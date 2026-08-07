@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
-const nextConfig: NextConfig = {
-  cacheComponents: true,
-};
+const withNextIntl = createNextIntlPlugin();
 
-export default nextConfig;
+const nextConfig: NextConfig = {};
+
+export default withNextIntl(nextConfig);
