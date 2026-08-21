@@ -51,13 +51,13 @@ export function FormPanel() {
 
   return (
     <div id="form-panel" className="pb-8">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-2 flex gap-1.5 overflow-x-auto">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-2 flex gap-1.5 overflow-x-auto">
         {sections.map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => scrollToSection(key)}
-            className="shrink-0 text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            className="shrink-0 text-xs px-2.5 py-1 rounded-full border border-border text-foreground hover:text-foreground hover:border-primary/50 transition-colors"
           >
             {t(`${key}.title`)}
           </button>

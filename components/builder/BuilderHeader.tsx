@@ -4,15 +4,22 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, ChevronDown, Menu, Share2, Layout, Loader2, Save, Sparkles, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Download, ChevronDown, Menu, Share2, Layout, Loader2, Save, Sparkles, CheckCircle2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { TemplateType } from "@/lib/types/resume";
 import { resumeTemplates, cvTemplates } from "@/lib/types/resume";
 import { AIAssistDialog } from "@/components/ai/AIAssistDialog";
 import { ShareDialog } from "@/components/share/ShareDialog";
-import { usePreviewZoomStore } from "@/lib/store/preview-zoom-store";
-import { generatePdf } from "@/lib/pdf/generator";
+import { useToastStore } from "@/lib/store/toast-store";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,12 +67,15 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
   const setCurrentResume = useResumeStore((s) => s.setCurrentResume);
   const [isSaving, setIsSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
   const savingRef = useRef(false);
   const router = useRouter();
-  const accentColor = data.theme?.accentColor ?? "#ff751f";
+  const accentColor = data.theme?.accentColor ?? "#f97316";
 
   const [aiOpen, setAiOpen] = useState(false);
   const [mobileShareOpen, setMobileShareOpen] = useState(false);
+  const showToast = useToastStore((s) => s.showToast);
 
   const availableTemplates = documentType === "cv" ? cvTemplates : resumeTemplates;
 
@@ -130,8 +140,11 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
     if (ok) {
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 2000);
+      showToast(t("saved"), "success");
+    } else {
+      showToast(t("saveError"), "error");
     }
-  }, [saveResume]);
+  }, [saveResume, showToast, t]);
 
   useEffect(() => {
     if (!isDirty || !hasContent) return;
@@ -141,55 +154,66 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
     return () => window.clearTimeout(timer);
   }, [isDirty, hasContent, saveResume]);
 
-  const handleDownloadPdf = useCallback(async () => {
-    const prev = usePreviewZoomStore.getState().zoom;
-    usePreviewZoomStore.getState().setZoom(100);
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    try {
-      await generatePdf("resume-preview");
-    } catch (err) {
-      console.error("PDF download error:", err);
-    } finally {
-      usePreviewZoomStore.getState().setZoom(prev);
-    }
+  const handleDownloadPdf = useCallback(() => {
+    window.print();
   }, []);
 
+  const handleRenameOpen = () => {
+    setRenameValue(title);
+    setRenameOpen(true);
+  };
+
+  const handleRenameSubmit = () => {
+    const value = renameValue.trim();
+    if (!value) return;
+    setTitle(value);
+    setRenameOpen(false);
+  };
+
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background px-4 py-2 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-3">
+    <header className="z-40 h-14 shrink-0 border-b border-border bg-background px-4 flex items-center justify-between">
+      <div className="flex items-center gap-2 min-w-0 flex-1 sm:gap-3">
         <Link
           href={`/${locale}/dashboard`}
           aria-label={ct("back")}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={20} />
         </Link>
-        <div>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-sm font-medium bg-transparent border-none outline-none focus:ring-0"
-          />
+        <div className="min-w-0 flex-1 flex items-center gap-1">
+          <span className="truncate text-sm font-medium">{title || dt("newResume")}</span>
+          <button
+            type="button"
+            onClick={handleRenameOpen}
+            aria-label={dt("rename")}
+            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Pencil size={13} />
+          </button>
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
+        <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
           {dt(documentType)}
         </span>
       </div>
-      <div className="flex items-center gap-1 sm:gap-1 overflow-x-auto">
-        {isDirty && (
-          <div className="shrink-0">
-            <Button variant="ghost" size="sm" onClick={handleSave} disabled={isSaving} className="text-xs">
-              {isSaving ? <Loader2 size={12} className="animate-spin mr-1" /> : <Save size={12} className="mr-1" />}
-              {isSaving ? t("saving") ?? "Saving…" : t("save") ?? "Save"}
+      <div className="flex items-center gap-1 shrink-0">
+        <div className="shrink-0 flex items-center justify-end min-w-0 sm:min-w-[92px]">
+          {isSaving ? (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground animate-in fade-in-0 duration-200">
+              <Loader2 size={12} className="animate-spin" />
+              <span className="hidden sm:inline">{t("saving")}</span>
+            </span>
+          ) : savedFlash ? (
+            <span className="flex items-center gap-1 text-xs text-green-600 animate-in fade-in-0 duration-200">
+              <CheckCircle2 size={12} />
+              <span className="hidden sm:inline">{t("saved")}</span>
+            </span>
+          ) : isDirty ? (
+            <Button variant="ghost" size="sm" onClick={handleSave} className="px-2 text-xs sm:px-3">
+              <Save size={12} className="sm:mr-1" />
+              <span className="hidden sm:inline">{t("save")}</span>
             </Button>
-          </div>
-        )}
-        {savedFlash && (
-          <span className="shrink-0 flex items-center gap-1 text-xs text-green-600">
-            <CheckCircle2 size={12} />
-            {t("saved")}
-          </span>
-        )}
+          ) : null}
+        </div>
         <div className="hidden sm:flex items-center gap-1 sm:gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -291,7 +315,7 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <span className="w-3 h-3 rounded-full mr-2 inline-block" style={{ backgroundColor: accentColor }} />
-                  Theme
+                  {t("theme")}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="p-2">
                   <div className="grid grid-cols-6 gap-1.5 mb-2">
@@ -338,6 +362,32 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
       </div>
       <AIAssistDialog open={aiOpen} onOpenChange={setAiOpen} />
       <ShareDialog open={mobileShareOpen} onOpenChange={setMobileShareOpen} onSave={saveResume} />
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dt("rename")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameSubmit();
+              }}
+              autoFocus
+              placeholder={dt("newResume")}
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRenameOpen(false)}>
+              {ct("cancel")}
+            </Button>
+            <Button onClick={handleRenameSubmit} disabled={!renameValue.trim()}>
+              {dt("rename")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

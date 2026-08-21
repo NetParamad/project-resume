@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { ToastViewport } from "@/components/ui/toast";
+import { PageTransition } from "@/components/page-transition";
+import { SetHtmlLang } from "@/components/SetHtmlLang";
 
 type Props = {
   children: React.ReactNode;
@@ -26,11 +29,15 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <SetHtmlLang locale={locale} />
       <Navbar />
       <main className="min-h-screen pb-16 md:pb-0 flex flex-col">
-          {children}
-          <Footer />
+          <PageTransition>
+            {children}
+            <Footer />
+          </PageTransition>
         </main>
+      <ToastViewport />
     </NextIntlClientProvider>
   );
 }

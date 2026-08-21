@@ -1,12 +1,18 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export function Footer() {
   const t = useTranslations();
   const f = useTranslations("footer");
   const locale = useLocale();
+  const pathname = usePathname();
+
+  if (pathname.includes("/builder/")) {
+    return null;
+  }
 
   return (
     <footer className="w-full border-t border-border bg-background mt-auto">

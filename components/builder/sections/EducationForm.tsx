@@ -61,7 +61,8 @@ export function EducationForm() {
       </CardHeader>
       <CardContent className="space-y-3">
         {education.map((edu) => (
-          <div key={edu.id} className="border border-border rounded-md p-3 space-y-2">
+          <Card key={edu.id} className="rounded-md shadow-none">
+            <CardContent className="p-3 space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">{t("degree")}</Label>
@@ -130,7 +131,8 @@ export function EducationForm() {
                 </Button>
               </div>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </CardContent>
     </Card>
