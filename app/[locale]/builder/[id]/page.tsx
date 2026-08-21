@@ -13,10 +13,12 @@ export default async function BuilderPage({
   setRequestLocale(locale);
 
   return (
-    <BuilderLayout
-      resumeId={id}
-      documentType={type as "resume" | "cv" | undefined}
-      initialTitle={title}
-    />
+    <div className="flex flex-col h-[calc(100dvh-3rem-4rem)] md:h-[calc(100dvh-4rem)] overflow-hidden">
+      <BuilderLayout
+        resumeId={id}
+        documentType={type as "resume" | "cv" | undefined}
+        initialTitle={title}
+      />
+    </div>
   );
 }

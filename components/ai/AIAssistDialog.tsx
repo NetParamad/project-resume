@@ -63,7 +63,7 @@ export function AIAssistDialog({
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1 min-h-0">
           <nav
-            className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-visible shrink-0 sm:w-44 pb-1 sm:pb-0"
+            className="grid grid-cols-2 gap-1 sm:flex sm:flex-col sm:gap-1 sm:shrink-0 sm:w-44 pb-1 sm:pb-0"
             aria-label={t("aiAssistTitle")}
           >
             {TABS.map((tabs) => {

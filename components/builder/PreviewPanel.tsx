@@ -4,18 +4,34 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { usePreviewZoomStore } from "@/lib/store/preview-zoom-store";
+import { useResumeLangStore, type ResumeLangPreference } from "@/lib/store/resume-lang-store";
 import { ResumePreview } from "@/components/preview/ResumePreview";
+import { ResumeLangProvider } from "@/lib/resume-lang-context";
 import { cn } from "@/lib/utils";
 
 const A4_WIDTH = 794;
 
 const ZOOM_OPTIONS = ["fit", 75, 100, 125] as const;
 
+const LANG_OPTIONS: { value: ResumeLangPreference; label: string }[] = [
+  { value: "en", label: "EN" },
+  { value: "th", label: "ไทย" },
+];
+
 export function PreviewPanel() {
   const t = useTranslations("builder");
   const data = useResumeStore((s) => s.data);
+  const title = useResumeStore((s) => s.title);
   const zoom = usePreviewZoomStore((s) => s.zoom);
   const setZoom = usePreviewZoomStore((s) => s.setZoom);
+  const resumeLang = useResumeLangStore((s) => s.lang);
+  const setResumeLang = useResumeLangStore((s) => s.setLang);
+
+  useEffect(() => {
+    if (title) {
+      document.title = title;
+    }
+  }, [title]);
 
   const hasData = data.personalInfo.fullName || data.summary || data.experience.length > 0;
 
@@ -51,25 +67,49 @@ export function PreviewPanel() {
 
   return (
     <div id="preview-panel" className="p-4">
-      <div className="flex items-center justify-between gap-2 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h2 className="text-lg font-semibold">{t("preview")}</h2>
-        <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
-          {ZOOM_OPTIONS.map((option) => (
-            <button
-              key={String(option)}
-              type="button"
-              onClick={() => setZoom(option)}
-              aria-pressed={zoom === option}
-              className={cn(
-                "px-2 py-0.5 rounded text-xs transition-colors",
-                zoom === option
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {option === "fit" ? t("zoomFit") : `${option}%`}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div
+            role="group"
+            aria-label={t("resumeLang")}
+            className="flex items-center gap-1 rounded-md border border-border p-0.5"
+          >
+            {LANG_OPTIONS.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                onClick={() => setResumeLang(option.value)}
+                aria-pressed={resumeLang === option.value}
+                className={cn(
+                  "px-2 py-0.5 rounded text-xs transition-colors",
+                  resumeLang === option.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:text-foreground",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
+            {ZOOM_OPTIONS.map((option) => (
+              <button
+                key={String(option)}
+                type="button"
+                onClick={() => setZoom(option)}
+                aria-pressed={zoom === option}
+                className={cn(
+                  "px-2 py-0.5 rounded text-xs transition-colors",
+                  zoom === option
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:text-foreground",
+                )}
+              >
+                {option === "fit" ? t("zoomFit") : `${option}%`}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div ref={containerRef} className="w-full">
@@ -79,11 +119,13 @@ export function PreviewPanel() {
         >
           <div
             ref={innerRef}
-            className="w-full origin-top-left"
+            className="w-full origin-top-left transition-transform duration-150 ease-out"
             style={{ width: A4_WIDTH, transform: `scale(${scale})` }}
           >
             {hasData ? (
-              <ResumePreview />
+              <ResumeLangProvider value={resumeLang === "auto" ? null : resumeLang}>
+                <ResumePreview />
+              </ResumeLangProvider>
             ) : (
               <div className="flex items-center justify-center h-64 bg-muted/50 rounded-lg border border-dashed border-border">
                 <p className="text-muted-foreground text-sm">{t("emptyState")}</p>

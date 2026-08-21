@@ -1,6 +1,7 @@
 "use client";
 
 import type { ResumeData } from "@/lib/types/resume";
+import { useResumeTranslator } from "@/lib/resume-lang-context";
 
 interface ModernTemplateProps {
   data: ResumeData;
@@ -8,7 +9,8 @@ interface ModernTemplateProps {
 
 export function ModernTemplate({ data }: ModernTemplateProps) {
   const { personalInfo, summary, experience, education, skills, certifications, projects, languages, theme } = data;
-  const accentColor = theme?.accentColor ?? "#ff751f";
+  const accentColor = theme?.accentColor ?? "#f97316";
+  const t = useResumeTranslator(data);
 
   return (
     <div className="p-6 text-sm text-gray-900">
@@ -17,7 +19,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
         {personalInfo.avatar && (
           <img src={personalInfo.avatar} alt="" className="w-16 h-16 rounded-full object-cover mx-auto mb-2" />
         )}
-        <h1 className="text-xl font-bold">{personalInfo.fullName || "Your Name"}</h1>
+        <h1 className="text-xl font-bold">{personalInfo.fullName || t("yourName")}</h1>
         {personalInfo.occupation && <p className="text-xs text-gray-500">{personalInfo.occupation}</p>}
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-gray-600 mt-1">
           {personalInfo.email && <span>{personalInfo.email}</span>}
@@ -39,7 +41,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {experience.length > 0 && (
         <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
-            Experience
+            {t("experience")}
           </h2>
           {experience.map((exp) => (
             <div key={exp.id} className="mb-2">
@@ -49,7 +51,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
                   <p className="text-xs text-gray-600">{exp.company}</p>
                 </div>
                 <p className="text-xs text-gray-500 shrink-0">
-                  {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  {exp.startDate} - {exp.current ? t("present") : exp.endDate}
                 </p>
               </div>
               {exp.description && (
@@ -64,7 +66,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {education.length > 0 && (
         <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
-            Education
+            {t("education")}
           </h2>
           {education.map((edu) => (
             <div key={edu.id} className="mb-1">
@@ -86,7 +88,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {skills.length > 0 && (
         <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
-            Skills
+            {t("skills")}
           </h2>
           <div className="flex flex-wrap gap-1">
             {skills.map((skill) => (
@@ -105,7 +107,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {certifications.length > 0 && (
         <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
-            Certifications
+            {t("certifications")}
           </h2>
           {certifications.map((cert) => (
             <div key={cert.id} className="flex justify-between mb-1">
@@ -120,7 +122,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {projects.length > 0 && (
         <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
-            Projects
+            {t("projects")}
           </h2>
           {projects.map((project) => (
             <div key={project.id} className="mb-2">
@@ -134,7 +136,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
                     className="text-xs hover:underline"
                     style={{ color: accentColor }}
                   >
-                    Link
+                    {t("link")}
                   </a>
                 )}
               </div>
@@ -150,7 +152,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {languages.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
-            Languages
+            {t("languages")}
           </h2>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {languages.map((lang) => (

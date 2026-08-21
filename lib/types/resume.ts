@@ -1,3 +1,5 @@
+import { nanoid } from "nanoid";
+
 export type DocumentType = "resume" | "cv"
 
 export interface PersonalInfo {
@@ -164,4 +166,37 @@ export interface Resume {
   createdAt: string
   updatedAt: string
   version: number
+}
+
+const arraySections = [
+  "experience",
+  "education",
+  "skills",
+  "certifications",
+  "projects",
+  "languages",
+  "references",
+  "publications",
+  "researchExperience",
+  "teachingExperience",
+  "awards",
+] as const satisfies readonly (keyof ResumeData)[];
+
+export function normalizeResumeData(data: ResumeData): ResumeData {
+  if (!data || typeof data !== "object") return data;
+  const result: Record<string, unknown> = { ...data };
+
+  for (const section of arraySections) {
+    const items = result[section];
+    if (Array.isArray(items)) {
+      result[section] = items.map((item) => {
+        if (item && typeof item === "object" && typeof (item as { id?: unknown }).id !== "string") {
+          return { ...(item as object), id: nanoid(12) };
+        }
+        return item;
+      });
+    }
+  }
+
+  return result as unknown as ResumeData;
 }

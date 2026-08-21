@@ -33,7 +33,7 @@ const defaultPersonalInfo: PersonalInfo = {
 };
 
 const defaultTheme: ThemeConfig = {
-  accentColor: "#ff751f",
+  accentColor: "#f97316",
 };
 
 export const defaultResumeData: ResumeData = {

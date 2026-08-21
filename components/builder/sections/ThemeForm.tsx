@@ -19,7 +19,7 @@ const PRESETS = [
 ];
 
 export function ThemeForm() {
-  const accentColor = useResumeStore((s) => s.data.theme?.accentColor ?? "#ff751f");
+  const accentColor = useResumeStore((s) => s.data.theme?.accentColor ?? "#f97316");
   const updateTheme = useResumeStore((s) => s.updateTheme);
 
   return (

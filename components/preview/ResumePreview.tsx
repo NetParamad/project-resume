@@ -1,6 +1,9 @@
 "use client";
 
 import { useResumeStore } from "@/lib/store/resume-store";
+import { hasThaiInResume } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useResumeLang } from "@/lib/resume-lang-context";
 import type { TemplateType, ResumeData } from "@/lib/types/resume";
 import { ModernTemplate } from "./templates/ModernTemplate";
 import { ClassicTemplate } from "./templates/ClassicTemplate";
@@ -25,10 +28,16 @@ export function ResumePreview() {
   const template = useResumeStore((s) => s.template);
 
   const Template = templateComponents[template] ?? ModernTemplate;
+  const lang = useResumeLang();
+  const isThai = lang ? lang === "th" : hasThaiInResume(data);
 
   return (
-    <div id="resume-preview" className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <Template data={data} />
+    <div
+      className={cn("bg-white shadow-sm rounded-lg overflow-hidden", isThai && "font-thai")}
+    >
+      <div key={template}>
+        <Template data={data} />
+      </div>
     </div>
   );
 }

@@ -246,7 +246,7 @@ export function normalizeResumeData(data: Partial<ResumeData> | undefined): Resu
     awards: normalizeAwards(source.awards),
     theme: source.theme?.accentColor
       ? { accentColor: str(source.theme.accentColor) }
-      : { accentColor: "#ff751f" },
+      : { accentColor: "#f97316" },
   };
 }
 

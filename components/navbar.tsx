@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { House, FileText, PlusCircle, User, LogOut, ChevronDown, BookOpen } from "lucide-react";
+import { House, FileText, FilePen, PlusCircle, User, LogOut, ChevronDown, BookOpen } from "lucide-react";
 
 function NavLink({
   href,
@@ -51,7 +51,7 @@ function TabItem({
   return (
     <Link
       href={href}
-      className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors ${
+      className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1 rounded-lg transition-colors ${
         active
           ? "text-foreground"
           : "text-muted-foreground hover:text-foreground"
@@ -100,7 +100,8 @@ export function Navbar() {
       {/* Mobile top bar */}
       <div className="md:hidden flex items-center justify-between h-12 px-4 border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur">
         <div className="flex items-center gap-3">
-          <Link href={`/${locale}`} className="font-semibold text-sm">
+          <Link href={`/${locale}`} className="flex items-center gap-2 font-semibold text-sm">
+            <FilePen size={18} className="text-primary" />
             {t("app.title")}
           </Link>
           <Link
@@ -119,8 +120,9 @@ export function Navbar() {
       <nav className="hidden md:flex h-16 border-b border-border items-center px-6 sticky top-0 z-50 bg-background/95 backdrop-blur">
         <Link
           href={`/${locale}`}
-          className="font-semibold text-lg mr-8"
+          className="flex items-center gap-2 font-semibold text-lg mr-8"
         >
+          <FilePen className="text-primary" />
           {t("app.title")}
         </Link>
         <div className="flex items-center gap-6">
@@ -199,7 +201,7 @@ export function Navbar() {
 
       {/* Mobile bottom tab bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background">
-        <div className="flex items-center justify-around h-16 px-2">
+        <div className="flex items-center h-16 px-2">
           <TabItem
             href={`/${locale}`}
             icon={House}
@@ -218,18 +220,13 @@ export function Navbar() {
             <CreateNewDialog open={createOpen} onOpenChange={setCreateOpen}>
               <button
                 type="button"
-                className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 py-1 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
               >
                 <PlusCircle size={20} />
                 <span className="text-[10px] font-medium">{t("nav.new")}</span>
               </button>
             </CreateNewDialog>
           )}
-          <TabItem
-            href={user ? `/${locale}/dashboard` : `/${locale}/auth/login`}
-            icon={User}
-            label={user ? t("nav.profile") : t("nav.signIn")}
-          />
         </div>
       </nav>
     </>

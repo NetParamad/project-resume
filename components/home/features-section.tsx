@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   FileText,
   Palette,
@@ -6,7 +7,7 @@ import {
   Zap,
   Globe,
   Download,
-  Layout,
+  Sparkles,
   Layers,
   ArrowRight,
   CheckCircle2,
@@ -18,10 +19,10 @@ const features = [
   { key: "atsOptimized", icon: Shield },
   { key: "customization", icon: Palette },
   { key: "multiFormatExport", icon: Download },
-  { key: "smartLayout", icon: Layout },
+  { key: "aiAssist", icon: Sparkles },
   { key: "multiLanguage", icon: Globe },
   { key: "sectionManager", icon: Layers },
-  { key: "coverLetter", icon: FileText },
+  { key: "importResume", icon: FileText },
 ] as const;
 
 const HIGHLIGHT_COUNT = 6;
@@ -56,20 +57,22 @@ export function FeaturesSection({ t, locale }: FeaturesSectionProps) {
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
-              <div
+              <Card
                 key={feature.key}
-                className="group rounded-xl border border-border bg-background p-6 transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+                className="group bg-background shadow-none transition-all hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 transition-all group-hover:scale-110 group-hover:bg-primary/15">
-                  <feature.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="font-heading text-base font-semibold text-foreground">
-                  {t(`home.features.${feature.key}Title`)}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {t(`home.features.${feature.key}Desc`)}
-                </p>
-              </div>
+                <CardContent className="p-6">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 transition-all group-hover:scale-110 group-hover:bg-primary/15">
+                    <feature.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-base font-semibold text-foreground">
+                    {t(`home.features.${feature.key}Title`)}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {t(`home.features.${feature.key}Desc`)}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -110,7 +113,8 @@ export function FeaturesSection({ t, locale }: FeaturesSectionProps) {
               </div>
             </div>
             <div className="relative">
-              <div className="overflow-hidden rounded-xl border border-border bg-card p-8">
+              <Card className="overflow-hidden">
+                <CardContent className="p-8">
                 <div className="flex flex-col gap-6">
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full bg-primary/10" />
@@ -140,7 +144,8 @@ export function FeaturesSection({ t, locale }: FeaturesSectionProps) {
                     <div className="h-2.5 w-3/4 rounded bg-muted-foreground/10" />
                   </div>
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
+import { normalizeResumeData } from "@/lib/types/resume";
 
 function generateShareSlug(): string {
   return nanoid(12);
@@ -33,7 +34,10 @@ export async function GET(
       throw error;
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({
+      ...data,
+      data: normalizeResumeData(data.data),
+    });
   } catch (error) {
     console.error("GET /api/resumes/[id] error:", error);
     return NextResponse.json({ error: "Failed to fetch resume" }, { status: 500 });

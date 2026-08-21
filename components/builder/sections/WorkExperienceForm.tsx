@@ -46,7 +46,8 @@ export function WorkExperienceForm() {
       </CardHeader>
       <CardContent className="space-y-4">
         {experience.map((exp) => (
-          <div key={exp.id} className="border border-border rounded-md p-3 space-y-2 relative">
+          <Card key={exp.id} className="rounded-md shadow-none relative">
+            <CardContent className="p-3 space-y-2">
             <div className="flex items-center gap-1 absolute left-1 top-1">
               <GripVertical size={14} className="text-muted-foreground cursor-grab" />
             </div>
@@ -121,7 +122,8 @@ export function WorkExperienceForm() {
                 <Trash2 size={14} />
               </Button>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </CardContent>
     </Card>

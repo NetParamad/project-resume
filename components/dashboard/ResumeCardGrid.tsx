@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToastStore } from "@/lib/store/toast-store";
 import { FileText, File as FileIcon, MoreVertical, Trash2, Pencil, Copy, Loader2 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -39,6 +40,7 @@ export function ResumeCardGrid({ resumes, locale }: ResumeCardGridProps) {
   const t = useTranslations("dashboard");
   const common = useTranslations("common");
   const router = useRouter();
+  const showToast = useToastStore((s) => s.showToast);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -50,33 +52,37 @@ export function ResumeCardGrid({ resumes, locale }: ResumeCardGridProps) {
     if (!deleteId) return;
     setDeleting(true);
     try {
-      await fetch(`/api/resumes/${deleteId}`, { method: "DELETE" });
+      const res = await fetch(`/api/resumes/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      showToast(t("deleteSuccess"), "success");
       router.refresh();
-    } catch (err) {
-      console.error("Delete error:", err);
+    } catch {
+      showToast(common("error"), "error");
     } finally {
       setDeleting(false);
       setDeleteId(null);
     }
-  }, [deleteId, router]);
+  }, [deleteId, router, showToast, t, common]);
 
   const handleRename = useCallback(async () => {
     if (!renameId || !renameTitle.trim()) return;
     setRenaming(true);
     try {
-      await fetch(`/api/resumes/${renameId}`, {
+      const res = await fetch(`/api/resumes/${renameId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: renameTitle.trim() }),
       });
+      if (!res.ok) throw new Error("Rename failed");
+      showToast(t("renameSuccess"), "success");
       router.refresh();
-    } catch (err) {
-      console.error("Rename error:", err);
+    } catch {
+      showToast(common("error"), "error");
     } finally {
       setRenaming(false);
       setRenameId(null);
     }
-  }, [renameId, renameTitle, router]);
+  }, [renameId, renameTitle, router, showToast, t, common]);
 
   const handleDuplicate = useCallback(async (id: string) => {
     try {
@@ -84,7 +90,7 @@ export function ResumeCardGrid({ resumes, locale }: ResumeCardGridProps) {
       if (!res.ok) throw new Error("Failed to fetch");
       const original = await res.json();
 
-      await fetch("/api/resumes", {
+      const dupRes = await fetch("/api/resumes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -94,11 +100,13 @@ export function ResumeCardGrid({ resumes, locale }: ResumeCardGridProps) {
           data: original.data,
         }),
       });
+      if (!dupRes.ok) throw new Error("Duplicate failed");
+      showToast(t("duplicateSuccess"), "success");
       router.refresh();
-    } catch (err) {
-      console.error("Duplicate error:", err);
+    } catch {
+      showToast(common("error"), "error");
     }
-  }, [router]);
+  }, [router, showToast, t, common]);
 
   const resumeDocs = resumes.filter((r) => r.document_type !== "cv");
   const cvDocs = resumes.filter((r) => r.document_type === "cv");
@@ -121,7 +129,21 @@ export function ResumeCardGrid({ resumes, locale }: ResumeCardGridProps) {
             </CardContent>
           </Card>
         </Link>
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setRenameId(resume.id);
+              setRenameTitle(resume.title);
+            }}
+            aria-label={t("rename")}
+          >
+            <Pencil size={14} />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
