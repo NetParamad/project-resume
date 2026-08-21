@@ -26,6 +26,7 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
 
       {summary && (
         <div className="mb-5">
+          <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase mb-2" style={{ color: accentColor }}>{t("summary")}</h2>
           <p className="text-xs leading-relaxed text-gray-600">{summary}</p>
         </div>
       )}

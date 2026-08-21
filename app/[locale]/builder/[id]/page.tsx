@@ -13,7 +13,7 @@ export default async function BuilderPage({
   setRequestLocale(locale);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-3rem-4rem)] md:h-[calc(100dvh-4rem)] overflow-hidden">
+    <div className="flex flex-col min-h-0 lg:h-[calc(100dvh-4rem)] lg:overflow-hidden">
       <BuilderLayout
         resumeId={id}
         documentType={type as "resume" | "cv" | undefined}

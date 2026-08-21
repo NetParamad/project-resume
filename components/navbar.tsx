@@ -94,6 +94,7 @@ export function Navbar() {
   const isHome = pathname === `/${locale}` || pathname === `/${locale}/`;
   const isDashboard = pathname.startsWith(`/${locale}/dashboard`);
   const isKnowledge = pathname.startsWith(`/${locale}/knowledge`);
+  const isSharePage = pathname.includes("/share/");
 
   return (
     <>
@@ -112,7 +113,7 @@ export function Navbar() {
           </Link>
         </div>
         <div className="flex items-center gap-1">
-          <LocaleSwitcher />
+          {!isSharePage && <LocaleSwitcher />}
         </div>
       </div>
 
@@ -162,7 +163,7 @@ export function Navbar() {
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <LocaleSwitcher />
+          {!isSharePage && <LocaleSwitcher />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

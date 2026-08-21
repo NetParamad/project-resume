@@ -30,6 +30,7 @@ export function CompactTemplate({ data }: CompactTemplateProps) {
 
       {summary && (
         <div className="mb-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: accentColor }}>{t("summary")}</h2>
           <p className="text-[11px] leading-relaxed text-gray-700">{summary}</p>
         </div>
       )}

@@ -127,7 +127,7 @@ export function BuilderLayout({
 
   return (
     <>
-      <div className="flex flex-col flex-1 bg-background">
+      <div className="flex flex-col flex-1 min-h-0 bg-background">
         <BuilderHeader resumeId={resumeId} />
         <div className="lg:hidden z-30 bg-background/95 backdrop-blur border-b border-border">
           <div className="grid grid-cols-2 gap-1 p-1.5">
@@ -159,23 +159,27 @@ export function BuilderLayout({
             </button>
           </div>
         </div>
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 min-h-0">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
           <div
             className={cn(
-              "border-b lg:border-b-0 lg:border-r border-border overflow-y-auto",
+              "relative min-h-0 border-b lg:border-b-0 lg:border-r border-border",
               mobileView === "preview" && "hidden lg:block",
             )}
           >
-            <FormPanel />
+            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto">
+              <FormPanel />
+            </div>
           </div>
           <div
             key={String(mobileView)}
             className={cn(
-              "overflow-y-auto bg-muted/30 animate-in fade-in-0 duration-200 ease-out",
+              "relative min-h-0 bg-muted/30",
               mobileView === "form" && "hidden lg:block",
             )}
           >
-            <PreviewPanel />
+            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto animate-in fade-in-0 duration-200 ease-out">
+              <PreviewPanel />
+            </div>
           </div>
         </div>
       </div>
