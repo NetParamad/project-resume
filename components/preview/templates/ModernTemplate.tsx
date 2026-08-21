@@ -33,6 +33,9 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
       {/* Summary */}
       {summary && (
         <div className="mb-4">
+          <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
+            {t("summary")}
+          </h2>
           <p className="text-xs leading-relaxed">{summary}</p>
         </div>
       )}
@@ -133,10 +136,10 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
                     href={project.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs hover:underline"
+                    className="text-xs hover:underline break-all"
                     style={{ color: accentColor }}
                   >
-                    {t("link")}
+                    {project.url.replace(/^https?:\/\//, "")}
                   </a>
                 )}
               </div>

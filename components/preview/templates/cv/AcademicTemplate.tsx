@@ -23,7 +23,7 @@ function PublicationsSection({ publications, accentColor, t }: { publications?: 
           </p>
           {pub.doi && <p className="text-gray-400">{t("doi")}: {pub.doi}</p>}
           {pub.url && (
-            <a href={pub.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: accentColor }}>{t("link")}</a>
+            <a href={pub.url} target="_blank" rel="noreferrer" className="hover:underline break-all" style={{ color: accentColor }}>{pub.url.replace(/^https?:\/\//, "")}</a>
           )}
         </div>
       ))}
@@ -111,6 +111,7 @@ export function AcademicTemplate({ data }: AcademicTemplateProps) {
 
       {summary && (
         <div className="mb-4">
+          <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">{t("summary")}</h2>
           <p className="text-xs leading-relaxed">{summary}</p>
         </div>
       )}

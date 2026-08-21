@@ -32,7 +32,7 @@ const CV_SECTIONS = ["researchExperience", "teachingExperience", "publications",
 
 function Section({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <div id={`section-${id}`} className="scroll-mt-16">
+    <div id={`section-${id}`} className="scroll-mt-[5.5rem] lg:scroll-mt-2">
       {children}
     </div>
   );
@@ -51,7 +51,7 @@ export function FormPanel() {
 
   return (
     <div id="form-panel" className="pb-8">
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-2 flex gap-1.5 overflow-x-auto">
+      <div className="sticky top-12 lg:top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-2 flex gap-1.5 overflow-x-auto">
         {sections.map((key) => (
           <button
             key={key}

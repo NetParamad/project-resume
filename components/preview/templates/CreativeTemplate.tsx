@@ -23,8 +23,8 @@ export function CreativeTemplate({ data }: { data: ResumeData }) {
           {personalInfo.email && <span>{personalInfo.email}</span>}
           {personalInfo.phone && <span>{personalInfo.phone}</span>}
           {personalInfo.location && <span>{personalInfo.location}</span>}
-          {personalInfo.linkedin && <span className="truncate max-w-[120px] sm:max-w-[200px]">{personalInfo.linkedin}</span>}
-          {personalInfo.portfolio && <span className="truncate max-w-[120px] sm:max-w-[200px]">{personalInfo.portfolio}</span>}
+          {personalInfo.linkedin && <span className="break-all">{personalInfo.linkedin}</span>}
+          {personalInfo.portfolio && <span className="break-all">{personalInfo.portfolio}</span>}
         </div>
         {summary && (
           <p className="text-xs mt-3 leading-relaxed text-white/90 italic border-t border-white/20 pt-3">

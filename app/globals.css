@@ -117,4 +117,11 @@
     break-after: avoid;
     page-break-after: avoid;
   }
+
+  .print-resume .mb-1,
+  .print-resume .mb-2,
+  .print-resume .mb-3 {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }

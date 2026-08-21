@@ -25,6 +25,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
 
       {summary && (
         <div className="mb-4">
+          <h2 className="text-sm font-serif font-bold tracking-wide border-b border-gray-300 pb-1 mb-2 uppercase" style={{ color: accentColor, borderColor: accentColor }}>{t("summary")}</h2>
           <p className="text-xs leading-relaxed italic">{summary}</p>
         </div>
       )}
@@ -66,7 +67,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="space-y-4">
         {skills.length > 0 && (
           <div>
             <h2 className="text-sm font-serif font-bold tracking-wide border-b border-gray-300 pb-1 mb-2 uppercase" style={{ color: accentColor, borderColor: accentColor }}>{t("skills")}</h2>

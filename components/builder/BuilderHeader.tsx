@@ -180,20 +180,21 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
         >
           <ArrowLeft size={20} />
         </Link>
-        <div className="min-w-0 flex-1 flex items-center gap-1">
+        <div className="min-w-0 flex items-center gap-1">
           <span className="truncate text-sm font-medium">{title || dt("newResume")}</span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleRenameOpen}
             aria-label={dt("rename")}
-            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            className="h-6 w-6 shrink-0 rounded-sm text-muted-foreground hover:text-foreground"
           >
             <Pencil size={13} />
-          </button>
+          </Button>
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
+            {dt(documentType)}
+          </span>
         </div>
-        <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
-          {dt(documentType)}
-        </span>
       </div>
       <div className="flex items-center gap-1 shrink-0">
         <div className="shrink-0 flex items-center justify-end min-w-0 sm:min-w-[92px]">
@@ -214,7 +215,7 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
             </Button>
           ) : null}
         </div>
-        <div className="hidden sm:flex items-center gap-1 sm:gap-2">
+        <div className="hidden lg:flex items-center gap-1 sm:gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="shrink-0">
@@ -279,7 +280,7 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
             {t("downloadPdf")}
           </Button>
         </div>
-        <div className="sm:hidden shrink-0">
+        <div className="lg:hidden shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" aria-label={ct("menu")}>
