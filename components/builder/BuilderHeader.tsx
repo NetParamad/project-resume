@@ -12,6 +12,7 @@ import { resumeTemplates, cvTemplates } from "@/lib/types/resume";
 import { AIAssistDialog } from "@/components/ai/AIAssistDialog";
 import { ShareDialog } from "@/components/share/ShareDialog";
 import { useToastStore } from "@/lib/store/toast-store";
+import { printResumeFitToOnePage } from "@/lib/print-utils";
 import {
   Dialog,
   DialogContent,
@@ -155,8 +156,11 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
   }, [isDirty, hasContent, saveResume]);
 
   const handleDownloadPdf = useCallback(() => {
-    window.print();
-  }, []);
+    printResumeFitToOnePage(
+      () => showToast(t("pdfScaledWarning"), "info"),
+      () => showToast(t("pdfScaleFailed"), "error"),
+    );
+  }, [showToast, t]);
 
   const handleRenameOpen = () => {
     setRenameValue(title);

@@ -207,6 +207,8 @@
     "aiAssist": "AI Assist",
     "share": "Share",
     "downloadPdf": "Download PDF",
+    "pdfScaledWarning": "Content exceeded one A4 page — automatically scaled down to fit a single page.",
+    "pdfScaleFailed": "Content is too long to fit on one page. Please shorten your resume or update your browser.",
     "addSection": "Add Section",
     "personalInfo": {
       "title": "Personal Information",

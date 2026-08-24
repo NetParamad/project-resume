@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { ResumeLangProvider } from "@/lib/resume-lang-context";
 import { useResumeLangStore } from "@/lib/store/resume-lang-store";
 import { hasThaiInResume, cn } from "@/lib/utils";
+import { printResumeFitToOnePage } from "@/lib/print-utils";
+import { useToastStore } from "@/lib/store/toast-store";
 import type { TemplateType, ResumeData } from "@/lib/types/resume";
 import { ModernTemplate } from "@/components/preview/templates/ModernTemplate";
 import { ClassicTemplate } from "@/components/preview/templates/ClassicTemplate";
@@ -36,6 +38,7 @@ export function ShareResumeView({
   title?: string;
 }) {
   const t = useTranslations("builder");
+  const showToast = useToastStore((s) => s.showToast);
   const lang = useResumeLangStore((s) => s.lang);
   const setLang = useResumeLangStore((s) => s.setLang);
 
@@ -49,7 +52,10 @@ export function ShareResumeView({
   const isThai = lang === "auto" ? hasThaiInResume(data) : lang === "th";
 
   const handleDownloadPdf = () => {
-    window.print();
+    printResumeFitToOnePage(
+      () => showToast(t("pdfScaledWarning"), "info"),
+      () => showToast(t("pdfScaleFailed"), "error"),
+    );
   };
   return (
     <div className="max-w-[800px] mx-auto">
