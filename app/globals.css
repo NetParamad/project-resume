@@ -101,6 +101,8 @@
     left: 0;
     top: 0;
     width: 794px;
+    height: 1122px;
+    overflow: hidden;
     margin: 0;
     padding: 0;
   }

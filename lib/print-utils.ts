@@ -4,8 +4,28 @@ export const A4_PAGE_HEIGHT_PX = 1122.5;
 const FIT_THRESHOLD_PX = 1080;
 const MIN_SCALE = 0.15;
 
+let printQueued = false;
+
 function getPrintElement(): HTMLElement | null {
   return document.querySelector(".print-resume");
+}
+
+function triggerPrint(): void {
+  if (printQueued) return;
+  printQueued = true;
+  // Defer so the click handler returns and React can paint (e.g. the toast)
+  // before the browser blocks the main thread on the native print dialog.
+  setTimeout(() => {
+    const done = () => {
+      printQueued = false;
+      window.removeEventListener("afterprint", done);
+    };
+    window.addEventListener("afterprint", done);
+    window.print();
+    // Fallback: afterprint doesn't fire if the dialog is cancelled in
+    // some browsers, so release the guard shortly after it closes.
+    setTimeout(done, 500);
+  }, 50);
 }
 
 export function measurePrintHeight(): number {
@@ -31,27 +51,31 @@ export function measurePrintHeight(): number {
   return height;
 }
 
+function resetZoom(el: HTMLElement): void {
+  el.style.zoom = "";
+}
+
 export function printResumeFitToOnePage(
   onScaled?: () => void,
   onCannotFit?: () => void,
 ): void {
   const el = getPrintElement();
   if (!el) {
-    window.print();
+    triggerPrint();
     return;
   }
 
-  el.style.zoom = "";
+  resetZoom(el);
   const height = measurePrintHeight();
 
   if (height <= FIT_THRESHOLD_PX) {
-    window.print();
+    triggerPrint();
     return;
   }
 
   if (typeof el.style.zoom === "undefined") {
     onCannotFit?.();
-    window.print();
+    triggerPrint();
     return;
   }
 
@@ -67,19 +91,19 @@ export function printResumeFitToOnePage(
     rectHeight > expected * 1.25 ||
     rectHeight < expected * 0.75
   ) {
-    el.style.zoom = "";
+    resetZoom(el);
     onCannotFit?.();
-    window.print();
+    triggerPrint();
     return;
   }
 
   onScaled?.();
 
   const cleanup = () => {
-    el.style.zoom = "";
+    resetZoom(el);
     window.removeEventListener("afterprint", cleanup);
   };
   window.addEventListener("afterprint", cleanup);
 
-  window.print();
+  triggerPrint();
 }
