@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { polishResume } from "@/lib/ai/polish";
+import { polishRequestSchema } from "@/lib/validation/ai";
+import { parseJsonBody } from "@/lib/validation/parse";
 import type { ResumeData } from "@/lib/types/resume";
 
 export const runtime = "nodejs";
@@ -23,15 +25,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { resumeData, locale, model } = await req.json();
-    if (!resumeData || typeof resumeData !== "object") {
-      return NextResponse.json({ error: "resumeData is required" }, { status: 400 });
-    }
+    const parsed = await parseJsonBody(req, polishRequestSchema);
+    if (parsed.error) return parsed.error;
+    const { resumeData, locale, model } = parsed.data;
 
     const data = await polishResume({
-      resumeData: resumeData as ResumeData,
+      resumeData: resumeData as unknown as ResumeData,
       locale: locale || "en",
-      modelId: typeof model === "string" ? model : undefined,
+      modelId: model,
     });
 
     return NextResponse.json({ data });

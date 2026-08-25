@@ -7,9 +7,12 @@ npm run dev                # dev server (localhost:3000)
 npm run build              # production build — run before finishing any change
 npm run lint               # eslint .  (baseline: 8 known warnings, 0 errors)
 npx tsc --noEmit           # typecheck (no `typecheck` script exists)
+npm test                   # vitest run — unit tests for lib/ (co-located *.test.ts files)
 ```
 
-There is no test suite. Verification = `tsc --noEmit` + `lint` + `build`.
+Verification = `tsc --noEmit` + `lint` + `test` + `build`. CI (`.github/workflows/ci.yml`) runs all four on every push/PR with placeholder env vars — it doesn't need real Supabase/AI credentials since those are only read at request time, not at build/import time.
+
+Test coverage is currently limited to pure logic in `lib/` (rate limiting, resume merge logic, zod request schemas) — no route handler or component tests yet. Add a co-located `*.test.ts` next to new pure functions in `lib/` when practical.
 
 ## Stack & Structure
 
