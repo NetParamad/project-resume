@@ -1,6 +1,6 @@
 import { generateAuthParams } from "@/lib/imagekit";
 import { createClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -11,13 +11,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = rateLimit(`upload:${user.id}`, 20, 5 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  const limited = enforceRateLimit(`upload:${user.id}`, 20, 5 * 60 * 1000);
+  if (limited) return limited;
 
   const params = generateAuthParams();
   return NextResponse.json(params);

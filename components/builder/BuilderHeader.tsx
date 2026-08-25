@@ -156,10 +156,11 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
   }, [isDirty, hasContent, saveResume]);
 
   const handleDownloadPdf = useCallback(() => {
-    printResumeFitToOnePage(
-      () => showToast(t("pdfScaledWarning"), "info"),
-      () => showToast(t("pdfScaleFailed"), "error"),
-    );
+    void printResumeFitToOnePage({
+      onScaled: () => showToast(t("pdfScaledWarning"), "info"),
+      onTooLong: () => showToast(t("pdfTooLongWarning"), "error"),
+      onCannotFit: () => showToast(t("pdfScaleFailed"), "error"),
+    });
   }, [showToast, t]);
 
   const handleRenameOpen = () => {

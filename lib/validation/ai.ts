@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { resumeDataSchema, localeSchema, modelSchema } from "./resume";
 
+const boundedText = z.string().max(20_000);
+
 export const tailorRequestSchema = z.object({
   resumeData: resumeDataSchema,
-  jobDescription: z.string().optional().default(""),
+  jobDescription: boundedText.optional().default(""),
   locale: localeSchema,
   model: modelSchema,
 });
@@ -16,14 +18,14 @@ export const polishRequestSchema = z.object({
 
 export const atsScoreRequestSchema = z.object({
   resumeData: resumeDataSchema,
-  jobDescription: z.string().optional(),
+  jobDescription: boundedText.optional(),
   locale: localeSchema,
   model: modelSchema,
 });
 
 export const improveRequestSchema = z.object({
   resumeData: resumeDataSchema,
-  jobDescription: z.string().optional().default(""),
+  jobDescription: boundedText.optional().default(""),
   locale: localeSchema,
   model: modelSchema,
 });

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
 import { createResumeSchema } from "@/lib/validation/resumes";
 import { parseJsonBody } from "@/lib/validation/parse";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
   try {
@@ -12,6 +13,9 @@ export async function GET() {
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    if (limited) return limited;
 
     const { data, error } = await supabase
       .from("resumes")
@@ -35,6 +39,9 @@ export async function POST(req: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    if (limited) return limited;
 
     const parsed = await parseJsonBody(req, createResumeSchema);
     if (parsed.error) return parsed.error;

@@ -78,52 +78,35 @@
     background: #ffffff !important;
   }
 
-  body * {
-    visibility: hidden;
+  /* The portaled print copy is the only visible body child, so document
+     height — and therefore page count — depends solely on the resume. */
+  body > *:not(.print-root) {
+    display: none !important;
   }
 
-  .print-resume,
-  .print-resume * {
-    visibility: visible;
-  }
-
-  .print-resume .overflow-hidden {
-    overflow: visible !important;
-  }
-
-  .print-resume .rounded-lg {
-    border-radius: 0;
-  }
-
-  .print-resume {
-    display: block;
-    position: absolute;
-    left: 0;
-    top: 0;
+  /* Fixed printable A4 box at 96dpi: guarantees exactly one page.
+     Content is fitted via zoom beforehand; worst case it clips here. */
+  .print-root {
+    display: block !important;
     width: 794px;
     height: 1122px;
     overflow: hidden;
     margin: 0;
     padding: 0;
+    background: #ffffff;
   }
 
-  .print-resume * {
+  .print-root .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  .print-root .rounded-lg {
+    border-radius: 0;
+  }
+
+  .print-root * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     box-shadow: none !important;
-  }
-
-  .print-resume h1,
-  .print-resume h2,
-  .print-resume h3 {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  .print-resume .mb-1,
-  .print-resume .mb-2,
-  .print-resume .mb-3 {
-    break-inside: avoid;
-    page-break-inside: avoid;
   }
 }

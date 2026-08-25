@@ -8,6 +8,7 @@ import { FormPanel } from "./FormPanel";
 import { PreviewPanel } from "./PreviewPanel";
 import { BuilderHeader } from "./BuilderHeader";
 import { ResumePreview } from "@/components/preview/ResumePreview";
+import { PrintResumePortal } from "@/components/preview/PrintResumePortal";
 import { ResumeLangProvider } from "@/lib/resume-lang-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -183,11 +184,11 @@ export function BuilderLayout({
           </div>
         </div>
       </div>
-      <div className="print-resume">
+      <PrintResumePortal>
         <ResumeLangProvider value={resumeLang === "auto" ? null : resumeLang}>
           <ResumePreview />
         </ResumeLangProvider>
-      </div>
+      </PrintResumePortal>
     </>
   );
 }

@@ -6,6 +6,7 @@ import { ResumeLangProvider } from "@/lib/resume-lang-context";
 import { useResumeLangStore } from "@/lib/store/resume-lang-store";
 import { hasThaiInResume, cn } from "@/lib/utils";
 import { printResumeFitToOnePage } from "@/lib/print-utils";
+import { PrintResumePortal } from "@/components/preview/PrintResumePortal";
 import { useToastStore } from "@/lib/store/toast-store";
 import type { TemplateType, ResumeData } from "@/lib/types/resume";
 import { ModernTemplate } from "@/components/preview/templates/ModernTemplate";
@@ -52,10 +53,11 @@ export function ShareResumeView({
   const isThai = lang === "auto" ? hasThaiInResume(data) : lang === "th";
 
   const handleDownloadPdf = () => {
-    printResumeFitToOnePage(
-      () => showToast(t("pdfScaledWarning"), "info"),
-      () => showToast(t("pdfScaleFailed"), "error"),
-    );
+    void printResumeFitToOnePage({
+      onScaled: () => showToast(t("pdfScaledWarning"), "info"),
+      onTooLong: () => showToast(t("pdfTooLongWarning"), "error"),
+      onCannotFit: () => showToast(t("pdfScaleFailed"), "error"),
+    });
   };
   return (
     <div className="max-w-[800px] mx-auto">
@@ -100,11 +102,11 @@ export function ShareResumeView({
           <Template data={data} />
         </ResumeLangProvider>
       </div>
-      <div className="print-resume">
+      <PrintResumePortal className={cn(isThai && "font-thai")}>
         <ResumeLangProvider value={lang === "auto" ? null : lang}>
           <Template data={data} />
         </ResumeLangProvider>
-      </div>
+      </PrintResumePortal>
     </div>
   );
 }

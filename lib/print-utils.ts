@@ -1,10 +1,16 @@
 "use client";
 
 export const A4_PAGE_HEIGHT_PX = 1122.5;
-const FIT_THRESHOLD_PX = 1080;
-const MIN_SCALE = 0.15;
+export const FIT_THRESHOLD_PX = 1080;
+export const MIN_SCALE = 0.15;
+export const HEAVY_SCALE_THRESHOLD = 0.5;
+
+const ZOOM_TOLERANCE = 0.25;
+const PAGE_SLACK_PX = 2;
+const MAX_FIT_ITERATIONS = 4;
 
 let printQueued = false;
+let fitting = false;
 
 function getPrintElement(): HTMLElement | null {
   return document.querySelector(".print-resume");
@@ -28,82 +34,187 @@ function triggerPrint(): void {
   }, 50);
 }
 
-export function measurePrintHeight(): number {
-  const el = getPrintElement();
-  if (!el) return 0;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  const prev = el.style.cssText;
-  el.style.cssText =
-    "display:block !important; position:absolute !important; top:0; left:-10000px; width:794px; margin:0; padding:0; visibility:hidden;";
+async function waitForPrintAssets(el: HTMLElement): Promise<void> {
+  try {
+    await Promise.race([document.fonts?.ready ?? Promise.resolve(), sleep(1200)]);
+  } catch {
+    // Font readiness is best-effort; fall back to whatever is loaded.
+  }
+  const pending = Array.from(el.querySelectorAll("img")).filter((img) => !img.complete);
+  if (pending.length > 0) {
+    await Promise.race([
+      Promise.all(
+        pending.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              img.addEventListener("load", () => resolve(), { once: true });
+              img.addEventListener("error", () => resolve(), { once: true });
+            }),
+        ),
+      ),
+      sleep(2000),
+    ]);
+  }
+}
 
+const OFFSCREEN_STYLE =
+  "display:block !important; position:absolute !important; top:0; left:-10000px; width:794px; margin:0; padding:0; visibility:hidden;";
+
+function loosenOverflowChildren(el: HTMLElement): Array<[HTMLElement, string]> {
   const clipped: Array<[HTMLElement, string]> = [];
   el.querySelectorAll<HTMLElement>(".overflow-hidden").forEach((child) => {
     clipped.push([child, child.style.overflow]);
     child.style.overflow = "visible";
   });
+  return clipped;
+}
 
-  const height = el.scrollHeight;
+/**
+ * Scale that should be attempted first so content of the given natural
+ * height fits within one printable page.
+ */
+export function computeInitialScale(
+  naturalHeight: number,
+  threshold: number = FIT_THRESHOLD_PX,
+  minScale: number = MIN_SCALE,
+): number {
+  if (naturalHeight <= threshold) return 1;
+  return Math.max(minScale, threshold / naturalHeight);
+}
 
-  clipped.forEach(([child, overflow]) => {
-    child.style.overflow = overflow;
-  });
-  el.style.cssText = prev;
-  return height;
+export type FitStepAction = "fits" | "retry" | "truncated" | "unsupported";
+
+export interface FitStep {
+  action: FitStepAction;
+  scale: number;
+}
+
+/**
+ * Pure decision step for the fit-to-one-page loop.
+ * - "unsupported": zoom had no (or an implausible) effect on layout.
+ * - "fits": actual height now fits inside one page.
+ * - "retry": still too tall — try the returned smaller scale.
+ * - "truncated": already at (or not meaningfully below) the previous scale
+ *   and still too tall — content cannot fully fit.
+ */
+export function evaluateFitStep(
+  naturalHeight: number,
+  scale: number,
+  actualHeight: number,
+  threshold: number = FIT_THRESHOLD_PX,
+  minScale: number = MIN_SCALE,
+): FitStep {
+  const expected = naturalHeight * scale;
+  if (
+    !Number.isFinite(actualHeight) ||
+    expected <= 0 ||
+    actualHeight > expected * (1 + ZOOM_TOLERANCE) ||
+    actualHeight < expected * (1 - ZOOM_TOLERANCE)
+  ) {
+    return { action: "unsupported", scale };
+  }
+  if (actualHeight <= threshold + PAGE_SLACK_PX) {
+    return { action: "fits", scale };
+  }
+  const refined = Math.max(minScale, (scale * threshold) / actualHeight);
+  if (refined >= scale - 0.005) {
+    return { action: "truncated", scale: Math.min(scale, refined) };
+  }
+  return { action: "retry", scale: refined };
 }
 
 function resetZoom(el: HTMLElement): void {
   el.style.zoom = "";
 }
 
-export function printResumeFitToOnePage(
-  onScaled?: () => void,
-  onCannotFit?: () => void,
-): void {
+export interface PrintFitCallbacks {
+  /** Content was auto-scaled down to fit one page. */
+  onScaled?: (scale: number) => void;
+  /** Content is too long: it was shrunk to the minimum or may be cut off. */
+  onTooLong?: (scale: number) => void;
+  /** Browser does not support zoom-based scaling; output may be clipped. */
+  onCannotFit?: () => void;
+}
+
+
+export async function printResumeFitToOnePage(
+  callbacks: PrintFitCallbacks = {},
+): Promise<void> {
   const el = getPrintElement();
   if (!el) {
     triggerPrint();
     return;
   }
+  // A run is already in flight — it owns printing. Printing now would catch
+  // the copy mid-measurement in its hidden offscreen state (blank page).
+  if (fitting) return;
+  fitting = true;
 
-  resetZoom(el);
-  const height = measurePrintHeight();
+  const prevCss = el.style.cssText;
+  let finalScale: number | null = null;
+  let outcome: "fits" | "too-long" | "cannot-fit" = "fits";
 
-  if (height <= FIT_THRESHOLD_PX) {
-    triggerPrint();
-    return;
-  }
-
-  if (typeof el.style.zoom === "undefined") {
-    onCannotFit?.();
-    triggerPrint();
-    return;
-  }
-
-  const scale = Math.max(MIN_SCALE, FIT_THRESHOLD_PX / height);
-  el.style.zoom = String(scale);
-
-  // scrollHeight ignores zoom — use getBoundingClientRect (reflects zoom)
-  // to verify the scale actually took effect in this browser.
-  const rectHeight = el.getBoundingClientRect().height;
-  const expected = height * scale;
-  if (
-    !Number.isFinite(rectHeight) ||
-    rectHeight > expected * 1.25 ||
-    rectHeight < expected * 0.75
-  ) {
+  try {
     resetZoom(el);
-    onCannotFit?.();
-    triggerPrint();
-    return;
+    el.style.cssText = OFFSCREEN_STYLE;
+    const clipped = loosenOverflowChildren(el);
+
+    try {
+      await waitForPrintAssets(el);
+
+      const naturalHeight = el.scrollHeight;
+      if (naturalHeight > FIT_THRESHOLD_PX) {
+        let step: FitStep = { action: "retry", scale: computeInitialScale(naturalHeight) };
+        for (let i = 0; i < MAX_FIT_ITERATIONS && step.action === "retry"; i++) {
+          el.style.zoom = String(step.scale);
+          const actualHeight = el.getBoundingClientRect().height;
+          step = evaluateFitStep(naturalHeight, step.scale, actualHeight);
+        }
+
+        if (step.action === "unsupported") {
+          outcome = "cannot-fit";
+        } else {
+          finalScale = step.scale;
+          const truncated =
+            step.action !== "fits" ||
+            step.scale < HEAVY_SCALE_THRESHOLD;
+          if (truncated) outcome = "too-long";
+        }
+      }
+    } finally {
+      clipped.forEach(([child, overflow]) => {
+        child.style.overflow = overflow;
+      });
+    }
+  } catch {
+    // Measurement failed — print unscaled rather than not at all.
+    finalScale = null;
+    outcome = "cannot-fit";
+  } finally {
+    // ALWAYS restore the element's real inline styles before printing.
+    // The offscreen style uses !important and would otherwise win over the
+    // print stylesheet, leaving a blank page (left:-10000px/hidden).
+    el.style.cssText = prevCss;
+    if (finalScale !== null) {
+      el.style.zoom = String(finalScale);
+    }
+    fitting = false;
+
+    if (outcome === "too-long") callbacks.onTooLong?.(finalScale ?? MIN_SCALE);
+    else if (outcome === "cannot-fit") callbacks.onCannotFit?.();
+    else if (finalScale !== null) callbacks.onScaled?.(finalScale);
   }
 
-  onScaled?.();
-
-  const cleanup = () => {
-    resetZoom(el);
-    window.removeEventListener("afterprint", cleanup);
-  };
-  window.addEventListener("afterprint", cleanup);
-
+  if (finalScale !== null) {
+    const cleanup = () => {
+      resetZoom(el);
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+  }
   triggerPrint();
 }
