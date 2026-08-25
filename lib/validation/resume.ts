@@ -1,17 +1,23 @@
 import { z } from "zod";
 
-const arrayItemSchema = z.record(z.string(), z.unknown());
+/**
+ * Loose bounds profile (ADR-0003): generous enough for long real-world CVs
+ * but finite, so a single field can never carry unbounded payloads.
+ * The overall size is additionally capped by MAX_BODY_BYTES in parse.ts.
+ */
+const boundedString = z.string().max(10_000);
+const boundedArray = z.array(z.record(z.string(), z.unknown())).max(50);
 
 const personalInfoSchema = z
   .object({
-    fullName: z.string(),
-    email: z.string(),
-    phone: z.string(),
-    location: z.string(),
-    linkedin: z.string(),
-    portfolio: z.string(),
-    occupation: z.string(),
-    avatar: z.string(),
+    fullName: boundedString,
+    email: boundedString,
+    phone: boundedString,
+    location: boundedString,
+    linkedin: boundedString,
+    portfolio: boundedString,
+    occupation: boundedString,
+    avatar: z.string().max(2048),
   })
   .partial()
   .passthrough();
@@ -24,21 +30,21 @@ const personalInfoSchema = z
 export const resumeDataSchema = z
   .object({
     personalInfo: personalInfoSchema.optional(),
-    summary: z.string().optional(),
-    experience: z.array(arrayItemSchema).optional(),
-    education: z.array(arrayItemSchema).optional(),
-    skills: z.array(arrayItemSchema).optional(),
-    certifications: z.array(arrayItemSchema).optional(),
-    projects: z.array(arrayItemSchema).optional(),
-    languages: z.array(arrayItemSchema).optional(),
-    references: z.array(arrayItemSchema).optional(),
-    publications: z.array(arrayItemSchema).optional(),
-    researchExperience: z.array(arrayItemSchema).optional(),
-    teachingExperience: z.array(arrayItemSchema).optional(),
-    awards: z.array(arrayItemSchema).optional(),
+    summary: boundedString.optional(),
+    experience: boundedArray.optional(),
+    education: boundedArray.optional(),
+    skills: boundedArray.optional(),
+    certifications: boundedArray.optional(),
+    projects: boundedArray.optional(),
+    languages: boundedArray.optional(),
+    references: boundedArray.optional(),
+    publications: boundedArray.optional(),
+    researchExperience: boundedArray.optional(),
+    teachingExperience: boundedArray.optional(),
+    awards: boundedArray.optional(),
     theme: z.record(z.string(), z.unknown()).optional(),
   })
   .passthrough();
 
 export const localeSchema = z.enum(["en", "th"]).optional();
-export const modelSchema = z.string().optional();
+export const modelSchema = z.string().max(100).optional();

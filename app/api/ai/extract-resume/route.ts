@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { parseResumeText } from "@/lib/parse-resume-text";
 import { sanitizeExtractedResume } from "@/lib/normalize-resume";
 import { llmText } from "@/lib/ai/client";
@@ -180,13 +180,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = rateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  const limited = enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
+  if (limited) return limited;
 
   try {
     const formData = await req.formData();
@@ -198,7 +193,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
+    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+    const tooLargeMsg = locale === "th"
+      ? "ไฟล์ใหญ่เกินกำหนด (สูงสุด 10MB)"
+      : "File is too large (10 MB max)";
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: tooLargeMsg }, { status: 413 });
+    }
+
     const fileBuffer = Buffer.from(await file.arrayBuffer());
+    if (fileBuffer.byteLength > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: tooLargeMsg }, { status: 413 });
+    }
     const mimeType = file.type || "application/pdf";
 
     if (mimeType === "application/pdf") {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { optimizeResume, MAX_ROUNDS, TARGET_SCORE } from "@/lib/ai/optimizer";
 import { improveRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
@@ -17,13 +17,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = rateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } },
-    );
-  }
+  const limited = enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
+  if (limited) return limited;
 
   const parsed = await parseJsonBody(req, improveRequestSchema);
   if (parsed.error) return parsed.error;

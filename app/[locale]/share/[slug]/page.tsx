@@ -1,11 +1,36 @@
 import { setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { normalizeResumeData, type TemplateType, type ResumeData } from "@/lib/types/resume";
+import { shareSlugSchema } from "@/lib/validation/resumes";
 import { ShareResumeView } from "@/components/share/ShareResumeView";
 
 export const dynamic = "force-dynamic";
+
+type PublicResume = {
+  title: string | null;
+  template: string | null;
+  document_type: string | null;
+  data: unknown;
+};
+
+/**
+ * Public reads go through the slug-scoped SECURITY DEFINER RPC (ADR-0002);
+ * the blanket `is_public = true` table policy was removed in migration 002.
+ */
+async function fetchPublicResume(
+  supabase: SupabaseClient,
+  slug: string,
+): Promise<PublicResume | null> {
+  // Slugs are capability tokens — skip pointless RPC hits for junk input.
+  if (!shareSlugSchema.safeParse(slug).success) return null;
+  const { data } = await supabase
+    .rpc("get_public_resume", { p_slug: slug })
+    .single();
+  return (data as PublicResume | null) ?? null;
+}
 
 export async function generateMetadata({
   params,
@@ -15,12 +40,7 @@ export async function generateMetadata({
   const { slug } = await params;
 
   const supabase = await createClient();
-  const { data: resume } = await supabase
-    .from("resumes")
-    .select("title, template")
-    .eq("share_slug", slug)
-    .eq("is_public", true)
-    .single();
+  const resume = await fetchPublicResume(supabase, slug);
 
   if (!resume) return { robots: { index: false, follow: false } };
 
@@ -46,12 +66,7 @@ export default async function SharePage({
   setRequestLocale(locale);
 
   const supabase = await createClient();
-  const { data: resume } = await supabase
-    .from("resumes")
-    .select("data, title, template")
-    .eq("share_slug", slug)
-    .eq("is_public", true)
-    .single();
+  const resume = await fetchPublicResume(supabase, slug);
 
   if (!resume) {
     notFound();

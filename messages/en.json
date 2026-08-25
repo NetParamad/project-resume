@@ -208,6 +208,7 @@
     "share": "Share",
     "downloadPdf": "Download PDF",
     "pdfScaledWarning": "Content exceeded one A4 page — automatically scaled down to fit a single page.",
+    "pdfTooLongWarning": "Your content is very long — it was shrunk to the minimum to fit one page, so some text may be cut off or too small to read. Consider trimming it.",
     "pdfScaleFailed": "Content is too long to fit on one page. Please shorten your resume or update your browser.",
     "addSection": "Add Section",
     "personalInfo": {

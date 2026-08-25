@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { normalizeResumeData } from "@/lib/types/resume";
 import { updateResumeSchema } from "@/lib/validation/resumes";
 import { parseJsonBody } from "@/lib/validation/parse";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 function generateShareSlug(): string {
   return nanoid(12);
@@ -21,6 +22,9 @@ export async function GET(
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    if (limited) return limited;
 
     const { data, error } = await supabase
       .from("resumes")
@@ -58,6 +62,9 @@ export async function PUT(
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    if (limited) return limited;
 
     const parsed = await parseJsonBody(req, updateResumeSchema);
     if (parsed.error) return parsed.error;
@@ -117,6 +124,9 @@ export async function DELETE(
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    if (limited) return limited;
 
     const { error } = await supabase
       .from("resumes")

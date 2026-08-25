@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
@@ -34,4 +36,21 @@ export function rateLimit(
 
   bucket.count += 1;
   return { ok: true, retryAfterSec: 0 };
+}
+
+/**
+ * Convenience wrapper for route handlers: returns a ready-to-send 429
+ * response when the limit is exceeded, or null when the request may proceed.
+ */
+export function enforceRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+): NextResponse | null {
+  const result = rateLimit(key, limit, windowMs);
+  if (result.ok) return null;
+  return NextResponse.json(
+    { error: "Too many requests", code: "rate_limited", retryAfterSec: result.retryAfterSec },
+    { status: 429, headers: { "Retry-After": String(result.retryAfterSec) } },
+  );
 }
