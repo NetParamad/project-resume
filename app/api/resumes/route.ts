@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
+import { createResumeSchema } from "@/lib/validation/resumes";
+import { parseJsonBody } from "@/lib/validation/parse";
 
 export async function GET() {
   try {
@@ -34,7 +36,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const parsed = await parseJsonBody(req, createResumeSchema);
+    if (parsed.error) return parsed.error;
+    const body = parsed.data;
     const shareSlug = nanoid(12);
 
     const { data, error } = await supabase

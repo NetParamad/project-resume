@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { optimizeResume, MAX_ROUNDS, TARGET_SCORE } from "@/lib/ai/optimizer";
+import { improveRequestSchema } from "@/lib/validation/ai";
+import { parseJsonBody } from "@/lib/validation/parse";
 
 const encoder = new TextEncoder();
 
@@ -23,7 +25,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { resumeData, jobDescription, locale, model } = await req.json();
+  const parsed = await parseJsonBody(req, improveRequestSchema);
+  if (parsed.error) return parsed.error;
+  const { resumeData, jobDescription, locale, model } = parsed.data;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -40,7 +44,7 @@ export async function POST(req: NextRequest) {
           resumeData,
           jobDescription,
           locale: locale || "en",
-          modelId: typeof model === "string" ? model : undefined,
+          modelId: model,
           onStep: (step) => send("step", step),
         });
 

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
 import { normalizeResumeData } from "@/lib/types/resume";
+import { updateResumeSchema } from "@/lib/validation/resumes";
+import { parseJsonBody } from "@/lib/validation/parse";
 
 function generateShareSlug(): string {
   return nanoid(12);
@@ -57,7 +59,9 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const parsed = await parseJsonBody(req, updateResumeSchema);
+    if (parsed.error) return parsed.error;
+    const body = parsed.data;
     const updates: Record<string, unknown> = {};
 
     if (body.title !== undefined) updates.title = body.title;
