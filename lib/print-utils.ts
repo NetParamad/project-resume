@@ -131,6 +131,26 @@ function resetZoom(el: HTMLElement): void {
   el.style.zoom = "";
 }
 
+const FORCED_PROPS = ["display", "position", "visibility", "left", "top", "margin", "padding"] as const;
+
+/**
+ * Last-resort guarantee: inline !important beats any stylesheet state,
+ * so even a missing/stale print stylesheet cannot produce a blank page.
+ */
+function forcePrintable(el: HTMLElement): void {
+  el.style.setProperty("display", "block", "important");
+  el.style.setProperty("position", "static", "important");
+  el.style.setProperty("visibility", "visible", "important");
+  el.style.setProperty("left", "0", "important");
+  el.style.setProperty("top", "0", "important");
+  el.style.setProperty("margin", "0", "important");
+  el.style.setProperty("padding", "0", "important");
+}
+
+function clearForcedStyles(el: HTMLElement): void {
+  FORCED_PROPS.forEach((prop) => el.style.removeProperty(prop));
+}
+
 export interface PrintFitCallbacks {
   /** Content was auto-scaled down to fit one page. */
   onScaled?: (scale: number) => void;
@@ -202,6 +222,8 @@ export async function printResumeFitToOnePage(
     if (finalScale !== null) {
       el.style.zoom = String(finalScale);
     }
+    // Reveal regardless of stylesheet state, then clean up after printing.
+    forcePrintable(el);
     fitting = false;
 
     if (outcome === "too-long") callbacks.onTooLong?.(finalScale ?? MIN_SCALE);
@@ -209,12 +231,13 @@ export async function printResumeFitToOnePage(
     else if (finalScale !== null) callbacks.onScaled?.(finalScale);
   }
 
-  if (finalScale !== null) {
-    const cleanup = () => {
-      resetZoom(el);
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-  }
+  const cleanup = () => {
+    resetZoom(el);
+    clearForcedStyles(el);
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  // afterprint doesn't fire when the dialog is cancelled in some browsers.
+  setTimeout(cleanup, 1000);
   triggerPrint();
 }

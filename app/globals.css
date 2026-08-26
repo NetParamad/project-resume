@@ -61,8 +61,15 @@
   }
 }
 
-.print-resume {
-  display: none;
+/* Print copy: parked off-canvas instead of display:none so it is always
+   laid out (getBoundingClientRect must work pre-print) and can be forced
+   visible with plain inline styles even if print CSS fails to load. */
+.print-root {
+  position: absolute;
+  top: 0;
+  left: -200vw;
+  width: 794px;
+  background: #ffffff;
 }
 
 @media print {
@@ -88,11 +95,14 @@
      Content is fitted via zoom beforehand; worst case it clips here. */
   .print-root {
     display: block !important;
+    position: static !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     width: 794px;
     height: 1122px;
     overflow: hidden;
-    margin: 0;
-    padding: 0;
     background: #ffffff;
   }
 
