@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { mapAuthError } from "@/lib/auth-errors";
@@ -22,6 +23,7 @@ export function ForgotPasswordForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const t = useTranslations("auth.forgotPassword");
   const et = useTranslations("auth.errors");
+  const locale = useLocale();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function ForgotPasswordForm({
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/${locale}/auth/update-password`,
       });
       if (error) throw error;
       setMessage(t("success"));

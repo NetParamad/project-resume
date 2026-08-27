@@ -2,19 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function ErrorMessage() {
   const t = useTranslations("auth.error");
-  const searchParams = useSearchParams();
-  const error = searchParams.get("error");
 
   return (
     <p className="text-sm text-muted-foreground">
-      {error
-        ? t("codeError", { error })
-        : t("unspecifiedError")}
+      {t("unspecifiedError")}
     </p>
   );
 }

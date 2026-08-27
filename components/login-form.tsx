@@ -47,6 +47,8 @@ export function LoginForm({
       router.push(`/${locale}/dashboard`);
     } catch (error: unknown) {
       setError(mapAuthError(error instanceof Error ? error.message : "", et));
+      // Brief cooldown to slow brute-force attempts from the client.
+      await new Promise((r) => setTimeout(r, 2000));
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +98,7 @@ export function LoginForm({
                   id="password"
                   type="password"
                   required
+                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
