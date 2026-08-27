@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { llmText } from "@/lib/ai/client";
+import { resolveLocale } from "@/lib/ai/detect-locale";
 import { autoFillRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
 
@@ -19,7 +20,8 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, autoFillRequestSchema);
     if (parsed.error) return parsed.error;
-    const { section, context, prompt: userPrompt, locale, model } = parsed.data;
+    const { section, context, prompt: userPrompt, locale: uiLocale, model } = parsed.data;
+    const locale = resolveLocale(userPrompt, uiLocale);
 
     const systemPrompt = locale === "th"
       ? `คุณคือผู้เชี่ยวชาญการเขียนเรซูเม่ที่ผ่าน ATS (Applicant Tracking System)
@@ -45,7 +47,7 @@ Rules:
 
     const text = await llmText({
       role: "autofill",
-      modelId: model,
+      modelId: model ?? undefined,
       system: systemPrompt,
       user: userContent,
     });

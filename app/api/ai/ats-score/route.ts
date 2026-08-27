@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (parsed.error) return parsed.error;
     const { resumeData, jobDescription, locale, model } = parsed.data;
 
-    const result = await scoreResume(resumeData, jobDescription, locale || "en", model);
+    const result = await scoreResume(resumeData, jobDescription, locale || "en", model ?? undefined);
     return NextResponse.json(result);
   } catch (error) {
     console.error("ATS score error:", error);

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
           resumeData,
           jobDescription,
           locale: locale || "en",
-          modelId: model,
+          modelId: model ?? undefined,
           onStep: (step) => send("step", step),
         });
 

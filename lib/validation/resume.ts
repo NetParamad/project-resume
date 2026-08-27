@@ -47,4 +47,4 @@ export const resumeDataSchema = z
   .passthrough();
 
 export const localeSchema = z.enum(["en", "th"]).optional();
-export const modelSchema = z.string().max(100).optional();
+export const modelSchema = z.string().max(100).nullish();
