@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       resumeData: resumeData as unknown as ResumeData,
       jobDescription,
       locale: locale || "en",
-      modelId: model,
+      modelId: model ?? undefined,
     });
 
     return NextResponse.json({ data });

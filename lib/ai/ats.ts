@@ -1,4 +1,5 @@
 import { llmText } from "./client";
+import { resolveLocale } from "./detect-locale";
 
 export interface ATSResult {
   score: number;
@@ -44,9 +45,10 @@ Return ONLY valid JSON:
 export async function scoreResume(
   resumeData: object,
   jobDescription?: string,
-  locale = "en",
+  uiLocale = "en",
   modelId?: string,
 ): Promise<ATSResult> {
+  const locale = resolveLocale(jobDescription, uiLocale);
   const systemPrompt = buildSystemPrompt(locale);
   const resumeText = JSON.stringify(resumeData, null, 2);
   const jobContext = jobDescription

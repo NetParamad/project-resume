@@ -1,5 +1,6 @@
 import { llmText } from "./client";
 import { mergeResumeOutput } from "./resume-utils";
+import { resolveLocale } from "./detect-locale";
 import type { ResumeData } from "@/lib/types/resume";
 
 function buildSystemPrompt(locale: string): string {
@@ -36,7 +37,8 @@ export async function tailorResume(options: {
   locale?: string;
   modelId?: string;
 }): Promise<ResumeData> {
-  const { resumeData, jobDescription, locale = "en", modelId } = options;
+  const { resumeData, jobDescription, modelId } = options;
+  const locale = resolveLocale(jobDescription, options.locale);
 
   const raw = await llmText({
     role: "tailor",

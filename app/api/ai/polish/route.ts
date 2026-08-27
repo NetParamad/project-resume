@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const data = await polishResume({
       resumeData: resumeData as unknown as ResumeData,
       locale: locale || "en",
-      modelId: model,
+      modelId: model ?? undefined,
     });
 
     return NextResponse.json({ data });

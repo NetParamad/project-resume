@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { runAgent, type AgentStep } from "./agent";
 import { scoreResume } from "./ats";
 import { ALLOWED_MODELS } from "./models";
+import { resolveLocale } from "./detect-locale";
 
 export const MAX_ROUNDS = 6;
 export const TARGET_SCORE = 85;
@@ -197,7 +198,8 @@ export async function optimizeResume(options: {
   modelId?: string;
   onStep?: (step: AgentStep) => void;
 }): Promise<OptimizeResult> {
-  const { resumeData, jobDescription, locale = "en", modelId, onStep } = options;
+  const { resumeData, jobDescription, modelId, onStep } = options;
+  const locale = resolveLocale(jobDescription, options.locale);
 
   const agentModel =
     modelId && ALLOWED_MODELS[modelId]?.supportsTools ? modelId : undefined;
