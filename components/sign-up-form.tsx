@@ -46,7 +46,7 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -54,9 +54,19 @@ export function SignUpForm({
         },
       });
       if (error) throw error;
+
+      // Supabase returns 200 even when email is already registered (to prevent
+      // enumeration). The only way to tell is that identities is empty.
+      if (data.user?.identities?.length === 0) {
+        setError(et("userExists"));
+        return;
+      }
+
       router.push(`/${locale}/auth/sign-up-success`);
     } catch (error: unknown) {
       setError(mapAuthError(error instanceof Error ? error.message : "", et));
+      // Brief cooldown to slow abuse from the client.
+      await new Promise((r) => setTimeout(r, 2000));
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +110,7 @@ export function SignUpForm({
                   id="password"
                   type="password"
                   required
+                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -112,6 +123,7 @@ export function SignUpForm({
                   id="repeat-password"
                   type="password"
                   required
+                  minLength={6}
                   value={repeatPassword}
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />

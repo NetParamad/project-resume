@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function UpdatePasswordForm({
   className,
@@ -31,6 +31,13 @@ export function UpdatePasswordForm({
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +54,10 @@ export function UpdatePasswordForm({
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setMessage(t("success"));
-      window.setTimeout(() => router.push(`/${locale}/dashboard`), 1500);
+      timerRef.current = window.setTimeout(
+        () => router.push(`/${locale}/dashboard`),
+        1500,
+      );
     } catch (error: unknown) {
       setError(mapAuthError(error instanceof Error ? error.message : "", et));
     } finally {
@@ -71,6 +81,7 @@ export function UpdatePasswordForm({
                   id="password"
                   type="password"
                   required
+                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -81,6 +92,7 @@ export function UpdatePasswordForm({
                   id="confirm-password"
                   type="password"
                   required
+                  minLength={6}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
