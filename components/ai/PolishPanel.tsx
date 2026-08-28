@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { Button } from "@/components/ui/button";
-import { Sparkles, CheckCircle2, X, RotateCcw } from "lucide-react";
+import { Sparkles, CheckCircle2, X, RotateCcw, Clock } from "lucide-react";
 import { AILoading } from "./AILoading";
 import { DiffView } from "./DiffView";
 import type { ResumeData } from "@/lib/types/resume";
@@ -25,8 +25,10 @@ export function PolishPanel() {
   const [baseData, setBaseData] = useState<ResumeData | null>(null);
   const [resultData, setResultData] = useState<ResumeData | null>(null);
   const [error, setError] = useState("");
+  const [elapsedSeconds, setElapsedSeconds] = useState<number | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
+  const startRef = useRef(0);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -41,6 +43,8 @@ export function PolishPanel() {
     setPhase("loading");
     setBaseData(resumeData);
     setResultData(null);
+    setElapsedSeconds(null);
+    startRef.current = Date.now();
 
     try {
       const res = await fetch("/api/ai/polish", {
@@ -51,6 +55,7 @@ export function PolishPanel() {
       });
       const data = await res.json();
       if (data.data) {
+        setElapsedSeconds((Date.now() - startRef.current) / 1000);
         setResultData(data.data as ResumeData);
         setPhase("result");
       } else {
@@ -117,7 +122,15 @@ export function PolishPanel() {
 
       {phase === "result" && baseData && resultData && (
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">{t("resultTitle")}</h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium">{t("resultTitle")}</h3>
+            {elapsedSeconds !== null && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+                <Clock size={12} />
+                {t("completedIn", { seconds: elapsedSeconds.toFixed(1) })}
+              </span>
+            )}
+          </div>
           <DiffView original={baseData} updated={resultData} />
           <div className="flex flex-col sm:flex-row gap-2">
             <Button onClick={handleApply} className="flex-1">

@@ -449,6 +449,7 @@
     "polishStep2": "Fixing grammar and spelling...",
     "polishStep3": "Improving flow and tone...",
     "elapsedTime": "{seconds}s elapsed",
+    "completedIn": "Completed in {seconds}s",
     "importedTitle": "Resume imported",
     "importedDone": "Your form is now filled with the extracted data. Review it before saving.",
     "importAgain": "Import Another",

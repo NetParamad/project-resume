@@ -108,9 +108,10 @@ function buildSystemPrompt(locale: string): string {
    - ความยาว 1-2 บรรทัดต่อหัวข้อ กระชับ
    - หลีกเลี่ยงภาษาเรียบ ๆ คำฟุ่มเฟือย
 4. เมื่อแก้ section ประเภท array ต้องรักษา field 'id' ของทุก item เดิมไว้ ห้ามลบ เปลี่ยน หรือสร้าง id ใหม่
-5. หลังทุก update_section ให้เรียก get_ats_score อีกครั้งเพื่อยืนยัน
-6. หยุดเมื่อคะแนนถึง 85 หรือเมื่อมั่นใจว่าไม่สามารถปรับปรุงได้มากกว่านี้
-7. เสร็จแล้วให้พิมพ์ข้อความสรุปการเปลี่ยนแปลง (โดยไม่เรียก tool)`;
+5. คงภาษาดั้งเดิมของแต่ละ section ไว้เสมอเมื่อใช้ update_section ห้ามแปลเนื้อหาเป็นภาษาอื่น แม้รายละเอียดงานเป้าหมายจะเป็นคนละภาษาก็ตาม
+6. หลังทุก update_section ให้เรียก get_ats_score อีกครั้งเพื่อยืนยัน
+7. หยุดเมื่อคะแนนถึง 85 หรือเมื่อมั่นใจว่าไม่สามารถปรับปรุงได้มากกว่านี้
+8. เสร็จแล้วให้พิมพ์ข้อความสรุปการเปลี่ยนแปลง (โดยไม่เรียก tool)`;
   }
   return `You are an expert ATS (Applicant Tracking System) optimization agent. Your goal is to improve the resume so it scores 85+ on an ATS scan.
 You have tools to inspect and modify a draft copy of the resume:
@@ -128,9 +129,10 @@ Rules:
    - Keep each bullet 1-2 lines, concise and impactful.
    - Avoid first-person pronouns, fluff, or generic statements.
 4. When updating array sections, PRESERVE the 'id' field of each existing item. Never remove, rename, or invent ids.
-5. After every update_section, call get_ats_score again to verify improvement.
-6. Stop when the score reaches 85 or higher, or when you determine no more meaningful gains are possible.
-7. When finished, output a plain-text summary of the changes you made (no tool calls).`;
+5. Keep each section in its original language when calling update_section. NEVER translate content into another language, even if the target job description is in a different language.
+6. After every update_section, call get_ats_score again to verify improvement.
+7. Stop when the score reaches 85 or higher, or when you determine no more meaningful gains are possible.
+8. When finished, output a plain-text summary of the changes you made (no tool calls).`;
 }
 
 function coerceToArray(value: unknown): unknown[] {

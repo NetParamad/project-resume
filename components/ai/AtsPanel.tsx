@@ -6,7 +6,7 @@ import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle, CheckCircle2, Lightbulb, Bot } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle2, Lightbulb, Bot, Clock } from "lucide-react";
 import {
   ImproveAgentLog,
   type AgentLogEntry,
@@ -44,6 +44,7 @@ export function AtsPanel() {
   const [result, setResult] = useState<ATSResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checkElapsed, setCheckElapsed] = useState<number | null>(null);
 
   const [agentStatus, setAgentStatus] = useState<AgentStatus>("idle");
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
@@ -51,9 +52,12 @@ export function AtsPanel() {
   const [agentScores, setAgentScores] = useState<number[]>([]);
   const [agentResult, setAgentResult] = useState<AgentDoneResult | null>(null);
   const [agentError, setAgentError] = useState("");
+  const [agentElapsed, setAgentElapsed] = useState<number | null>(null);
   const [applied, setApplied] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
+  const checkStartRef = useRef(0);
+  const agentStartRef = useRef(0);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -68,6 +72,7 @@ export function AtsPanel() {
     setAgentScores([]);
     setAgentResult(null);
     setAgentError("");
+    setAgentElapsed(null);
     setApplied(false);
   }, []);
 
@@ -75,6 +80,8 @@ export function AtsPanel() {
     setIsLoading(true);
     setError("");
     setResult(null);
+    setCheckElapsed(null);
+    checkStartRef.current = Date.now();
 
     try {
       const res = await fetch("/api/ai/ats-score", {
@@ -86,6 +93,7 @@ export function AtsPanel() {
       if (data.error) {
         setError(data.error);
       } else {
+        setCheckElapsed((Date.now() - checkStartRef.current) / 1000);
         setResult(data as ATSResult);
       }
     } catch {
@@ -118,6 +126,7 @@ export function AtsPanel() {
   const handleImprove = async () => {
     resetAgent();
     setAgentStatus("running");
+    agentStartRef.current = Date.now();
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -149,6 +158,7 @@ export function AtsPanel() {
         }
       }
 
+      setAgentElapsed((Date.now() - agentStartRef.current) / 1000);
       setAgentStatus((prev) => (prev === "error" ? prev : "done"));
     } catch {
       if (!controller.signal.aborted) {
@@ -236,6 +246,7 @@ export function AtsPanel() {
           scores={agentScores}
           result={agentResult}
           error={agentError}
+          elapsedSeconds={agentElapsed}
           applied={applied}
           onApply={handleApply}
           onRetry={() => {
@@ -260,6 +271,12 @@ export function AtsPanel() {
               </span>
               <span className="text-lg text-muted-foreground ml-1">/100</span>
             </div>
+            {checkElapsed !== null && (
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <Clock size={12} />
+                {t("completedIn", { seconds: checkElapsed.toFixed(1) })}
+              </p>
+            )}
 
             {result.keywordsFound.length > 0 && (
               <div>
