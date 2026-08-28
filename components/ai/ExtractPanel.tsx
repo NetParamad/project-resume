@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { normalizeResumeData } from "@/lib/normalize-resume";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, FileText, CheckCircle2, RotateCcw, Eye } from "lucide-react";
+import { Upload, Loader2, FileText, CheckCircle2, RotateCcw, Eye, Clock } from "lucide-react";
 import type { ResumeData } from "@/lib/types/resume";
 
 const ARRAY_KEYS = [
@@ -34,9 +34,11 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
   const [missing, setMissing] = useState<string[]>([]);
   const [usedFallback, setUsedFallback] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [finalElapsed, setFinalElapsed] = useState<number | null>(null);
   const setCurrentResume = useResumeStore((s) => s.setCurrentResume);
   const documentType = useResumeStore((s) => s.documentType);
   const model = useAIModelStore((s) => s.override);
+  const startRef = useRef(0);
 
   useEffect(() => {
     if (!isLoading) {
@@ -54,6 +56,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
       setError("");
       setMissing([]);
       setUsedFallback(false);
+      setFinalElapsed(null);
     }
   };
 
@@ -61,6 +64,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
     if (!file) return;
     setIsLoading(true);
     setError("");
+    startRef.current = Date.now();
 
     try {
       const formData = new FormData();
@@ -87,6 +91,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
         }
         setMissing(empty);
         setUsedFallback(data.source === "heuristic");
+        setFinalElapsed((Date.now() - startRef.current) / 1000);
         const defaultTemplate = documentType === "cv" ? "academic" : "modern";
         setCurrentResume(null, "Imported Resume", documentType, defaultTemplate, normalized);
         setDone(true);
@@ -113,6 +118,12 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
           <p className="text-sm text-muted-foreground text-center max-w-[420px]">
             {t("importedDone")}
           </p>
+          {finalElapsed !== null && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock size={12} />
+              {t("completedIn", { seconds: finalElapsed.toFixed(1) })}
+            </p>
+          )}
           {usedFallback && (
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-center max-w-[420px]">
               {t("importedHeuristic")}
@@ -145,6 +156,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
               setError("");
               setMissing([]);
               setUsedFallback(false);
+              setFinalElapsed(null);
             }}
           >
             <RotateCcw size={14} className="mr-2" />

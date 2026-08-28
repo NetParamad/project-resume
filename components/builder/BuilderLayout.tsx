@@ -167,7 +167,7 @@ export function BuilderLayout({
               mobileView === "preview" && "hidden lg:block",
             )}
           >
-            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto">
+            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto [scrollbar-gutter:stable]">
               <FormPanel />
             </div>
           </div>
@@ -178,7 +178,7 @@ export function BuilderLayout({
               mobileView === "form" && "hidden lg:block",
             )}
           >
-            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto animate-in fade-in-0 duration-200 ease-out">
+            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto [scrollbar-gutter:stable] animate-in fade-in-0 duration-200 ease-out">
               <PreviewPanel />
             </div>
           </div>

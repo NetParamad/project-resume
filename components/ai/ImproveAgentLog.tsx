@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   RotateCcw,
   Square,
+  Clock,
 } from "lucide-react";
 import { sectionTitle, renderValue, truncate } from "./section-utils";
 
@@ -41,6 +42,7 @@ interface ImproveAgentLogProps {
   scores: number[];
   result: AgentDoneResult | null;
   error: string;
+  elapsedSeconds?: number | null;
   applied: boolean;
   onApply: () => void;
   onRetry: () => void;
@@ -54,6 +56,7 @@ export function ImproveAgentLog({
   scores,
   result,
   error,
+  elapsedSeconds,
   applied,
   onApply,
   onRetry,
@@ -92,6 +95,13 @@ export function ImproveAgentLog({
             {t("stop")}
           </Button>
         </div>
+      )}
+
+      {status === "done" && typeof elapsedSeconds === "number" && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <Clock size={12} />
+          {t("completedIn", { seconds: elapsedSeconds.toFixed(1) })}
+        </p>
       )}
 
       {scores.length > 0 && (

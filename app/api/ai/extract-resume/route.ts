@@ -4,6 +4,7 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 import { parseResumeText } from "@/lib/parse-resume-text";
 import { sanitizeExtractedResume } from "@/lib/normalize-resume";
 import { llmText } from "@/lib/ai/client";
+import { resolveLocale } from "@/lib/ai/detect-locale";
 import { PDFParse } from "pdf-parse";
 import path from "path";
 import type { ResumeData } from "@/lib/types/resume";
@@ -47,6 +48,7 @@ function buildSystemPrompt(locale: string): string {
 
 กฎ:
 - เนื้อหาของเรซูเม่อาจเป็นภาษาไทย อังกฤษ หรือทั้งสองภาษา (แบบสองภาษา) ให้ดึงข้อมูลทั้งหมดไม่จำกัดภาษา
+- ห้ามแปลค่าที่ดึงมาเป็นภาษาอื่นเด็ดขาด ให้คงภาษาดั้งเดิมของแต่ละฟิลด์ไว้ตามที่ปรากฏในเรซูเม่ (ถ้าต้นฉบับเป็นภาษาไทยให้คงเป็นไทย ถ้าเป็นอังกฤษให้คงเป็นอังกฤษ) แม้ว่าคำสั่งนี้จะเป็นภาษาไทยก็ตาม
 - แยกแต่ละตำแหน่งงาน/บริษัท/โครงการ/การศึกษาออกเป็น 1 element ใน array ต่างหาก ห้ามรวมหลายรายการเข้าด้วยกัน และห้ามเหลือแค่รายการเดียว
 - วันที่, ตำแหน่ง, บริษัท, และรายละเอียด ต้องตรงกับรายการนั้น ๆ ห้ามสลับหรือปนกับรายการอื่น
 - ใส่รายละเอียดให้มากที่สุดเท่าที่มีในเรซูเม่ (สถานที่, ผู้ควบคุมงาน supervisor, เกรด gpa ฯลฯ)
@@ -67,6 +69,7 @@ ${schema}`;
 
 Rules:
 - The resume content may be in Thai, English, or both (bilingual). Extract ALL information regardless of language.
+- NEVER translate extracted values into another language. Keep each field in its original language exactly as written in the resume (Thai stays Thai, English stays English), even though these instructions are in English.
 - Put each distinct job/company/project/education into its OWN separate element in the array. Never merge multiple entries into one, and never output just a single entry.
 - Dates, job title, company, and description must belong to the correct entry. Never shift or mix them across entries.
 - Include as much detail as available in the resume (location, supervisor, GPA, etc.).
@@ -89,7 +92,10 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string | null> {
   try {
     pdf = new PDFParse({ data: buffer, useSystemFonts: true });
     const result = await pdf.getText();
-    const text = result.text?.trim();
+    // NFC-normalize so Thai vowel/tone marks that pdfjs may emit as separate
+    // combining sequences recompose into the same codepoints the rest of
+    // the app (and the LLM) expects.
+    const text = result.text?.normalize("NFC").trim();
     return text || null;
   } catch (e) {
     console.warn("pdf-parse failed:", e);
@@ -216,7 +222,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: msg }, { status: 422 });
       }
 
-      const aiResult = await tryAIExtract(extractedText, locale, model);
+      const contentLocale = resolveLocale(extractedText, locale);
+      const aiResult = await tryAIExtract(extractedText, contentLocale, model);
       if (aiResult) {
         return NextResponse.json({
           ...sanitizeExtractedResume(aiResult as Partial<ResumeData>),

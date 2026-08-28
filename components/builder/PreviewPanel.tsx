@@ -45,7 +45,11 @@ export function PreviewPanel() {
     if (!el) return;
     const update = () => {
       const available = el.clientWidth - 8;
-      setFitScale(Math.max(0.25, Math.min(available / A4_WIDTH, 1.25)));
+      const next = Math.max(0.25, Math.min(available / A4_WIDTH, 1.25));
+      // Ignore sub-percent changes: a scrollbar toggling on/off nudges
+      // clientWidth by a few px, which would otherwise re-trigger this
+      // observer in a feedback loop and make the preview visibly shake.
+      setFitScale((prev) => (Math.abs(next - prev) < 0.005 ? prev : next));
     };
     update();
     const ro = new ResizeObserver(update);
