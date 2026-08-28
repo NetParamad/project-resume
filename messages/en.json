@@ -142,7 +142,9 @@
       "submit": "Login",
       "submitting": "Logging in...",
       "noAccount": "Don't have an account?",
-      "signUp": "Sign up"
+      "signUp": "Sign up",
+      "continueWithGoogle": "Continue with Google",
+      "orContinueWith": "Or continue with"
     },
     "signUp": {
       "title": "Sign up",
@@ -152,6 +154,8 @@
       "repeatPasswordLabel": "Repeat Password",
       "submit": "Sign up",
       "submitting": "Creating an account...",
+      "continueWithGoogle": "Continue with Google",
+      "orContinueWith": "Or continue with",
       "hasAccount": "Already have an account?",
       "login": "Login",
       "passwordsDoNotMatch": "Passwords do not match",

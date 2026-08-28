@@ -142,12 +142,16 @@
       "submit": "เข้าสู่ระบบ",
       "submitting": "กำลังเข้าสู่ระบบ...",
       "noAccount": "ยังไม่มีบัญชี?",
-      "signUp": "สมัครสมาชิก"
+      "signUp": "สมัครสมาชิก",
+      "continueWithGoogle": "เข้าสู่ระบบด้วย Google",
+      "orContinueWith": "หรือดำเนินการต่อด้วย"
     },
     "signUp": {
       "title": "สมัครสมาชิก",
       "description": "สร้างบัญชีใหม่",
       "emailLabel": "อีเมล",
+      "continueWithGoogle": "เข้าสู่ระบบด้วย Google",
+      "orContinueWith": "หรือดำเนินการต่อด้วย",
       "passwordLabel": "รหัสผ่าน",
       "repeatPasswordLabel": "ยืนยันรหัสผ่าน",
       "submit": "สมัครสมาชิก",
