@@ -211,6 +211,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
               )}
             </label>
           </div>
+          <p className="text-xs text-muted-foreground/70">{t("uploadPdfHint")}</p>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </>
       )}
