@@ -463,7 +463,8 @@
     "cancel": "Cancel",
     "stopped": "Stopped. You can review or run again.",
     "importView": "Review in Editor",
-    "uploadPdf": "Click to upload PDF"
+    "uploadPdf": "Click to upload PDF",
+    "uploadPdfHint": "Only text-based PDFs are supported — the kind where you can select and copy the text. Scanned or photographed PDFs won't work."
   },
   "share": {
     "title": "Share Your Resume",
