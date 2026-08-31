@@ -25,11 +25,18 @@ export const resumeLangDict = {
   doi: { en: "DOI", th: "DOI" },
   pages: { en: "pp.", th: "น." },
   morePublications: { en: "more publications", th: "ผลงานตีพิมพ์เพิ่มเติม" },
+  native: { en: "Native", th: "เจ้าของภาษา" },
+  fluent: { en: "Fluent", th: "คล่องแคล่ว" },
+  advanced: { en: "Advanced", th: "ขั้นสูง" },
+  intermediate: { en: "Intermediate", th: "ปานกลาง" },
+  basic: { en: "Basic", th: "พื้นฐาน" },
+  beginner: { en: "Beginner", th: "เริ่มต้น" },
+  expert: { en: "Expert", th: "เชี่ยวชาญ" },
 } as const;
 
 export type ResumeLangKey = keyof typeof resumeLangDict;
 
 export function createResumeLang(data: unknown, override?: ResumeLang | null) {
   const isThai = override ? override === "th" : hasThaiInResume(data);
-  return (key: ResumeLangKey): string => resumeLangDict[key][isThai ? "th" : "en"];
+  return (key: ResumeLangKey): string => resumeLangDict[key]?.[isThai ? "th" : "en"] ?? String(key);
 }

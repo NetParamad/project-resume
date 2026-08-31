@@ -82,7 +82,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
           <div>
             <h2 className="text-base font-serif font-bold tracking-wide border-b border-gray-300 pb-1 mb-2 uppercase" style={{ color: accentColor, borderColor: accentColor }}>{t("languages")}</h2>
             {languages.map((l) => (
-              <p key={l.id} className="text-sm">{l.name} — {l.proficiency}</p>
+              <p key={l.id} className="text-sm">{l.name} — {t(l.proficiency)}</p>
             ))}
           </div>
         )}

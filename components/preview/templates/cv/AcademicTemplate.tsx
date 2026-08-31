@@ -197,7 +197,7 @@ export function AcademicTemplate({ data }: AcademicTemplateProps) {
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">{t("languages")}</h2>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
             {languages.map((lang) => (
-              <p key={lang.id}>{lang.name} - {lang.proficiency}</p>
+              <p key={lang.id}>{lang.name} - {t(lang.proficiency)}</p>
             ))}
           </div>
         </div>
