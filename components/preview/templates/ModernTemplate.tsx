@@ -160,7 +160,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {languages.map((lang) => (
               <p key={lang.id} className="text-xs">
-                {lang.name} - {lang.proficiency}
+                {lang.name} - {t(lang.proficiency)}
               </p>
             ))}
           </div>

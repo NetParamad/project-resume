@@ -104,7 +104,7 @@ export function CompactTemplate({ data }: CompactTemplateProps) {
       {languages.length > 0 && (
         <div>
           <h2 className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: accentColor }}>{t("languages")}</h2>
-          <p className="text-[11px] text-gray-700">{languages.map((l) => `${l.name} (${l.proficiency})`).join(", ")}</p>
+          <p className="text-[11px] text-gray-700">{languages.map((l) => `${l.name} (${t(l.proficiency)})`).join(", ")}</p>
         </div>
       )}
     </div>

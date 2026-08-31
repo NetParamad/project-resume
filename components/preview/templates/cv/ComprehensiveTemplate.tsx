@@ -184,7 +184,7 @@ export function ComprehensiveTemplate({ data }: ComprehensiveTemplateProps) {
           <h2 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: accentColor }}>{t("languages")}</h2>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
             {languages.map((lang) => (
-              <p key={lang.id}>{lang.name} - {lang.proficiency}</p>
+              <p key={lang.id}>{lang.name} - {t(lang.proficiency)}</p>
             ))}
           </div>
         </div>

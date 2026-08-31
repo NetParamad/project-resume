@@ -111,7 +111,7 @@ export function CreativeTemplate({ data }: { data: ResumeData }) {
             <div>
               <h2 className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: accentColor }}>{t("languages")}</h2>
               {languages.map((l) => (
-                <p key={l.id} className="text-xs mb-1">{l.name} — {l.proficiency}</p>
+                <p key={l.id} className="text-xs mb-1">{l.name} — {t(l.proficiency)}</p>
               ))}
             </div>
           )}
