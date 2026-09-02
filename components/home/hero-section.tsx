@@ -10,13 +10,13 @@ export function HeroSection({ t, locale }: HeroSectionProps) {
   return (
     <section className="py-20 md:py-32 px-5">
       <div className="max-w-3xl mx-auto text-center space-y-6 my-5">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight animate-fade-in-up">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
           {t("home.hero.title")}
         </h1>
-        <p className="text-lg text-muted-foreground max-w-xl mx-auto animate-fade-in-up [animation-delay:100ms]">
+        <p className="text-lg text-muted-foreground max-w-xl mx-auto">
           {t("home.hero.subtitle")}
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 animate-fade-in-up [animation-delay:200ms]">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link href={`/${locale}/auth/sign-up`}>
             <Button size="lg" className="text-base transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0">
               {t("home.hero.getStarted")}

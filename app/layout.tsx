@@ -1,18 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Noto_Sans_Thai } from "next/font/google";
-import { ImageKitProvider } from "@imagekit/next";
 import { getSiteUrl } from "@/lib/site-url";
-import { SITE_NAME, SEO_KEYWORDS } from "@/lib/seo";
+import { SITE_NAME, SEO_KEYWORDS, ogImage, UNIVERSITY } from "@/lib/seo";
 import "./globals.css";
 
+/**
+ * The <html>/<body> shell lives in `app/[locale]/layout.tsx` so `lang` can be
+ * set from the active locale (see next-intl docs). This root layout only carries
+ * the default metadata and global stylesheet; non-localized routes
+ * (`not-found`, `global-error`) render their own shell.
+ */
+
 const description =
-  "Build ATS-friendly resumes and CVs with an AI writing assistant, 7 professional templates, real-time preview, ATS score checker, PDF export and a shareable live link. Free, in Thai and English.";
+  `Free online resume builder for students and graduates of ${UNIVERSITY.nameEn} (${UNIVERSITY.abbr}). ` +
+  "Create an ATS-friendly resume with professional templates, an AI writing assistant, an ATS score checker and PDF export — in Thai or English.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: `${SITE_NAME} — Free ATS-Friendly Resume & CV Maker with AI`,
-    template: `%s — ${SITE_NAME}`,
+    default: `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} Students`,
+    template: `%s | ${SITE_NAME}`,
   },
   description,
   applicationName: SITE_NAME,
@@ -35,13 +41,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Free ATS-Friendly Resume & CV Maker with AI`,
+    title: `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} Students`,
     description,
+    images: [ogImage()],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — Free ATS-Friendly Resume & CV Maker with AI`,
+    title: `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} Students`,
     description,
+    images: [ogImage()],
   },
   verification: {
     google:
@@ -54,34 +62,8 @@ export const viewport: Viewport = {
   themeColor: "#c2410c",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
-});
-
-const notoSansThai = Noto_Sans_Thai({
-  variable: "--font-noto-sans-thai",
-  display: "swap",
-  subsets: ["thai"],
-  weight: ["400", "500", "600", "700"],
-});
-
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${notoSansThai.variable}`}
-    >
-      <body className="antialiased" suppressHydrationWarning>
-        <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}>
-          {children}
-        </ImageKitProvider>
-      </body>
-    </html>
-  );
+}: Readonly<{ children: React.ReactNode }>) {
+  return children;
 }
