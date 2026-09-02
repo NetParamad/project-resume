@@ -75,7 +75,7 @@ export default async function Home({
       <HeroSection t={t} locale={locale} />
       <EditorPreview />
       <FeaturesSection t={t} locale={locale} />
-      <CTASection t={t} />
+      <CTASection t={t} locale={locale} />
     </div>
   );
 }
