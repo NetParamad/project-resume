@@ -1,109 +1,137 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+<h1 align="center">RMUTL Resume</h1>
 
 <p align="center">
- The fastest way to build apps with Next.js and Supabase
+  A free online résumé &amp; CV builder for students and graduates of
+  Rajamangala University of Technology Lanna (มทร.ล้านนา).
 </p>
 
 <p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
+  <a href="https://rmutl-resume.vercel.app"><strong>rmutl-resume.vercel.app</strong></a>
 </p>
-<br/>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#tech-stack">Tech stack</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="#environment-variables">Environment</a> ·
+  <a href="#project-structure">Structure</a> ·
+  <a href="#development">Development</a> ·
+  <a href="#deployment">Deployment</a>
+</p>
+
+---
 
 ## Features
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+- **Real‑time editor with live preview** — edits render instantly next to an A4 preview.
+- **7 templates** — 4 résumé layouts (Modern, Classic, Minimal, Creative) and 3 academic CV layouts (Academic, Comprehensive, Compact), each with an adjustable accent color.
+- **ATS score checker** — scores the résumé against Applicant Tracking Systems and suggests missing keywords.
+- **AI writing assistant** — improve, rewrite, polish, fix grammar and tailor content to a specific job (`app/api/ai/*`).
+- **Import & auto‑fill** — upload an existing résumé (PDF); the text is extracted and mapped into the form.
+- **Thai & English** — the UI is fully localized, and résumé *content* has its own language setting with automatic section‑heading detection.
+- **PDF export** — print‑based export that guarantees a single A4 page (see [ADR‑0001](docs/adr/0001-pdf-fit-one-page.md)).
+- **Shareable link** — publish a résumé at a public, slug‑scoped URL (see [ADR‑0002](docs/adr/0002-public-share-rpc.md)).
+- **Cloud storage** — résumés are saved to Supabase and available from any device.
 
-## Demo
+> This is an independent project built for the RMUTL student community. It is not an official service of the university.
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+## Tech stack
 
-## Deploy to Vercel
+| Area | Choice |
+| --- | --- |
+| Framework | [Next.js 16](https://nextjs.org) (App Router, Turbopack) · React 19 · TypeScript |
+| Styling | Tailwind CSS v3 · [shadcn/ui](https://ui.shadcn.com) (`components/ui/`) |
+| State | Zustand stores (`lib/store/`) |
+| i18n | [next-intl](https://next-intl.dev) — locales `en` / `th` (default `en`), see `i18n/routing.ts` |
+| Auth & DB | [Supabase](https://supabase.com) (Postgres + Auth via `@supabase/ssr` cookies) |
+| AI | [NVIDIA API](https://build.nvidia.com) (OpenAI‑compatible) via the `openai` SDK — models in `lib/ai/models.ts` |
+| Images | [ImageKit](https://imagekit.io) — avatar upload &amp; transforms |
+| Hosting | [Vercel](https://vercel.com) (serverless, see [ADR‑0004](docs/adr/0004-vercel-deployment.md)) |
 
-Vercel deployment will guide you through creating a Supabase account and project.
+## Getting started
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+Requirements: **Node.js 22+**, a [Supabase project](https://database.new), and (for the AI features) an NVIDIA API key and an ImageKit account.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+```bash
+git clone https://github.com/NetParamad/project-resume.git
+cd project-resume
+npm install
+cp .env.example .env.local   # then fill in the values below
+npm run dev                  # http://localhost:3000
+```
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+Apply the database schema by running the SQL files in [`supabase/migrations/`](supabase/migrations/) **in order** against your Supabase project (SQL editor or `psql`). They are idempotent — there is no migration tool wired up.
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## Environment variables
 
-## Clone and run locally
+Copy `.env.example` to `.env.local` and set:
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | From your Supabase project's API settings |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ | Supabase *publishable* (or legacy *anon*) key |
+| `NVIDIA_API_KEY` | for AI | Used by every `app/api/ai/*` route |
+| `IMAGEKIT_PRIVATE_KEY` | for uploads | Server‑side signing for avatar upload |
+| `NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY` | for uploads | |
+| `NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT` | for uploads | e.g. `https://ik.imagekit.io/your_id` |
+| `NEXT_PUBLIC_SITE_URL` | production | Canonical origin for metadata / sitemap / hreflang. On Vercel it falls back to the deployment URL — set it to the real domain. |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | optional | `content` value of the Search Console meta tag |
 
-2. Create a Next.js app using the Supabase Starter template npx command
+Supabase and AI credentials are only read at **request time**, so the app builds without them (CI uses placeholders).
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+## Project structure
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+```
+app/
+  [locale]/            localized routes (home, auth, dashboard, builder, knowledge, share)
+  api/
+    resumes/           CRUD for the signed-in user's résumés
+    ai/                improve · polish · tailor · ats-score · auto-fill · extract-resume
+    upload/auth/       ImageKit upload signing
+  layout.tsx           default metadata (no <html> — that lives in [locale]/layout.tsx)
+  sitemap.ts robots.ts manifest.ts opengraph-image.tsx
+components/
+  ui/                  shadcn/ui primitives
+  builder/             editor form + preview panels
+  preview/templates/   résumé & CV template components
+  home/ dashboard/ share/ seo/
+lib/
+  ai/                  NVIDIA client, model chain, prompts
+  supabase/            client & server helpers
+  types/resume.ts      résumé data shape (source of truth)
+  store/               Zustand stores (incl. résumé content language)
+  seo.ts site-url.ts   metadata / JSON-LD helpers
+  print-utils.ts       one-page PDF fit
+  validation/          zod request schemas
+i18n/                  next-intl routing & request config
+messages/              en.json · th.json  (every user-facing string, both files)
+supabase/migrations/   raw SQL, applied manually
+proxy.ts               middleware: i18n routing + Supabase session refresh
+docs/adr/              architecture decision records
+```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+## Development
 
-3. Use `cd` to change into the app's directory
+```bash
+npm run dev          # dev server
+npm run build        # production build
+npm run lint         # eslint (baseline: 8 known <img> warnings, 0 errors)
+npx tsc --noEmit     # typecheck
+npm test             # vitest — unit tests for pure logic in lib/
+```
 
-   ```bash
-   cd with-supabase-app
-   ```
+Verification before any change = **`tsc --noEmit` + `lint` + `test` + `build`**. GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs all four on every push and PR.
 
-4. Rename `.env.example` to `.env.local` and update the following:
+Conventions (see [`AGENTS.md`](AGENTS.md) for the full list):
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+- Every user‑facing string goes through `next-intl` and must exist in **both** `messages/en.json` and `messages/th.json`.
+- Prefer `components/ui/*` (shadcn/ui) over hand‑rolled markup.
+- Résumé data shape is defined once in `lib/types/resume.ts`.
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+## Deployment
 
-5. You can now run the Next.js local development server:
+Deployed on Vercel. Set the environment variables above in the project settings, point `NEXT_PUBLIC_SITE_URL` at the production domain, and apply the `supabase/migrations/` SQL to the production database.
 
-   ```bash
-   npm run dev
-   ```
+## License
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
-
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
-
-## Feedback and issues
-
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
-
-## More Supabase examples
-
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+No license file is currently included — all rights reserved by the authors.
