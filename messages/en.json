@@ -3,6 +3,24 @@
     "title": "Resume Builder",
     "description": "Build ATS-friendly resumes with AI assistance"
   },
+  "seo": {
+    "defaultTitle": "Resume Builder — Free ATS-Friendly Resume & CV Maker with AI",
+    "titleTemplate": "%s — Resume Builder",
+    "home": {
+      "title": "Free ATS Resume Builder with AI — Make a Professional Resume or CV",
+      "description": "Create an ATS-friendly resume or CV in minutes: 7 professional templates, real-time preview, an AI writing assistant, an ATS score checker, PDF export and a shareable live link. Free, in Thai and English."
+    },
+    "knowledge": {
+      "howToUse": {
+        "title": "How to Use Resume Builder — Step-by-Step Guide",
+        "description": "A step-by-step guide to building a professional, ATS-ready resume: sign up, choose a template, edit your content, use the AI assistant, check your ATS score and export to PDF."
+      },
+      "cvVsResume": {
+        "title": "CV vs Resume: Key Differences and When to Use Each",
+        "description": "Learn the difference between a CV and a resume — length, purpose, content and formatting — and which document to send for industry jobs, academia and applications abroad."
+      }
+    }
+  },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
