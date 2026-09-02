@@ -4,10 +4,16 @@ import { useTranslations, useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import dynamic from "next/dynamic";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { CreateNewDialog } from "@/components/dashboard/CreateNewDialog";
 import { Button } from "@/components/ui/button";
+
+// Only reachable for a signed-in user on the mobile tab bar — keep the dialog
+// (and its radix-dialog dependency) out of the shared navbar chunk.
+const CreateNewDialog = dynamic(
+  () => import("@/components/dashboard/CreateNewDialog").then((m) => m.CreateNewDialog),
+  { ssr: false },
+);
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,20 +78,28 @@ export function Navbar() {
   const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
+    let unsubscribe: (() => void) | undefined;
 
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    // Load the Supabase client lazily so `@supabase/ssr` stays out of the
+    // initial page bundle (it isn't needed to paint the marketing pages).
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      const supabase = createClient();
+
+      supabase.auth.getSession().then(({ data }) => {
+        setUser(data.session?.user ?? null);
+      });
+
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+      });
+      unsubscribe = () => data.subscription.unsubscribe();
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe?.();
   }, []);
 
   const handleLogout = async () => {
+    const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
