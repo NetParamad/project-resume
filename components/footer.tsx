@@ -3,6 +3,7 @@
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { UNIVERSITY } from "@/lib/seo";
 
 export function Footer() {
   const t = useTranslations();
@@ -23,7 +24,7 @@ export function Footer() {
               {t("app.title")}
             </Link>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-              {t("app.description")}
+              {f("about")}
             </p>
           </div>
           <div>
@@ -43,6 +44,33 @@ export function Footer() {
               >
                 {t("nav.dashboard")}
               </Link>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              {f("resources")}
+            </p>
+            <div className="flex flex-col gap-2">
+              <Link
+                href={`/${locale}/knowledge/how-to-use`}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t("knowledge.howToUse.title")}
+              </Link>
+              <Link
+                href={`/${locale}/knowledge/cv-vs-resume`}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t("knowledge.cvVsResume.title")}
+              </Link>
+              <a
+                href={UNIVERSITY.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {f("university")}
+              </a>
             </div>
           </div>
           <div>

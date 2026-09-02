@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { ImageKitProvider } from "@imagekit/next";
 import { routing } from "@/i18n/routing";
 import { alternates, buildMetadata } from "@/lib/seo";
+import { fontVariables } from "@/lib/fonts";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ToastViewport } from "@/components/ui/toast";
 import { PageTransition } from "@/components/page-transition";
-import { SetHtmlLang } from "@/components/SetHtmlLang";
 
 type Props = {
   children: React.ReactNode;
@@ -52,16 +53,21 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
-      <SetHtmlLang locale={locale} />
-      <Navbar />
-      <main className="min-h-screen pb-16 md:pb-0 flex flex-col">
-          <PageTransition>
-            {children}
-            <Footer />
-          </PageTransition>
-        </main>
-      <ToastViewport />
-    </NextIntlClientProvider>
+    <html lang={locale} className={fontVariables}>
+      <body className="antialiased" suppressHydrationWarning>
+        <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <Navbar />
+            <main className="min-h-screen pb-16 md:pb-0 flex flex-col">
+              <PageTransition>
+                {children}
+                <Footer />
+              </PageTransition>
+            </main>
+            <ToastViewport />
+          </NextIntlClientProvider>
+        </ImageKitProvider>
+      </body>
+    </html>
   );
 }

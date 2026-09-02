@@ -81,6 +81,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|trpc|_next|_vercel|auth/confirm|auth/oauth|.*\\..*).*)',
+    // Skip API/internal routes, files with an extension, and the extension-less
+    // metadata routes (opengraph-image, sitemap, robots) so i18n doesn't
+    // redirect them to a locale-prefixed path.
+    '/((?!api|trpc|_next|_vercel|auth/confirm|auth/oauth|opengraph-image|twitter-image|sitemap|robots|manifest|icon|apple-icon|.*\\..*).*)',
   ],
 };

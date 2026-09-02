@@ -1,13 +1,13 @@
 export function EditorPreview() {
   return (
     <section className="pb-16">
-      <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-primary/5 animate-fade-in-up [animation-delay:300ms]">
+      <div className="mx-auto max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-primary/5">
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           <div className="h-3 w-3 rounded-full bg-destructive/60" />
           <div className="h-3 w-3 rounded-full bg-primary/40" />
           <div className="h-3 w-3 rounded-full bg-muted-foreground/30" />
           <span className="ml-2 text-xs text-muted-foreground">
-            Resume Builder
+            RMUTL Resume
           </span>
         </div>
         <div className="grid gap-0 sm:grid-cols-3">

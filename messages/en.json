@@ -1,23 +1,23 @@
 {
   "app": {
-    "title": "Resume Builder",
-    "description": "Build ATS-friendly resumes with AI assistance"
+    "title": "RMUTL Resume",
+    "description": "Free online resume builder for RMUTL students and graduates — ATS-friendly templates with AI assistance."
   },
   "seo": {
-    "defaultTitle": "Resume Builder — Free ATS-Friendly Resume & CV Maker with AI",
-    "titleTemplate": "%s — Resume Builder",
+    "defaultTitle": "RMUTL Resume — Free ATS Resume Builder for RMUTL Students",
+    "titleTemplate": "%s | RMUTL Resume",
     "home": {
-      "title": "Free ATS Resume Builder with AI — Make a Professional Resume or CV",
-      "description": "Create an ATS-friendly resume or CV in minutes: 7 professional templates, real-time preview, an AI writing assistant, an ATS score checker, PDF export and a shareable live link. Free, in Thai and English."
+      "title": "RMUTL Resume | Free Online Resume Builder for RMUTL Students",
+      "description": "RMUTL Resume is a free online resume builder for students and graduates of Rajamangala University of Technology Lanna (RMUTL). Create an ATS-friendly resume with professional templates, an AI writing assistant, an ATS score checker and PDF export — in Thai or English."
     },
     "knowledge": {
       "howToUse": {
-        "title": "How to Use Resume Builder — Step-by-Step Guide",
-        "description": "A step-by-step guide to building a professional, ATS-ready resume: sign up, choose a template, edit your content, use the AI assistant, check your ATS score and export to PDF."
+        "title": "How to Build a Student Resume — Step-by-Step Guide",
+        "description": "A step-by-step guide for RMUTL students: sign up, pick a template, add your experience and projects, use the AI assistant, check your ATS score and export your resume to PDF."
       },
       "cvVsResume": {
         "title": "CV vs Resume: Key Differences and When to Use Each",
-        "description": "Learn the difference between a CV and a resume — length, purpose, content and formatting — and which document to send for industry jobs, academia and applications abroad."
+        "description": "Understand the difference between a CV and a resume — length, purpose, content and formatting — and which document RMUTL students should send for internships, jobs and graduate applications."
       }
     }
   },
@@ -67,7 +67,7 @@
       "reference": "Reference: JobsDB Thailand — CV vs Resume Guide"
     },
     "howToUse": {
-      "title": "How to Use Resume Builder",
+      "title": "How to Use RMUTL Resume",
       "subtitle": "Follow these simple steps to create your professional resume.",
       "step1": {
         "title": "1. Sign Up / Sign In",
@@ -95,20 +95,23 @@
       }
     },
     "back": "Back to Home",
-    "howToUseCta": "Next: How to Use Resume Builder",
+    "howToUseCta": "Next: How to use RMUTL Resume",
     "cvVsResumeCta": "Also read: CV vs Resume — What is the Difference?"
   },
   "footer": {
+    "about": "Free ATS-friendly resume builder for RMUTL students and graduates.",
+    "links": "Links",
+    "resources": "Resources",
+    "legal": "Legal",
+    "university": "Rajamangala University of Technology Lanna",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
-    "copyright": "© {year} Resume Builder. All rights reserved.",
-    "links": "Links",
-    "legal": "Legal"
+    "copyright": "© {year} RMUTL Resume. All rights reserved."
   },
   "home": {
     "hero": {
-      "title": "Build Your Professional Resume",
-      "subtitle": "ATS-compatible, AI-powered resume builder with live preview",
+      "title": "Build a Professional Resume Made for RMUTL Students",
+      "subtitle": "RMUTL Resume is a free, ATS-friendly resume builder with AI assistance and a live preview — for students and graduates of Rajamangala University of Technology Lanna.",
       "getStarted": "Get Started Free"
     },
     "features": {
@@ -127,7 +130,7 @@
       "multiLanguageDesc": "Build resumes in Thai or English, with automatic language detection for section headings.",
       "sectionManagerTitle": "Section Manager",
       "sectionManagerDesc": "Add, remove, and reorder entries within each section. Include sections tailored for academic CVs.",
-      "whyUsBadge": "Why Resume Builder?",
+      "whyUsBadge": "Why RMUTL Resume?",
       "whyUsTitle": "Built for Job Seekers Who Want Results",
       "whyUsSubtitle": "We combine beautiful design with smart technology to help you create resumes that pass ATS filters and impress hiring managers.",
       "highlights": [
@@ -144,9 +147,16 @@
       "importResumeTitle": "Import & Auto-fill",
       "importResumeDesc": "Upload an existing resume and let AI extract the content and fill the form automatically."
     },
+    "about": {
+      "badge": "About",
+      "title": "About RMUTL Resume",
+      "body": "RMUTL Resume is a free online resume builder for students and graduates of Rajamangala University of Technology Lanna (RMUTL). It turns your coursework, projects and internships into an ATS-friendly resume — with professional templates, an AI writing assistant and one-click PDF export, in both Thai and English.",
+      "howToUseCta": "Learn how to use RMUTL Resume",
+      "cvVsResumeCta": "CV vs Resume — which one should you use?"
+    },
     "cta": {
       "title": "Ready to Build Your Resume?",
-      "subtitle": "Join thousands of professionals who use Resume Builder to land their dream jobs."
+      "subtitle": "Join RMUTL students and graduates who use RMUTL Resume to land internships and jobs."
     }
   },
   "auth": {
