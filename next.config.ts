@@ -3,12 +3,11 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin();
 
-const nextConfig: NextConfig = {
-  experimental: {
-    // Inline the (small) global stylesheet into <head> instead of shipping a
-    // render-blocking <link>. Removes ~120ms of render-blocking time / LCP delay.
-    inlineCss: true,
-  },
-};
+const nextConfig: NextConfig = {};
+
+// Note: experimental.inlineCss was tried and reverted — with a ~40 KB Tailwind
+// sheet it roughly doubled the streamed HTML (the CSS is also serialized into
+// the RSC payload), which cost more for real users than the render-blocking
+// <link> it removed.
 
 export default withNextIntl(nextConfig);
