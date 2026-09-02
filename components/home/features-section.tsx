@@ -41,11 +41,11 @@ export function FeaturesSection({ t, locale }: FeaturesSectionProps) {
             <p className="font-heading text-sm font-semibold uppercase tracking-wider text-primary">
               {t("home.features.badge")}
             </p>
-            <h1 className="mt-3 font-heading text-4xl font-bold text-foreground md:text-5xl">
+            <h2 className="mt-3 font-heading text-4xl font-bold text-foreground md:text-5xl">
               <span className="text-balance">
                 {t("home.features.title")}
               </span>
-            </h1>
+            </h2>
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
               {t("home.features.subtitle")}
             </p>

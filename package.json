@@ -30,6 +30,14 @@
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
+  "browserslist": [
+    "chrome >= 109",
+    "edge >= 109",
+    "firefox >= 115",
+    "safari >= 16",
+    "ios_saf >= 16",
+    "not dead"
+  ],
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
