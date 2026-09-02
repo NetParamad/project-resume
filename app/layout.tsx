@@ -43,9 +43,11 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — Free ATS-Friendly Resume & CV Maker with AI`,
     description,
   },
-  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
-    : undefined,
+  verification: {
+    google:
+      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ??
+      "Ru2xNFiDnq0ZqSqjzqynQCbd9BWzAC7Rodz0rjShAt0",
+  },
 };
 
 export const viewport: Viewport = {
