@@ -49,15 +49,14 @@ export async function proxy(request: NextRequest) {
   const user = data?.claims;
 
   const pathname = request.nextUrl.pathname;
-  const isPublic =
-    pathname === "/" ||
-    /^\/(en|th)\/?$/.test(pathname) ||
-    pathname.includes("/auth") ||
-    pathname.includes("/login") ||
-    pathname.includes("/share") ||
-    pathname.includes("/knowledge");
 
-  if (!isPublic && !user) {
+  // Auth-gate by denylist, not allowlist: only the builder + dashboard need a
+  // session. Everything else (home, knowledge, SEO landing pages, share, auth
+  // forms) is public and must stay crawlable — an allowlist silently 307s any
+  // new public route to /auth/login.
+  const isPrivate = /(^|\/)(dashboard|builder)(\/|$)/.test(pathname);
+
+  if (isPrivate && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);

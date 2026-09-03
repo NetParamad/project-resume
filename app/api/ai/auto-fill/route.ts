@@ -71,7 +71,7 @@ function getSectionContext(
   switch (section) {
     case "summary":
       return isTh
-        ? "เขียนสรุปอาชีพ (Professional Summary) ความยาว 2-3 บรรทัด ประกอบด้วย: ปีประสบการณ์, ทักษะหลัก 3 อย่าง, อุตสาหกรรมที่เชี่ยวชาญ, และความสำเร็จที่วัดผลได้ ใช้ภาษาเรียกตัวเองว่า 'มีประสบการณ์' ไม่ใช้ 'ฉัน' หรือ 'ผม'"
+        ? "เขียนสรุปภาพรวม (Professional Summary) ความยาว 2-3 บรรทัด ประกอบด้วย: ปีประสบการณ์, ทักษะหลัก 3 อย่าง, อุตสาหกรรมที่เชี่ยวชาญ, และความสำเร็จที่วัดผลได้ ใช้ภาษาเรียกตัวเองว่า 'มีประสบการณ์' ไม่ใช้ 'ฉัน' หรือ 'ผม'"
         : "Write a 2-3 line professional summary. Include: years of experience, top 3 skills, key industries, and a career highlight with metrics. Keep under 50 words. Use third-person implied voice (e.g., 'Experienced engineer with...').";
     case "experience":
       return isTh

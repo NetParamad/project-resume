@@ -5,7 +5,7 @@ export type ResumeLang = "en" | "th";
 export const resumeLangDict = {
   experience: { en: "Experience", th: "ประสบการณ์การทำงาน" },
   professionalExperience: { en: "Professional Experience", th: "ประสบการณ์การทำงาน" },
-  summary: { en: "Professional Summary", th: "สรุปอาชีพ" },
+  summary: { en: "Professional Summary", th: "สรุปภาพรวม" },
   education: { en: "Education", th: "การศึกษา" },
   skills: { en: "Skills", th: "ทักษะ" },
   certifications: { en: "Certifications", th: "ประกาศนียบัตร" },

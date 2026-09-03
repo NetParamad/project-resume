@@ -141,6 +141,85 @@ export function buildMetadata({
 
 type JsonLdObject = Record<string, unknown>;
 
+const inLang = (locale: string) => (locale === "th" ? "th-TH" : "en-US");
+
+/** BreadcrumbList from an ordered list of {name, path} (path is locale-relative, "" = home). */
+export function breadcrumbJsonLd(
+  locale: string,
+  crumbs: Array<{ name: string; path: string }>,
+): JsonLdObject {
+  const base = getSiteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: `${base}/${locale}${c.path}`,
+    })),
+  };
+}
+
+/** FAQPage — only emit when the same Q&A is visible on the page. */
+export function faqJsonLd(faq: Array<{ q: string; a: string }>): JsonLdObject {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+}
+
+/** Article structured data for knowledge / guide pages. */
+export function articleJsonLd(opts: {
+  locale: string;
+  path: string;
+  headline: string;
+  description: string;
+  datePublished?: string;
+  dateModified?: string;
+}): JsonLdObject {
+  const base = getSiteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: opts.headline,
+    description: opts.description,
+    inLanguage: inLang(opts.locale),
+    url: `${base}/${opts.locale}${opts.path}`,
+    mainEntityOfPage: `${base}/${opts.locale}${opts.path}`,
+    image: `${base}/opengraph-image`,
+    ...(opts.datePublished ? { datePublished: opts.datePublished } : {}),
+    dateModified: opts.dateModified ?? opts.datePublished,
+    author: { "@id": `${base}/#organization` },
+    publisher: { "@id": `${base}/#organization` },
+  };
+}
+
+/** SoftwareApplication block reused on commercial landing pages. */
+export function softwareAppJsonLd(locale: string, description: string): JsonLdObject {
+  const base = getSiteUrl();
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "@id": `${base}/#webapp`,
+    name: SITE_NAME,
+    alternateName: SITE_ALTERNATE_NAMES,
+    url: `${base}/${locale}`,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    inLanguage: ["th-TH", "en-US"],
+    description,
+    isAccessibleForFree: true,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "THB" },
+    publisher: { "@id": `${base}/#organization` },
+  };
+}
+
 /**
  * Structured data for the home page: identifies the site as "RMUTL Resume",
  * lists the aliases users search for, and states (via `about`) that the tool
