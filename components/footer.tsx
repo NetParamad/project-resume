@@ -52,16 +52,22 @@ export function Footer() {
             </p>
             <div className="flex flex-col gap-2">
               <Link
-                href={`/${locale}/knowledge/how-to-use`}
+                href={`/${locale}/resume-builder`}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t("knowledge.howToUse.title")}
+                {t("nav.resumeBuilder")}
               </Link>
               <Link
-                href={`/${locale}/knowledge/cv-vs-resume`}
+                href={`/${locale}/ats-resume`}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {t("knowledge.cvVsResume.title")}
+                {t("nav.atsResume")}
+              </Link>
+              <Link
+                href={`/${locale}/knowledge`}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {f("resourcesHub")}
               </Link>
               <a
                 href={UNIVERSITY.url}

@@ -19,19 +19,26 @@ export function AboutSection({ t, locale }: AboutSectionProps) {
         <p className="mt-4 leading-relaxed text-muted-foreground">
           {t("home.about.body")}
         </p>
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:gap-6">
+        <div className="mt-6 flex flex-col gap-2.5">
           <Link
-            href={`/${locale}/knowledge/how-to-use`}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            {t("home.about.howToUseCta")}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href={`/${locale}/knowledge/cv-vs-resume`}
+            href={`/${locale}/resume-builder`}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
             {t("home.about.cvVsResumeCta")}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href={`/${locale}/ats-resume`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            {t("home.about.atsCta")}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href={`/${locale}/knowledge`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            {t("home.about.howToUseCta")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

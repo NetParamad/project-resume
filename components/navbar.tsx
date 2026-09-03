@@ -120,7 +120,7 @@ export function Navbar() {
             {t("app.title")}
           </Link>
           <Link
-            href={`/${locale}/knowledge/cv-vs-resume`}
+            href={`/${locale}/knowledge`}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {t("nav.knowledge")}
@@ -155,7 +155,19 @@ export function Navbar() {
                 <ChevronDown size={14} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-56">
+            <DropdownMenuContent align="center" className="w-64">
+              <DropdownMenuItem asChild>
+                <Link href={`/${locale}/resume-builder`} className="cursor-pointer">
+                  <BookOpen size={14} className="mr-2" />
+                  {t("nav.resumeBuilder")}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/${locale}/ats-resume`} className="cursor-pointer">
+                  <BookOpen size={14} className="mr-2" />
+                  {t("nav.atsResume")}
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/knowledge/cv-vs-resume`} className="cursor-pointer">
                   <BookOpen size={14} className="mr-2" />
@@ -163,9 +175,12 @@ export function Navbar() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={`/${locale}/knowledge/how-to-use`} className="cursor-pointer">
+                <Link
+                  href={`/${locale}/knowledge`}
+                  className="cursor-pointer font-medium text-primary"
+                >
                   <BookOpen size={14} className="mr-2" />
-                  {t("knowledge.howToUse.title")}
+                  {t("knowledge.viewAll")}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
