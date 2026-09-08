@@ -15,6 +15,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/auth/password-input";
+import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter";
+import {
+  isAcceptablePassword,
+  MIN_PASSWORD_LENGTH,
+} from "@/lib/validation/password-strength";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -59,6 +65,12 @@ export function SignUpForm({
 
     if (password !== repeatPassword) {
       setError(t("passwordsDoNotMatch"));
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isAcceptablePassword(password, email)) {
+      setError(t("passwordRequirementsNotMet"));
       setIsLoading(false);
       return;
     }
@@ -158,27 +170,31 @@ export function SignUpForm({
                 <div className="flex items-center">
                   <Label htmlFor="password">{t("passwordLabel")}</Label>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
+                  autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={MIN_PASSWORD_LENGTH}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <PasswordStrengthMeter password={password} email={email} />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="repeat-password">{t("repeatPasswordLabel")}</Label>
                 </div>
-                <Input
+                <PasswordInput
                   id="repeat-password"
-                  type="password"
+                  autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={MIN_PASSWORD_LENGTH}
                   value={repeatPassword}
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
+                {repeatPassword.length > 0 && repeatPassword !== password && (
+                  <p className="text-xs text-orange-600">{t("passwordsDoNotMatch")}</p>
+                )}
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
