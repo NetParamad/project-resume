@@ -208,10 +208,29 @@
       "hasAccount": "Already have an account?",
       "login": "Login",
       "passwordsDoNotMatch": "Passwords do not match",
+      "passwordRequirementsNotMet": "Please choose a stronger password that meets the requirements below.",
       "success": "Thank you for signing up!",
       "successDescription": "Check your email to confirm",
       "successMessage": "You've successfully signed up. Please check your email to confirm your account before signing in.",
       "goToLogin": "Go to Login"
+    },
+    "password": {
+      "strengthLabel": "Password strength",
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong",
+      "reqLength": "At least 8 characters",
+      "reqLower": "Lowercase letter",
+      "reqUpper": "Uppercase letter",
+      "reqDigit": "Number",
+      "reqSymbol": "Symbol",
+      "tooShort": "too short",
+      "tooCommon": "this password is too common",
+      "containsEmail": "don't use your email address",
+      "needsVariety": "add more character types",
+      "show": "Show password",
+      "hide": "Hide password"
     },
     "forgotPassword": {
       "title": "Forgot Password",
@@ -229,6 +248,7 @@
       "submit": "Update Password",
       "success": "Your password has been updated",
       "mismatch": "Passwords do not match",
+      "requirementsNotMet": "Please choose a stronger password that meets the requirements below.",
       "submitting": "Updating..."
     },
     "error": {
@@ -239,7 +259,8 @@
     "errors": {
       "invalidCredentials": "Invalid email or password",
       "userExists": "An account with this email already exists",
-      "weakPassword": "Password must be at least 6 characters",
+      "weakPassword": "Password must be at least 8 characters with a mix of letters, numbers, and symbols",
+      "passwordLeaked": "This password has appeared in a data breach. Please pick a different one.",
       "generic": "Something went wrong. Please try again."
     },
     "backHome": "Back to Home"

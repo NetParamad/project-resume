@@ -8,6 +8,8 @@ import {
   passwordSchema,
 } from "./auth";
 
+const STRONG = "Str0ng!pass";
+
 describe("emailSchema", () => {
   it("accepts valid email", () => {
     expect(emailSchema.safeParse("user@example.com").success).toBe(true);
@@ -21,11 +23,17 @@ describe("emailSchema", () => {
 });
 
 describe("passwordSchema", () => {
-  it("accepts 6-char password", () => {
-    expect(passwordSchema.safeParse("123456").success).toBe(true);
+  it("accepts a strong password (length + mixed classes)", () => {
+    expect(passwordSchema.safeParse(STRONG).success).toBe(true);
   });
-  it("rejects 5-char password", () => {
-    expect(passwordSchema.safeParse("12345").success).toBe(false);
+  it("rejects a short password", () => {
+    expect(passwordSchema.safeParse("Ab1!x").success).toBe(false);
+  });
+  it("rejects a long-but-single-class password", () => {
+    expect(passwordSchema.safeParse("aaaaaaaaaaaa").success).toBe(false);
+  });
+  it("rejects a common password even if it meets the shape", () => {
+    expect(passwordSchema.safeParse("Password123").success).toBe(false);
   });
   it("rejects empty string", () => {
     expect(passwordSchema.safeParse("").success).toBe(false);
@@ -34,81 +42,87 @@ describe("passwordSchema", () => {
 
 describe("loginSchema", () => {
   it("accepts valid credentials", () => {
-    expect(
-      loginSchema.safeParse({ email: "a@b.com", password: "123456" }).success,
-    ).toBe(true);
+    expect(loginSchema.safeParse({ email: "a@b.com", password: STRONG }).success).toBe(true);
+  });
+  it("does not apply the new-password policy (old short passwords can still log in)", () => {
+    expect(loginSchema.safeParse({ email: "a@b.com", password: "123456" }).success).toBe(true);
   });
   it("rejects invalid email", () => {
-    expect(
-      loginSchema.safeParse({ email: "bad", password: "123456" }).success,
-    ).toBe(false);
+    expect(loginSchema.safeParse({ email: "bad", password: STRONG }).success).toBe(false);
   });
-  it("rejects short password", () => {
-    expect(
-      loginSchema.safeParse({ email: "a@b.com", password: "123" }).success,
-    ).toBe(false);
+  it("rejects an empty password", () => {
+    expect(loginSchema.safeParse({ email: "a@b.com", password: "" }).success).toBe(false);
   });
 });
 
 describe("signUpSchema", () => {
-  it("accepts matching passwords", () => {
+  it("accepts a strong password with matching repeat", () => {
+    const result = signUpSchema.safeParse({
+      email: "a@b.com",
+      password: STRONG,
+      repeatPassword: STRONG,
+    });
+    expect(result.success).toBe(true);
+  });
+  it("rejects mismatched passwords", () => {
+    const result = signUpSchema.safeParse({
+      email: "a@b.com",
+      password: STRONG,
+      repeatPassword: `${STRONG}x`,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path.includes("repeatPassword"))).toBe(true);
+    }
+  });
+  it("rejects a weak password", () => {
     const result = signUpSchema.safeParse({
       email: "a@b.com",
       password: "123456",
       repeatPassword: "123456",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
-  it("rejects mismatched passwords", () => {
+  it("rejects a password built from the email address", () => {
     const result = signUpSchema.safeParse({
-      email: "a@b.com",
-      password: "123456",
-      repeatPassword: "654321",
+      email: "somchai@example.com",
+      password: "Somchai123!",
+      repeatPassword: "Somchai123!",
     });
     expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].path).toContain("repeatPassword");
-    }
   });
 });
 
 describe("forgotPasswordSchema", () => {
   it("accepts valid email", () => {
-    expect(forgotPasswordSchema.safeParse({ email: "a@b.com" }).success).toBe(
-      true,
-    );
+    expect(forgotPasswordSchema.safeParse({ email: "a@b.com" }).success).toBe(true);
   });
   it("rejects invalid email", () => {
-    expect(forgotPasswordSchema.safeParse({ email: "bad" }).success).toBe(
-      false,
-    );
+    expect(forgotPasswordSchema.safeParse({ email: "bad" }).success).toBe(false);
   });
 });
 
 describe("updatePasswordSchema", () => {
-  it("accepts matching passwords", () => {
+  it("accepts a strong password with matching confirm", () => {
     const result = updatePasswordSchema.safeParse({
-      password: "123456",
-      confirmPassword: "123456",
+      password: STRONG,
+      confirmPassword: STRONG,
     });
     expect(result.success).toBe(true);
   });
   it("rejects mismatched passwords", () => {
     const result = updatePasswordSchema.safeParse({
-      password: "123456",
-      confirmPassword: "654321",
+      password: STRONG,
+      confirmPassword: `${STRONG}x`,
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].path).toContain("confirmPassword");
+      expect(result.error.issues.some((i) => i.path.includes("confirmPassword"))).toBe(true);
     }
   });
-  it("rejects short password", () => {
+  it("rejects a weak password", () => {
     expect(
-      updatePasswordSchema.safeParse({
-        password: "123",
-        confirmPassword: "123",
-      }).success,
+      updatePasswordSchema.safeParse({ password: "123456", confirmPassword: "123456" }).success,
     ).toBe(false);
   });
 });

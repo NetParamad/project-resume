@@ -13,8 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/auth/password-input";
+import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter";
+import {
+  isAcceptablePassword,
+  MIN_PASSWORD_LENGTH,
+} from "@/lib/validation/password-strength";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
@@ -43,6 +48,10 @@ export function UpdatePasswordForm({
     e.preventDefault();
     if (password !== confirmPassword) {
       setError(t("mismatch"));
+      return;
+    }
+    if (!isAcceptablePassword(password)) {
+      setError(t("requirementsNotMet"));
       return;
     }
     const supabase = createClient();
@@ -77,25 +86,29 @@ export function UpdatePasswordForm({
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="password">{t("passwordLabel")}</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
+                  autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={MIN_PASSWORD_LENGTH}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <PasswordStrengthMeter password={password} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="confirm-password">{t("confirmLabel")}</Label>
-                <Input
+                <PasswordInput
                   id="confirm-password"
-                  type="password"
+                  autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={MIN_PASSWORD_LENGTH}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
+                {confirmPassword.length > 0 && confirmPassword !== password && (
+                  <p className="text-xs text-orange-600">{t("mismatch")}</p>
+                )}
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               {message && <p className="text-sm text-green-500">{message}</p>}
