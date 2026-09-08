@@ -448,6 +448,8 @@
     "atsMissingKeywords": "Missing Keywords",
     "atsSuggestions": "Suggestions",
     "atsCheck": "Check ATS Score",
+    "atsJobDescription": "Target job description (optional)",
+    "atsJobDescriptionPlaceholder": "Paste the job description to score your resume against its keywords and requirements...",
     "improveWithAgent": "Improve with AI Agent",
     "agentStart": "Starting optimization agent...",
     "agentAnalyzing": "Analyzing current resume...",

@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Polish error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "AI service error" },
+      { code: "ai_error" },
       { status: 500 },
     );
   }

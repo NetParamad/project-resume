@@ -1,5 +1,5 @@
 import { llmText } from "./client";
-import { mergeResumeOutput } from "./resume-utils";
+import { extractJsonObject, mergeResumeOutput } from "./resume-utils";
 import { resolveResumeLocale } from "./detect-locale";
 import type { ResumeData } from "@/lib/types/resume";
 
@@ -28,16 +28,6 @@ Rules:
 7. Return ONLY valid JSON, no other text.`;
 }
 
-function parseResumeJson(raw: string): unknown | null {
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return null;
-  try {
-    return JSON.parse(jsonMatch[0]);
-  } catch {
-    return null;
-  }
-}
-
 export async function polishResume(options: {
   resumeData: ResumeData;
   locale?: string;
@@ -59,7 +49,7 @@ export async function polishResume(options: {
           : `${buildSystemPrompt(effectiveLocale)}\nReturn the raw JSON object without markdown fences, code blocks, or any commentary.`,
       user,
     });
-    parsed = parseResumeJson(raw);
+    parsed = extractJsonObject(raw);
   }
 
   if (parsed === null) {
