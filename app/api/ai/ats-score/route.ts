@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("ATS score error:", error);
     return NextResponse.json(
-      { error: "AI service error. Please try again." },
+      { code: "ai_error", detail: error instanceof Error ? error.message.slice(0, 500) : undefined },
       { status: 500 },
     );
   }
