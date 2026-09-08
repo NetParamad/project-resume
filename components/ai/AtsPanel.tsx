@@ -42,6 +42,7 @@ export function AtsPanel() {
   const model = useAIModelStore((s) => s.override);
 
   const [result, setResult] = useState<ATSResult | null>(null);
+  const [jobDescription, setJobDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkElapsed, setCheckElapsed] = useState<number | null>(null);
@@ -87,7 +88,12 @@ export function AtsPanel() {
       const res = await fetch("/api/ai/ats-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData, locale, model }),
+        body: JSON.stringify({
+          resumeData,
+          jobDescription: jobDescription.trim() || undefined,
+          locale,
+          model,
+        }),
       });
       const data = await res.json();
       if (data.error) {
@@ -135,7 +141,12 @@ export function AtsPanel() {
       const res = await fetch("/api/ai/improve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData, locale, model }),
+        body: JSON.stringify({
+          resumeData,
+          jobDescription: jobDescription.trim() || undefined,
+          locale,
+          model,
+        }),
         signal: controller.signal,
       });
 
@@ -237,6 +248,22 @@ export function AtsPanel() {
           {t("atsScore", { score: lastScore })}
         </p>
       </div>
+
+      {agentStatus === "idle" && !isLoading && (
+        <div className="space-y-1">
+          <label htmlFor="ats-job-description" className="text-xs font-medium text-muted-foreground">
+            {t("atsJobDescription")}
+          </label>
+          <textarea
+            id="ats-job-description"
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            placeholder={t("atsJobDescriptionPlaceholder")}
+            className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            rows={4}
+          />
+        </div>
+      )}
 
       {agentStatus !== "idle" ? (
         <ImproveAgentLog

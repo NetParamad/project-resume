@@ -19,48 +19,50 @@ export interface RoleConfig {
   params?: Record<string, unknown>;
 }
 
+// Ordered fallback chain. Every id here must be invokable by the configured
+// NVIDIA_API_KEY on https://integrate.api.nvidia.com/v1 — ids that 404/410 for
+// the account make the whole chain fail. Verify against `GET /v1/models` and a
+// real chat completion before adding one.
 export const MODEL_CHAIN = [
-  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "minimaxai/minimax-m3",
+  "nvidia/nemotron-3.5-lightning-30b-a3b",
   "nvidia/nemotron-3-super-120b-a12b",
-  "google/gemma-4-31b-it",
-  "deepseek-ai/deepseek-v4-pro",
-  "nvidia/llama-3.3-nemotron-super-49b-v1.5",
 ] as const;
 
 export const ALLOWED_MODELS: Record<string, ModelMeta> = {
-  "openai/gpt-oss-120b": {
-    label: "GPT-OSS-120B",
+  "openai/gpt-oss-20b": {
+    label: "GPT-OSS-20B",
+    supportsTools: true,
+  },
+  "minimaxai/minimax-m3": {
+    label: "MiniMax-M3",
+    supportsTools: true,
+  },
+  "nvidia/nemotron-3.5-lightning-30b-a3b": {
+    label: "Nemotron-3.5-Lightning-30B",
     supportsTools: true,
   },
   "nvidia/nemotron-3-super-120b-a12b": {
     label: "Nemotron-3-Super-120B",
-    supportsTools: true,
-  },
-  "google/gemma-4-31b-it": {
-    label: "Gemma-4-31B-IT",
     supportsTools: false,
-  },
-  "deepseek-ai/deepseek-v4-pro": {
-    label: "DeepSeek-V4-Pro",
-    supportsTools: true,
-  },
-  "nvidia/llama-3.3-nemotron-super-49b-v1.5": {
-    label: "Llama-3.3-Nemotron-49B",
-    supportsTools: true,
   },
 };
 
 export const MODEL_PARAMS: Record<string, Record<string, unknown>> = {
-  "openai/gpt-oss-120b": {
+  "openai/gpt-oss-20b": {
     reasoning_effort: "low",
+  },
+  "minimaxai/minimax-m3": {},
+  // Lightning streams its chain-of-thought into `content` by default, which
+  // corrupts JSON-only replies — keep thinking off outside the agent role.
+  "nvidia/nemotron-3.5-lightning-30b-a3b": {
+    chat_template_kwargs: { enable_thinking: false },
   },
   "nvidia/nemotron-3-super-120b-a12b": {
     reasoning_budget: 4096,
     chat_template_kwargs: { enable_thinking: true },
   },
-  "google/gemma-4-31b-it": {},
-  "deepseek-ai/deepseek-v4-pro": {},
-  "nvidia/llama-3.3-nemotron-super-49b-v1.5": {},
 };
 
 export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
@@ -70,7 +72,7 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
     timeoutMs: 50_000,
   },
   tailor: {
-    maxTokens: 8192,
+    maxTokens: 16384,
     temperature: 0.3,
     timeoutMs: 90_000,
   },
@@ -94,7 +96,7 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
     timeoutMs: 90_000,
   },
   polish: {
-    maxTokens: 8192,
+    maxTokens: 16384,
     temperature: 0.3,
     timeoutMs: 60_000,
   },

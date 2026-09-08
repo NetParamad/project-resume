@@ -46,9 +46,7 @@ export async function POST(req: NextRequest) {
         send("done", result);
       } catch (error) {
         console.error("Improve agent error:", error);
-        send("error", {
-          message: error instanceof Error ? error.message : "Agent failed",
-        });
+        send("error", { code: "agent_error" });
       } finally {
         controller.close();
       }

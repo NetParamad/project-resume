@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeResumeOutput } from "./resume-utils";
+import { extractJsonObject, mergeResumeOutput } from "./resume-utils";
 import type { ResumeData } from "@/lib/types/resume";
 
 function baseResume(): ResumeData {
@@ -92,5 +92,82 @@ describe("mergeResumeOutput", () => {
     const original = baseResume();
     const merged = mergeResumeOutput(original, { experience: "not an array" });
     expect(merged.experience).toEqual(original.experience);
+  });
+
+  function threeExpResume(): ResumeData {
+    const base = baseResume();
+    base.experience = [
+      { id: "exp-1", jobTitle: "Junior Engineer", company: "Acme", location: "", startDate: "", endDate: "", current: false, description: "A" },
+      { id: "exp-2", jobTitle: "Engineer", company: "Beta", location: "", startDate: "", endDate: "", current: false, description: "B" },
+      { id: "exp-3", jobTitle: "Senior Engineer", company: "Gamma", location: "", startDate: "", endDate: "", current: false, description: "C" },
+    ];
+    return base;
+  }
+
+  it("keeps original items the model dropped (index fallback)", () => {
+    const original = threeExpResume();
+    const merged = mergeResumeOutput(original, {
+      experience: [
+        { jobTitle: "Junior Software Engineer", description: "A refined" },
+        { jobTitle: "Software Engineer", description: "B refined" },
+      ],
+    });
+
+    expect(merged.experience).toHaveLength(3);
+    expect(merged.experience[0].id).toBe("exp-1");
+    expect(merged.experience[0].jobTitle).toBe("Junior Software Engineer");
+    expect(merged.experience[2].id).toBe("exp-3");
+    expect(merged.experience[2].description).toBe("C");
+  });
+
+  it("matches by id and preserves original order when the model reorders", () => {
+    const original = threeExpResume();
+    const merged = mergeResumeOutput(original, {
+      experience: [
+        { id: "exp-3", jobTitle: "Senior Engineer II", description: "C refined" },
+        { id: "exp-1", jobTitle: "Junior Engineer II", description: "A refined" },
+        { id: "exp-2", jobTitle: "Engineer II", description: "B refined" },
+      ],
+    });
+
+    expect(merged.experience.map((e) => e.id)).toEqual(["exp-1", "exp-2", "exp-3"]);
+    expect(merged.experience[0].jobTitle).toBe("Junior Engineer II");
+    expect(merged.experience[2].jobTitle).toBe("Senior Engineer II");
+  });
+
+  it("keeps an original item the model omitted from an id-keyed response", () => {
+    const original = threeExpResume();
+    const merged = mergeResumeOutput(original, {
+      experience: [
+        { id: "exp-1", jobTitle: "Junior Engineer II" },
+        { id: "exp-3", jobTitle: "Senior Engineer II" },
+      ],
+    });
+
+    expect(merged.experience.map((e) => e.id)).toEqual(["exp-1", "exp-2", "exp-3"]);
+    expect(merged.experience[1].jobTitle).toBe("Engineer");
+  });
+});
+
+describe("extractJsonObject", () => {
+  it("parses a plain JSON object", () => {
+    expect(extractJsonObject('{"a":1}')).toEqual({ a: 1 });
+  });
+
+  it("strips ```json fences", () => {
+    expect(extractJsonObject('```json\n{"a":1}\n```')).toEqual({ a: 1 });
+  });
+
+  it("ignores leading reasoning text and trailing prose", () => {
+    const raw = 'Here is the result:\n{"a":{"b":2}}\nHope that helps!';
+    expect(extractJsonObject(raw)).toEqual({ a: { b: 2 } });
+  });
+
+  it("returns null for a truncated object", () => {
+    expect(extractJsonObject('{"a":1,"b":[1,2,3')).toBeNull();
+  });
+
+  it("returns null when there is no object at all", () => {
+    expect(extractJsonObject("no json here")).toBeNull();
   });
 });

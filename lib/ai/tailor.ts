@@ -1,5 +1,5 @@
 import { llmText } from "./client";
-import { mergeResumeOutput } from "./resume-utils";
+import { extractJsonObject, mergeResumeOutput } from "./resume-utils";
 import { resolveResumeLocale } from "./detect-locale";
 import type { ResumeData } from "@/lib/types/resume";
 
@@ -41,23 +41,24 @@ export async function tailorResume(options: {
 }): Promise<ResumeData> {
   const { resumeData, jobDescription, modelId } = options;
   const locale = resolveResumeLocale(resumeData, jobDescription, options.locale);
+  const system = buildSystemPrompt(locale);
+  const user = buildUserPrompt(resumeData, jobDescription);
 
-  const raw = await llmText({
-    role: "tailor",
-    modelId,
-    system: buildSystemPrompt(locale),
-    user: buildUserPrompt(resumeData, jobDescription),
-  });
-
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Tailor output was not valid JSON");
+  let parsed: unknown = null;
+  for (let attempt = 1; attempt <= 2 && parsed === null; attempt++) {
+    const raw = await llmText({
+      role: "tailor",
+      modelId,
+      system:
+        attempt === 1
+          ? system
+          : `${system}\nReturn the raw JSON object only — no markdown fences, no commentary, and make sure the JSON is complete.`,
+      user,
+    });
+    parsed = extractJsonObject(raw);
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(jsonMatch[0]);
-  } catch {
+  if (parsed === null) {
     throw new Error("Tailor output was not valid JSON");
   }
 
