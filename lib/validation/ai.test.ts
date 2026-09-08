@@ -4,6 +4,7 @@ import {
   polishRequestSchema,
   atsScoreRequestSchema,
   autoFillRequestSchema,
+  extractResumeRequestSchema,
 } from "./ai";
 
 describe("tailorRequestSchema", () => {
@@ -50,6 +51,30 @@ describe("atsScoreRequestSchema", () => {
   it("allows jobDescription and model to be omitted", () => {
     const result = atsScoreRequestSchema.safeParse({ resumeData: { summary: "x" } });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("extractResumeRequestSchema", () => {
+  it("accepts a text payload", () => {
+    const result = extractResumeRequestSchema.safeParse({
+      text: "Somchai Jaidee — Software Engineer, 5 years experience",
+      locale: "th",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a missing text field", () => {
+    expect(extractResumeRequestSchema.safeParse({ locale: "en" }).success).toBe(false);
+  });
+
+  it("rejects an empty text field", () => {
+    expect(extractResumeRequestSchema.safeParse({ text: "" }).success).toBe(false);
+  });
+
+  it("rejects text over the size cap", () => {
+    expect(
+      extractResumeRequestSchema.safeParse({ text: "a".repeat(100_001) }).success,
+    ).toBe(false);
   });
 });
 

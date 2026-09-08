@@ -30,6 +30,12 @@ export const improveRequestSchema = z.object({
   model: modelSchema,
 });
 
+export const extractResumeRequestSchema = z.object({
+  text: z.string().min(1).max(100_000),
+  locale: localeSchema,
+  model: modelSchema,
+});
+
 export const autoFillRequestSchema = z.object({
   section: z.string().min(1, "section is required"),
   context: z.record(z.string(), z.unknown()).nullable().default(null),
