@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const limited = enforceRateLimit(`upload:${user.id}`, 20, 5 * 60 * 1000);
+  const limited = await enforceRateLimit(`upload:${user.id}`, 20, 5 * 60 * 1000);
   if (limited) return limited;
 
   const params = generateAuthParams();

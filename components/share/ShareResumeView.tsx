@@ -107,6 +107,9 @@ export function ShareResumeView({
           <Template data={data} />
         </ResumeLangProvider>
       </PrintResumePortal>
+      <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground/80">
+        {t("aiDisclaimer")}
+      </p>
     </div>
   );
 }

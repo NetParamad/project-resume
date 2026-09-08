@@ -7,6 +7,10 @@ export const SECTION_KEYS: Record<string, string> = {
   certifications: "certifications",
   languages: "languages",
   references: "references",
+  publications: "publications",
+  researchExperience: "researchExperience",
+  teachingExperience: "teachingExperience",
+  awards: "awards",
 };
 
 export function truncate(s: string, max = 120): string {
@@ -26,6 +30,10 @@ export function renderValue(section: string, value: unknown): string {
         if (section === "skills") return String(t.name ?? "");
         if (section === "education") return String(t.degree ?? t.institution ?? "");
         if (section === "projects") return String(t.name ?? "");
+        if (section === "publications") return String(t.title ?? t.journal ?? "");
+        if (section === "researchExperience") return String(t.role ?? t.institution ?? "");
+        if (section === "teachingExperience") return String(t.courseName ?? t.institution ?? "");
+        if (section === "awards") return String(t.name ?? "");
         return String(t.name ?? t.title ?? "");
       })
       .filter(Boolean)

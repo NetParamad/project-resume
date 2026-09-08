@@ -45,6 +45,7 @@ export function AIAssistDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("ai");
+  const tb = useTranslations("builder");
   const [tab, setTab] = useState<Tab>("ats");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const override = useAIModelStore((s) => s.override);
@@ -59,6 +60,7 @@ export function AIAssistDialog({
             {t("aiAssistTitle")}
           </DialogTitle>
           <DialogDescription>{t("aiAssistDescription")}</DialogDescription>
+          <p className="text-[11px] leading-relaxed text-muted-foreground/80">{tb("aiDisclaimer")}</p>
         </DialogHeader>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1 min-h-0">

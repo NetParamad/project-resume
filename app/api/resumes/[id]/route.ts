@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { nanoid } from "nanoid";
-import { normalizeResumeData } from "@/lib/types/resume";
+import { normalizeResumeData } from "@/lib/normalize-resume";
 import { updateResumeSchema } from "@/lib/validation/resumes";
 import { parseJsonBody } from "@/lib/validation/parse";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -23,7 +23,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    const limited = await enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
     if (limited) return limited;
 
     const { data, error } = await supabase
@@ -40,9 +40,11 @@ export async function GET(
       throw error;
     }
 
+    const row = { ...data };
+    delete row.user_id;
     return NextResponse.json({
-      ...data,
-      data: normalizeResumeData(data.data),
+      ...row,
+      data: normalizeResumeData(row.data),
     });
   } catch (error) {
     console.error("GET /api/resumes/[id] error:", error);
@@ -63,7 +65,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    const limited = await enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
     if (limited) return limited;
 
     const parsed = await parseJsonBody(req, updateResumeSchema);
@@ -105,7 +107,9 @@ export async function PUT(
       throw error;
     }
 
-    return NextResponse.json(data);
+    const row = { ...data };
+    delete row.user_id;
+    return NextResponse.json(row);
   } catch (error) {
     console.error("PUT /api/resumes/[id] error:", error);
     return NextResponse.json({ error: "Failed to update resume" }, { status: 500 });
@@ -125,7 +129,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    const limited = await enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
     if (limited) return limited;
 
     const { error } = await supabase

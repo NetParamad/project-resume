@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    const limited = await enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
     if (limited) return limited;
 
     const { data, error } = await supabase
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const limited = enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
+    const limited = await enforceRateLimit(`resumes:${user.id}`, 60, 5 * 60 * 1000);
     if (limited) return limited;
 
     const parsed = await parseJsonBody(req, createResumeSchema);
@@ -62,7 +62,9 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
-    return NextResponse.json(data);
+    const row = { ...data };
+    delete row.user_id;
+    return NextResponse.json(row);
   } catch (error) {
     console.error("POST /api/resumes error:", error);
     return NextResponse.json({ error: "Failed to create resume" }, { status: 500 });

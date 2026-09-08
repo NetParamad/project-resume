@@ -121,7 +121,15 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
       const saved = await res.json();
 
       if (!currentResumeId) {
-        setCurrentResume(saved.id, saved.title, saved.document_type || "resume", saved.template, saved.data);
+        setCurrentResume(
+          saved.id,
+          saved.title,
+          saved.document_type || "resume",
+          saved.template,
+          saved.data,
+          saved.share_slug,
+          saved.is_public,
+        );
         router.replace(`/${locale}/builder/${saved.id}`);
       }
 
@@ -275,7 +283,7 @@ export function BuilderHeader({ resumeId }: { resumeId: string }) {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" onClick={() => setAiOpen(true)} className="shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setAiOpen(true)} className="shrink-0" title={t("aiDisclaimer")}>
             <Sparkles size={14} className="mr-1" />
             {t("aiAssist")}
           </Button>

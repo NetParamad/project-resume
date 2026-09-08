@@ -9,6 +9,8 @@ import { PDFParse } from "pdf-parse";
 import path from "path";
 import type { ResumeData } from "@/lib/types/resume";
 
+export const runtime = "nodejs";
+
 const WORKER_PATH = path.join(
   process.cwd(),
   "node_modules/pdfjs-dist/build/pdf.worker.mjs",
@@ -186,7 +188,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const limited = enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
+  const limited = await enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
   if (limited) return limited;
 
   try {

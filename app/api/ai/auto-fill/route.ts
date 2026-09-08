@@ -6,6 +6,8 @@ import { resolveLocale } from "@/lib/ai/detect-locale";
 import { autoFillRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const limited = enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
+  const limited = await enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
   if (limited) return limited;
 
   try {
