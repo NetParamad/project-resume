@@ -59,7 +59,7 @@ Rules:
   } catch (error) {
     console.error("AI auto-fill error:", error);
     return NextResponse.json(
-      { error: "AI service error. Please try again." },
+      { code: "ai_error", detail: error instanceof Error ? error.message.slice(0, 500) : undefined },
       { status: 500 },
     );
   }
