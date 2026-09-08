@@ -8,6 +8,7 @@ import { parseJsonBody } from "@/lib/validation/parse";
 const encoder = new TextEncoder();
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();

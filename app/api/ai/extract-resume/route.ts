@@ -6,17 +6,17 @@ import { sanitizeExtractedResume } from "@/lib/normalize-resume";
 import { llmText } from "@/lib/ai/client";
 import { resolveLocale } from "@/lib/ai/detect-locale";
 import { PDFParse } from "pdf-parse";
-import path from "path";
 import type { ResumeData } from "@/lib/types/resume";
 
 export const runtime = "nodejs";
+// PDF parse + up to two LLM calls: needs well over the Vercel default. Hobby
+// caps at 60; raise here (and in project settings) if on a plan that allows more.
+export const maxDuration = 60;
 
-const WORKER_PATH = path.join(
-  process.cwd(),
-  "node_modules/pdfjs-dist/build/pdf.worker.mjs",
-);
-
-PDFParse.setWorker(WORKER_PATH);
+// No PDFParse.setWorker() call on purpose: a hardcoded worker path breaks under
+// Vercel's bundled output, and module-system resolution gets mangled by the
+// bundler. In Node, pdfjs falls back to a main-thread worker when no workerSrc
+// is set, which is what we want for small resume PDFs.
 
 const RESUME_JSON_SCHEMA = {
   personalInfo: {
@@ -153,8 +153,12 @@ async function tryAIExtract(
   modelId?: string,
 ): Promise<object | null> {
   const systemPrompt = buildSystemPrompt(locale);
+  // Leave headroom before the route's maxDuration so a second pass never
+  // gets started when it can't finish — the heuristic parser covers us then.
+  const deadline = Date.now() + 40_000;
 
   for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0 && Date.now() > deadline) break;
     let raw: string;
     try {
       const user =
