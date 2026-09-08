@@ -516,7 +516,9 @@
     "stopped": "Stopped. You can review or run again.",
     "importView": "Review in Editor",
     "uploadPdf": "Click to upload PDF",
-    "uploadPdfHint": "Only text-based PDFs are supported — the kind where you can select and copy the text. Scanned or photographed PDFs won't work."
+    "uploadPdfHint": "Only text-based PDFs are supported — the kind where you can select and copy the text. Scanned or photographed PDFs won't work.",
+    "extractNoText": "Couldn't read text from this PDF — it may be a scan or an image. Try a text-based PDF (one where you can select the text).",
+    "extractFileTooLarge": "That PDF is too large (15 MB max). Try a smaller file."
   },
   "share": {
     "title": "Share Your Resume",

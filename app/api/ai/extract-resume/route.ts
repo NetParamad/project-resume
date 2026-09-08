@@ -5,18 +5,15 @@ import { parseResumeText } from "@/lib/parse-resume-text";
 import { sanitizeExtractedResume } from "@/lib/normalize-resume";
 import { llmText } from "@/lib/ai/client";
 import { resolveLocale } from "@/lib/ai/detect-locale";
-import { PDFParse } from "pdf-parse";
+import { extractResumeRequestSchema } from "@/lib/validation/ai";
+import { parseJsonBody } from "@/lib/validation/parse";
 import type { ResumeData } from "@/lib/types/resume";
 
 export const runtime = "nodejs";
-// PDF parse + up to two LLM calls: needs well over the Vercel default. Hobby
-// caps at 60; raise here (and in project settings) if on a plan that allows more.
+// Just the LLM calls now — PDF text is extracted in the browser and sent as
+// plain text. Hobby caps maxDuration at 60; raise here (and in project
+// settings) on a plan that allows more.
 export const maxDuration = 60;
-
-// No PDFParse.setWorker() call on purpose: a hardcoded worker path breaks under
-// Vercel's bundled output, and module-system resolution gets mangled by the
-// bundler. In Node, pdfjs falls back to a main-thread worker when no workerSrc
-// is set, which is what we want for small resume PDFs.
 
 const RESUME_JSON_SCHEMA = {
   personalInfo: {
@@ -87,24 +84,6 @@ Rules:
 
 Structure:
 ${schema}`;
-}
-
-async function extractTextFromPDF(buffer: Buffer): Promise<string | null> {
-  let pdf;
-  try {
-    pdf = new PDFParse({ data: buffer, useSystemFonts: true });
-    const result = await pdf.getText();
-    // NFC-normalize so Thai vowel/tone marks that pdfjs may emit as separate
-    // combining sequences recompose into the same codepoints the rest of
-    // the app (and the LLM) expects.
-    const text = result.text?.normalize("NFC").trim();
-    return text || null;
-  } catch (e) {
-    console.warn("pdf-parse failed:", e);
-    return null;
-  } finally {
-    await pdf?.destroy();
-  }
 }
 
 function extractJSON(raw: string): object | null {
@@ -195,63 +174,37 @@ export async function POST(req: NextRequest) {
   const limited = await enforceRateLimit(`ai:${user.id}`, 40, 5 * 60 * 1000);
   if (limited) return limited;
 
+  const parsed = await parseJsonBody(req, extractResumeRequestSchema);
+  if (parsed.error) return parsed.error;
+  const { text, locale, model } = parsed.data;
+
+  const resumeText = text.trim();
+  if (resumeText.length < 30) {
+    const msg = locale === "th"
+      ? "อ่านข้อความจากไฟล์ PDF ไม่ได้ ไฟล์อาจเป็นรูปสแกน กรุณาลองไฟล์อื่นหรือวางข้อความเอง"
+      : "Couldn't read text from this PDF — it may be a scan. Try another file or paste the text.";
+    return NextResponse.json({ error: msg }, { status: 422 });
+  }
+
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const locale = (formData.get("locale") as string) || "en";
-    const model = (formData.get("model") as string) || undefined;
-
-    if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-    }
-
-    const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-    const tooLargeMsg = locale === "th"
-      ? "ไฟล์ใหญ่เกินกำหนด (สูงสุด 10MB)"
-      : "File is too large (10 MB max)";
-    if (file.size > MAX_UPLOAD_BYTES) {
-      return NextResponse.json({ error: tooLargeMsg }, { status: 413 });
-    }
-
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    if (fileBuffer.byteLength > MAX_UPLOAD_BYTES) {
-      return NextResponse.json({ error: tooLargeMsg }, { status: 413 });
-    }
-    const mimeType = file.type || "application/pdf";
-
-    if (mimeType === "application/pdf") {
-      const extractedText = await extractTextFromPDF(fileBuffer);
-      if (!extractedText) {
-        const msg = locale === "th"
-          ? "ไม่สามารถอ่านข้อความจากไฟล์ PDF ได้ กรุณาลองไฟล์อื่น"
-          : "Could not extract text from this PDF. Please try another file.";
-        return NextResponse.json({ error: msg }, { status: 422 });
-      }
-
-      const contentLocale = resolveLocale(extractedText, locale);
-      const aiResult = await tryAIExtract(extractedText, contentLocale, model);
-      if (aiResult) {
-        return NextResponse.json({
-          ...sanitizeExtractedResume(aiResult as Partial<ResumeData>),
-          source: "ai",
-        });
-      }
-
-      const parsed = parseResumeText(extractedText) as unknown as Partial<ResumeData>;
+    const contentLocale = resolveLocale(resumeText, locale || "en");
+    const aiResult = await tryAIExtract(resumeText, contentLocale, model ?? undefined);
+    if (aiResult) {
       return NextResponse.json({
-        ...sanitizeExtractedResume(parsed),
-        source: "heuristic",
+        ...sanitizeExtractedResume(aiResult as Partial<ResumeData>),
+        source: "ai",
       });
     }
 
-    const msg = locale === "th"
-      ? "รองรับเฉพาะไฟล์ PDF เท่านั้นในโหมดออฟไลน์"
-      : "Only PDF files are supported in offline mode";
-    return NextResponse.json({ error: msg }, { status: 400 });
+    const heuristic = parseResumeText(resumeText) as unknown as Partial<ResumeData>;
+    return NextResponse.json({
+      ...sanitizeExtractedResume(heuristic),
+      source: "heuristic",
+    });
   } catch (error) {
     console.error("Extract resume error:", error);
     return NextResponse.json(
-      { error: "Failed to process resume" },
+      { code: "ai_error", detail: error instanceof Error ? error.message.slice(0, 500) : undefined },
       { status: 500 },
     );
   }

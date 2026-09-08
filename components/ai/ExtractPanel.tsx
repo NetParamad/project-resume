@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { normalizeResumeData } from "@/lib/normalize-resume";
+import { extractPdfText } from "@/lib/pdf/extract-pdf-text";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, FileText, CheckCircle2, RotateCcw, Eye, Clock } from "lucide-react";
 import type { ResumeData } from "@/lib/types/resume";
@@ -62,19 +63,34 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
 
   const handleExtract = async () => {
     if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      setError(t("extractFileTooLarge"));
+      return;
+    }
     setIsLoading(true);
     setError("");
     startRef.current = Date.now();
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("locale", locale);
-      if (model) formData.append("model", model);
+      let text: string;
+      try {
+        const result = await extractPdfText(file);
+        text = result.text;
+      } catch (e) {
+        console.warn("client PDF text extraction failed:", e);
+        setError(t("extractNoText"));
+        return;
+      }
+
+      if (text.trim().length < 30) {
+        setError(t("extractNoText"));
+        return;
+      }
 
       const res = await fetch("/api/ai/extract-resume", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, locale, model }),
       });
 
       const data = await res.json();
