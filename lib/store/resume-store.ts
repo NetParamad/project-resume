@@ -50,6 +50,7 @@ export const defaultResumeData: ResumeData = {
 };
 
 interface ResumeState {
+  hasHydrated: boolean
   currentResumeId: string | null
   title: string
   documentType: DocumentType
@@ -114,6 +115,7 @@ interface ResumeActions {
   removeAward: (id: string) => void
   resetData: () => void
   markSaved: () => void
+  setHasHydrated: (hasHydrated: boolean) => void
 }
 
 type ResumeStore = ResumeState & ResumeActions
@@ -121,6 +123,7 @@ type ResumeStore = ResumeState & ResumeActions
 export const useResumeStore = create<ResumeStore>()(
   persist(
     (set) => ({
+      hasHydrated: false,
       currentResumeId: null,
       title: "Untitled Resume",
       documentType: "resume",
@@ -637,9 +640,15 @@ export const useResumeStore = create<ResumeStore>()(
 
       markSaved: () =>
         set({ isDirty: false, lastSaved: new Date().toISOString() }),
+
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {
       name: "resume-draft",
+      skipHydration: true,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
       partialize: (state) => ({
         data: state.data,
         title: state.title,

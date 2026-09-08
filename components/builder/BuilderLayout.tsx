@@ -25,6 +25,7 @@ export function BuilderLayout({
 }) {
   const t = useTranslations("builder");
   const ct = useTranslations("common");
+  const hasHydrated = useResumeStore((s) => s.hasHydrated);
   const isDirty = useResumeStore((s) => s.isDirty);
   const setCurrentResume = useResumeStore((s) => s.setCurrentResume);
   const resetData = useResumeStore((s) => s.resetData);
@@ -37,6 +38,8 @@ export function BuilderLayout({
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
+    useResumeStore.persist.rehydrate();
+
     if (resumeId === "new") {
       const currentDraft = localStorage.getItem("resume-draft");
       if (currentDraft) {
@@ -80,7 +83,7 @@ export function BuilderLayout({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  if (loading) {
+  if (loading || !hasHydrated) {
     return (
       <div className="flex flex-col flex-1 bg-background">
         <BuilderHeader resumeId={resumeId} />
@@ -178,10 +181,13 @@ export function BuilderLayout({
               mobileView === "form" && "hidden lg:block",
             )}
           >
-            <div className="lg:absolute lg:inset-0 lg:overflow-y-auto [scrollbar-gutter:stable] animate-in fade-in-0 duration-200 ease-out">
+<div className="lg:absolute lg:inset-0 lg:overflow-y-auto [scrollbar-gutter:stable] animate-in fade-in-0 duration-200 ease-out">
               <PreviewPanel />
             </div>
           </div>
+        </div>
+        <div className="border-t bg-muted/40 px-4 py-1.5 text-center text-[11px] leading-relaxed text-muted-foreground/80">
+          {t("aiDisclaimer")}
         </div>
       </div>
       <PrintResumePortal>

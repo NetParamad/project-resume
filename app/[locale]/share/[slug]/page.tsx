@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { normalizeResumeData, type TemplateType, type ResumeData } from "@/lib/types/resume";
+import { normalizeResumeData } from "@/lib/normalize-resume";
+import type { TemplateType, ResumeData } from "@/lib/types/resume";
 import { shareSlugSchema } from "@/lib/validation/resumes";
 import { ShareResumeView } from "@/components/share/ShareResumeView";
 

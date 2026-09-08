@@ -1,5 +1,5 @@
 import { llmText } from "./client";
-import { resolveLocale } from "./detect-locale";
+import { resolveResumeLocale } from "./detect-locale";
 
 export interface ATSResult {
   score: number;
@@ -17,6 +17,8 @@ function buildSystemPrompt(locale: string): string {
 3. คำหลักที่สำคัญแต่ขาดหายไป
 4. คำแนะนำในการปรับปรุง
 
+ให้คะแนนจากเนื้อหาที่มีอยู่ในเรซูเม่จริงเท่านั้น ห้ามเพิ่มหรือลดคะแนนเกินจริงเพื่อเอาใจผู้ใช้
+
 ตอบเป็น JSON เท่านั้น:
 {
   "score": number,
@@ -33,6 +35,8 @@ Analyze:
 3. Important missing keywords
 4. Suggestions for improvement
 
+Base the score strictly on content that actually exists in the resume. Never inflate or deflate the score to please the user.
+
 Return ONLY valid JSON:
 {
   "score": number,
@@ -48,7 +52,7 @@ export async function scoreResume(
   uiLocale = "en",
   modelId?: string,
 ): Promise<ATSResult> {
-  const locale = resolveLocale(jobDescription, uiLocale);
+  const locale = resolveResumeLocale(resumeData, jobDescription, uiLocale);
   const systemPrompt = buildSystemPrompt(locale);
   const resumeText = JSON.stringify(resumeData, null, 2);
   const jobContext = jobDescription

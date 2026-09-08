@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import { runAgent, type AgentStep } from "./agent";
 import { scoreResume } from "./ats";
 import { ALLOWED_MODELS } from "./models";
-import { resolveLocale } from "./detect-locale";
+import { resolveResumeLocale } from "./detect-locale";
 
 export const MAX_ROUNDS = 6;
 export const TARGET_SCORE = 85;
@@ -17,6 +17,10 @@ export const OPTIMIZER_SECTIONS = [
   "certifications",
   "languages",
   "references",
+  "publications",
+  "researchExperience",
+  "teachingExperience",
+  "awards",
 ] as const;
 
 export interface SectionChange {
@@ -70,7 +74,7 @@ const TOOL_SCHEMA: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     function: {
       name: "update_section",
       description:
-        "Rewrite a resume section with ATS-optimized content. Use strong action verbs, quantify achievements with metrics, include job-description keywords. For array sections (experience, skills, education, etc.) pass an array of items and PRESERVE each existing item's 'id' field.",
+        "Rewrite a resume section with ATS-optimized content. Use strong action verbs, quantify achievements with metrics, include job-description keywords. For array sections (experience, skills, education, publications, researchExperience, teachingExperience, awards, etc.) pass an array of items and PRESERVE each existing item's 'id' field.",
       parameters: {
         type: "object",
         properties: {
@@ -95,7 +99,7 @@ function buildSystemPrompt(locale: string): string {
     return `คุณคือ Agent ผู้เชี่ยวชาญด้าน ATS (Applicant Tracking System) เป้าหมายคือปรับปรุงเรซูเม่ให้ได้คะแนน ATS 85+
 คุณมีเครื่องมือ (tools) เพื่อตรวจสอบและแก้ไขสำเนาเรซูเม่:
 - get_ats_score: ให้คะแนนเรซูเม่ปัจจุบัน (0-100) เรียกเป็นอันดับแรกและเรียกหลังทุกการเปลี่ยนแปลง
-- get_section: อ่านเนื้อหาของ section (summary, experience, skills, education, projects, certifications, languages, references)
+- get_section: อ่านเนื้อหาของ section (summary, experience, skills, education, projects, certifications, languages, references, publications, researchExperience, teachingExperience, awards)
 - update_section: เขียน section ใหม่ให้ผ่าน ATS
 
 กฎ:
@@ -103,7 +107,7 @@ function buildSystemPrompt(locale: string): string {
 2. เริ่มด้วย get_ats_score เพื่อวัดคะแนนตั้งต้น
 3. จากนั้น get_section ในส่วนที่อ่อน และ update_section เพื่อปรับปรุง:
    - ใช้คำกริยาแสดงความสำเร็จ (พัฒนา, เพิ่ม, ลด, จัดการ, นำทีม, ออกแบบ, ปรับปรุง)
-   - ใส่ตัวเลข/metrics ที่วัดผลได้ เช่น เพิ่มยอดขาย 30%, ลดต้นทุน 15%, จัดการทีม 10 คน
+   - ใช้ตัวเลข/metrics ที่มีอยู่ในเรซูเม่ต้นฉบับเท่านั้น เช่นถ้าต้นฉบับระบุ "เพิ่มยอดขาย 30%" ไว้แล้วจึงนำมาใช้ได้ ห้ามสร้างตัวเลขขึ้นใหม่เอง
    - ใส่ keywords จากรายละเอียดงานเป้าหมาย
    - ความยาว 1-2 บรรทัดต่อหัวข้อ กระชับ
    - หลีกเลี่ยงภาษาเรียบ ๆ คำฟุ่มเฟือย
@@ -111,12 +115,13 @@ function buildSystemPrompt(locale: string): string {
 5. คงภาษาดั้งเดิมของแต่ละ section ไว้เสมอเมื่อใช้ update_section ห้ามแปลเนื้อหาเป็นภาษาอื่น แม้รายละเอียดงานเป้าหมายจะเป็นคนละภาษาก็ตาม
 6. หลังทุก update_section ให้เรียก get_ats_score อีกครั้งเพื่อยืนยัน
 7. หยุดเมื่อคะแนนถึง 85 หรือเมื่อมั่นใจว่าไม่สามารถปรับปรุงได้มากกว่านี้
-8. เสร็จแล้วให้พิมพ์ข้อความสรุปการเปลี่ยนแปลง (โดยไม่เรียก tool)`;
+8. เสร็จแล้วให้พิมพ์ข้อความสรุปการเปลี่ยนแปลง (โดยไม่เรียก tool)
+9. ห้ามสร้างข้อมูลเท็จโดยเด็ดขาด ห้ามคิดค้นสถิติ ตัวเลข เปอร์เซ็นต์ วันที่ ชื่อบริษัท ตำแหน่งงาน หรือผลงานที่ไม่มีอยู่ในเรซูเม่ต้นฉบับ การเพิ่มตัวเลขใด ๆ ต้องมาจากต้นฉบับเท่านั้น`;
   }
   return `You are an expert ATS (Applicant Tracking System) optimization agent. Your goal is to improve the resume so it scores 85+ on an ATS scan.
 You have tools to inspect and modify a draft copy of the resume:
 - get_ats_score: score the current draft (0-100) with keyword analysis. Call this FIRST and after EVERY change.
-- get_section: read a section (summary, experience, skills, education, projects, certifications, languages, references).
+- get_section: read a section (summary, experience, skills, education, projects, certifications, languages, references, publications, researchExperience, teachingExperience, awards).
 - update_section: rewrite a section with ATS-optimized content.
 
 Rules:
@@ -124,7 +129,7 @@ Rules:
 2. Start by calling get_ats_score to measure the baseline.
 3. Then get_section on the weakest sections and update_section to improve them:
    - Use strong action verbs (achieved, led, developed, improved, designed, managed, reduced, increased).
-   - Quantify achievements with numbers/metrics (e.g., increased sales 30%, led team of 10, reduced costs 15%).
+   - Quantify achievements ONLY with numbers/metrics already present in the original resume (e.g., if the resume already says "increased sales 30%", you may reuse that figure). NEVER invent or exaggerate numbers, statistics, dates, percentages, names, or metrics.
    - Include relevant keywords from the target job description.
    - Keep each bullet 1-2 lines, concise and impactful.
    - Avoid first-person pronouns, fluff, or generic statements.
@@ -132,7 +137,8 @@ Rules:
 5. Keep each section in its original language when calling update_section. NEVER translate content into another language, even if the target job description is in a different language.
 6. After every update_section, call get_ats_score again to verify improvement.
 7. Stop when the score reaches 85 or higher, or when you determine no more meaningful gains are possible.
-8. When finished, output a plain-text summary of the changes you made (no tool calls).`;
+8. When finished, output a plain-text summary of the changes you made (no tool calls).
+9. NEVER fabricate anything. Do NOT invent statistics, numbers, percentages, dates, company names, job titles, or achievements that are not present in the original resume. Any figures you include must come from the original.`;
 }
 
 function coerceToArray(value: unknown): unknown[] {
@@ -201,7 +207,7 @@ export async function optimizeResume(options: {
   onStep?: (step: AgentStep) => void;
 }): Promise<OptimizeResult> {
   const { resumeData, jobDescription, modelId, onStep } = options;
-  const locale = resolveLocale(jobDescription, options.locale);
+  const locale = resolveResumeLocale(resumeData, jobDescription, options.locale);
 
   const agentModel =
     modelId && ALLOWED_MODELS[modelId]?.supportsTools ? modelId : undefined;
@@ -324,6 +330,10 @@ function buildSummary(changes: SectionChange[], locale: string): string {
           certifications: "ใบรับรอง",
           languages: "ภาษา",
           references: "ข้อมูลอ้างอิง",
+          publications: "สิ่งตีพิมพ์",
+          researchExperience: "ประสบการณ์วิจัย",
+          teachingExperience: "ประสบการณ์สอน",
+          awards: "รางวัล",
           head: "ปรับปรุงส่วน: ",
         }
       : {
@@ -335,6 +345,10 @@ function buildSummary(changes: SectionChange[], locale: string): string {
           certifications: "certifications",
           languages: "languages",
           references: "references",
+          publications: "publications",
+          researchExperience: "researchExperience",
+          teachingExperience: "teachingExperience",
+          awards: "awards",
           head: "Improved ",
         };
 
