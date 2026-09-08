@@ -7,6 +7,7 @@ import { autoFillRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();

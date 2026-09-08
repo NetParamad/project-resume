@@ -79,7 +79,9 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
   extract: {
     maxTokens: 4096,
     temperature: 0.2,
-    timeoutMs: 60_000,
+    // Kept short so both retry passes still finish inside the route's
+    // maxDuration; a slow model yields a JSON error, not a platform 504.
+    timeoutMs: 14_000,
     maxChain: 2,
     params: {
       chat_template_kwargs: { enable_thinking: false },

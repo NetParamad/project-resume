@@ -7,6 +7,7 @@ import { parseJsonBody } from "@/lib/validation/parse";
 import type { ResumeData } from "@/lib/types/resume";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
