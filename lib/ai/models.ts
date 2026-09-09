@@ -23,22 +23,21 @@ export interface RoleConfig {
 // NVIDIA_API_KEY on https://integrate.api.nvidia.com/v1 — ids that 404/410 for
 // the account make the whole chain fail. Verify against `GET /v1/models` and a
 // real chat completion before adding one.
+//
+// Order matters a lot for the streaming agent route (maxDuration 60s): a slow
+// lead model burns the whole budget before any fallback runs. Measured latency
+// on this account (single tool-call round):
+//   - nemotron-3.5-lightning-30b : ~16s, tool calls OK   → lead
+//   - gpt-oss-20b                : ~70s                   → last resort only
+//   - nemotron-3-super-120b      : ~22s, NO tool support  → JSON roles only
+//   - minimaxai/minimax-m3       : 410 Gone               → removed
 export const MODEL_CHAIN = [
-  "openai/gpt-oss-20b",
-  "minimaxai/minimax-m3",
   "nvidia/nemotron-3.5-lightning-30b-a3b",
   "nvidia/nemotron-3-super-120b-a12b",
+  "openai/gpt-oss-20b",
 ] as const;
 
 export const ALLOWED_MODELS: Record<string, ModelMeta> = {
-  "openai/gpt-oss-20b": {
-    label: "GPT-OSS-20B",
-    supportsTools: true,
-  },
-  "minimaxai/minimax-m3": {
-    label: "MiniMax-M3",
-    supportsTools: true,
-  },
   "nvidia/nemotron-3.5-lightning-30b-a3b": {
     label: "Nemotron-3.5-Lightning-30B",
     supportsTools: true,
@@ -47,13 +46,16 @@ export const ALLOWED_MODELS: Record<string, ModelMeta> = {
     label: "Nemotron-3-Super-120B",
     supportsTools: false,
   },
+  "openai/gpt-oss-20b": {
+    label: "GPT-OSS-20B",
+    supportsTools: true,
+  },
 };
 
 export const MODEL_PARAMS: Record<string, Record<string, unknown>> = {
   "openai/gpt-oss-20b": {
     reasoning_effort: "low",
   },
-  "minimaxai/minimax-m3": {},
   // Lightning streams its chain-of-thought into `content` by default, which
   // corrupts JSON-only replies — keep thinking off outside the agent role.
   "nvidia/nemotron-3.5-lightning-30b-a3b": {
@@ -93,7 +95,9 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
     timeoutMs: 50_000,
   },
   agent: {
-    maxTokens: 8192,
+    // Batched update_section calls carry full section JSON — 8k truncates the
+    // tool arguments mid-string and the edit lands as a stringified blob.
+    maxTokens: 16384,
     temperature: 0.4,
     timeoutMs: 90_000,
   },
