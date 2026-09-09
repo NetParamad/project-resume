@@ -6,7 +6,10 @@ import { ALLOWED_MODELS } from "./models";
 import { resolveResumeLocale } from "./detect-locale";
 import { buildPersona } from "./persona";
 
-export const MAX_ROUNDS = 6;
+// The improve route runs on Vercel (maxDuration 60s). One agent turn of
+// update_section calls is ~30s and the post-loop re-score is ~20s, so the
+// budget only stretches to a couple of turns.
+export const MAX_ROUNDS = 2;
 export const TARGET_SCORE = 85;
 
 export const OPTIMIZER_SECTIONS = [
@@ -38,38 +41,11 @@ export interface OptimizeResult {
   summary: string;
 }
 
+// The agent runs inside a ~60s serverless budget, so it gets exactly one tool:
+// rewrite a section. The full resume JSON and job description are already in the
+// prompt (no need to read sections back), and scoring happens once before and
+// once after the loop outside the agent (an in-loop score call costs ~20s).
 const TOOL_SCHEMA: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: "function",
-    function: {
-      name: "get_ats_score",
-      description:
-        "Score the current resume draft (0-100) with keyword analysis and suggestions. Call this first and after every change.",
-      parameters: {
-        type: "object",
-        properties: {},
-        additionalProperties: false,
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_section",
-      description: "Read the current content of a resume section.",
-      parameters: {
-        type: "object",
-        properties: {
-          section: {
-            type: "string",
-            enum: [...OPTIMIZER_SECTIONS],
-          },
-        },
-        required: ["section"],
-        additionalProperties: false,
-      },
-    },
-  },
   {
     type: "function",
     function: {
@@ -103,52 +79,57 @@ function buildSystemPrompt(locale: "th" | "en"): string {
 
 ### งานนี้: Agent ปรับปรุงเรซูเม่ให้ผ่าน ATS
 
-เป้าหมายคือปรับปรุงเรซูเม่ให้ได้คะแนน ATS 85 ขึ้นไป โดยทำงานบนสำเนา (draft) ผ่านเครื่องมือ:
-- get_ats_score: ให้คะแนน draft ปัจจุบัน (0-100) พร้อมวิเคราะห์คำหลัก เรียกเป็นอันดับแรกและหลังทุกการแก้ไข
-- get_section: อ่านเนื้อหาของ section (summary, experience, skills, education, projects, certifications, languages, references, publications, researchExperience, teachingExperience, awards)
-- update_section: เขียน section ใหม่ให้ผ่าน ATS
+เป้าหมายคือปรับปรุงเรซูเม่ให้ผ่าน ATS ได้ดีขึ้น คุณมีเวลาจำกัดมากและมีเครื่องมือเดียว: update_section (เขียน section ใหม่)
 
-ขั้นตอนการทำงาน:
-1. ต้องเรียก tool ก่อนเสมอ อย่าพิมพ์ข้อความธรรมดาจนกว่าจะทำงานเสร็จทั้งหมด
-2. เริ่มด้วย get_ats_score หนึ่งครั้งเพื่อวัดคะแนนตั้งต้น อย่าเรียกซ้ำก่อนจะลงมือแก้
-3. ใช้ get_section กับส่วนที่อ่อนที่สุด แล้ว update_section เพื่อปรับปรุง (ยึดตามหลักการปรับ ATS ในหลักการทำงานหลักด้านบน)
-4. หลังทุก update_section ให้เรียก get_ats_score อีกครั้งเพื่อยืนยันผล
-5. หยุดเมื่อคะแนนถึง 85 หรือเมื่อมั่นใจว่าไม่สามารถปรับปรุงได้อีกอย่างมีนัยสำคัญ
-6. เมื่อเสร็จ ให้พิมพ์ข้อความสรุปการเปลี่ยนแปลงเป็นภาษาไทย (โดยไม่เรียก tool)`;
+JSON เรซูเม่ฉบับเต็มและรายละเอียดงานเป้าหมายอยู่ในข้อความด้านล่างแล้ว
+
+ขั้นตอน:
+1. ในเทิร์นแรก (เทิร์นเดียว) ต้องเรียก update_section อย่างน้อย 3 ครั้งพร้อมกัน สำหรับ summary, experience และ skills เป็นอย่างน้อย (เพิ่ม section อื่นที่อ่อนได้) มีเวลาแค่ 2 เทิร์นเท่านั้น
+2. ยึดหลักการปรับ ATS ในหลักการทำงานหลักด้านบน แทรกคำหลักจากรายละเอียดงานเป้าหมายเท่าที่ข้อเท็จจริงรองรับ และห้ามกุข้อมูล
+3. สำหรับ section ที่เป็น array ต้องคง field 'id' ของทุก item เดิมไว้
+4. เมื่อแก้ไขเสร็จ ให้พิมพ์ข้อความสรุปการเปลี่ยนแปลงสั้น ๆ เป็นภาษาไทย (โดยไม่เรียก tool)`;
   }
 
   return `${persona}
 
 ### THIS TASK: ATS OPTIMIZATION AGENT
 
-Your goal is to improve the resume so it scores 85 or higher on an ATS scan. You work on a draft copy through tools:
-- get_ats_score: score the current draft (0-100) with keyword analysis. Call this FIRST and after EVERY change.
-- get_section: read a section (summary, experience, skills, education, projects, certifications, languages, references, publications, researchExperience, teachingExperience, awards).
-- update_section: rewrite a section with ATS-optimized content.
+Improve the resume's ATS readiness. You are on a very tight time budget and have a single tool: update_section (rewrite a section).
 
-Workflow:
-1. ALWAYS call a tool before writing anything. Never output plain text until you are completely done.
-2. Start with a single get_ats_score to measure the baseline. Do not call it again before making an edit.
-3. Use get_section on the weakest sections, then update_section to improve them (follow the ATS optimization principles in the core operating principles above).
-4. After every update_section, call get_ats_score again to verify the improvement.
-5. Stop when the score reaches 85 or higher, or when no more meaningful gains are possible.
-6. When finished, output a plain-text summary of the changes you made (no tool calls).`;
+The full resume JSON and the target job description are already in the message below.
+
+Steps:
+1. On your FIRST turn (a single turn), issue at least 3 update_section calls together — at minimum summary, experience, and skills (add other weak sections too). You only get 2 turns.
+2. Follow the ATS optimization principles in the core operating principles above, working in keywords from the target job description only where the facts support them. Never fabricate.
+3. For array sections, preserve the 'id' field of every existing item.
+4. When the edits are done, output a short plain-text summary of the changes (no tool calls).`;
+}
+
+function parseJsonArrayString(value: unknown): unknown[] | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("[")) return null;
+  try {
+    const parsed = JSON.parse(trimmed);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 function coerceToArray(value: unknown): unknown[] {
-  if (Array.isArray(value)) return value;
-  if (value === null || value === undefined) return [];
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (trimmed.startsWith("[")) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) return parsed;
-      } catch {
-        // fall through
-      }
+  if (Array.isArray(value)) {
+    // Models sometimes pass the whole array as a JSON string, which arrives
+    // wrapped as ["[{...}]"]. Unwrap that back into the real array.
+    if (value.length === 1) {
+      const unwrapped = parseJsonArrayString(value[0]);
+      if (unwrapped) return unwrapped;
     }
+    return value;
   }
+  if (value === null || value === undefined) return [];
+  const parsed = parseJsonArrayString(value);
+  if (parsed) return parsed;
   return [value];
 }
 
@@ -211,15 +192,14 @@ export async function optimizeResume(options: {
 
   const draft = JSON.parse(JSON.stringify(resumeData)) as Record<string, unknown>;
   const changes: SectionChange[] = [];
-  let lastAction: "score" | "update" | "none" = "none";
-  const getLastAction = () => lastAction;
 
   const systemPrompt = buildSystemPrompt(locale);
   const userContent =
     `Resume JSON:\n${JSON.stringify(resumeData, null, 2)}` +
     (jobDescription?.trim()
       ? `\n\nTarget Job Description:\n${jobDescription.trim()}`
-      : "");
+      : "") +
+    `\n\nRewrite the weakest sections now with update_section — summary, experience and skills are usually the highest impact.`;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
@@ -230,45 +210,21 @@ export async function optimizeResume(options: {
     name: string,
     args: Record<string, unknown>,
   ): Promise<unknown> => {
-    switch (name) {
-      case "get_ats_score": {
-        const result = await scoreResume(draft as object, jobDescription, locale, undefined, locale);
-        lastAction = "score";
-        // Nudge weak models that keep re-scoring the baseline instead of editing.
-        if (changes.length === 0) {
-          return {
-            ...result,
-            next_step:
-              locale === "th"
-                ? "ยังไม่ได้แก้ไข section ใดเลย ให้เรียก get_section แล้ว update_section เพื่อปรับปรุงส่วนที่อ่อนที่สุดทันที อย่าเรียก get_ats_score ซ้ำก่อนจะแก้ไข"
-                : "No sections edited yet. Call get_section then update_section now to improve the weakest sections. Do not call get_ats_score again before making an edit.",
-          };
-        }
-        return result;
-      }
-      case "get_section": {
-        const section = String(args.section ?? "");
-        return { section, content: draft[section] ?? null };
-      }
-      case "update_section": {
-        const section = String(args.section ?? "");
-        if (!OPTIMIZER_SECTIONS.includes(section as (typeof OPTIMIZER_SECTIONS)[number])) {
-          return { ok: false, error: `Unknown section: ${section}` };
-        }
-        const previous = JSON.parse(JSON.stringify(draft[section] ?? null));
-        const next = normalizeSection(section, args.content, draft[section]);
-        draft[section] = next;
-        lastAction = "update";
-        changes.push({
-          section,
-          previous,
-          current: JSON.parse(JSON.stringify(next)),
-        });
-        return { ok: true, section };
-      }
-      default:
-        return { error: `Unknown tool: ${name}` };
+    if (name !== "update_section") return { error: `Unknown tool: ${name}` };
+
+    const section = String(args.section ?? "");
+    if (!OPTIMIZER_SECTIONS.includes(section as (typeof OPTIMIZER_SECTIONS)[number])) {
+      return { ok: false, error: `Unknown section: ${section}` };
     }
+    const previous = JSON.parse(JSON.stringify(draft[section] ?? null));
+    const next = normalizeSection(section, args.content, draft[section]);
+    draft[section] = next;
+    changes.push({
+      section,
+      previous,
+      current: JSON.parse(JSON.stringify(next)),
+    });
+    return { ok: true, section };
   };
 
   const result = await runAgent({
@@ -276,41 +232,27 @@ export async function optimizeResume(options: {
     tools: TOOL_SCHEMA,
     executeTool,
     maxRounds: MAX_ROUNDS,
-    timeoutMs: 90_000,
+    timeoutMs: 40_000,
     modelId: agentModel,
     recoveryPrompt:
       locale === "th"
-        ? "คุณตอบกลับด้วยข้อความแต่ไม่ได้เรียกใช้ tool ใด ๆ โปรดทำงานต่อด้วยการเรียกใช้เครื่องมือ เริ่มจาก get_ats_score แล้วตามด้วย get_section หรือ update_section ตามความเหมาะสม และพิมพ์ข้อความสรุปเป็นภาษาไทยก็ต่อเมื่อเสร็จสิ้นการปรับปรุงแล้วเท่านั้น"
-        : "You replied with text but did not call any tool. Continue your work by calling a tool: start with get_ats_score, then get_section or update_section as appropriate. Only write your final summary text when you are completely finished improving the resume.",
+        ? "คุณตอบกลับด้วยข้อความแต่ไม่ได้เรียกใช้ tool ใด ๆ ให้เรียก update_section ทันทีสำหรับ section ที่อ่อนที่สุด และพิมพ์ข้อความสรุปเป็นภาษาไทยก็ต่อเมื่อแก้ไขเสร็จแล้วเท่านั้น"
+        : "You replied with text but did not call any tool. Call update_section now for the weakest sections. Only write your final summary text once the edits are done.",
     onStep,
-    checkStop: ({ scores }) => {
-      if (scores.length > 0) {
-        const last = scores[scores.length - 1];
-        if (last >= TARGET_SCORE) return { stop: true, reason: "target_reached" };
-      }
-      // Only call it a plateau once the agent has actually rewritten at least
-      // two sections. Weak models routinely re-run get_ats_score a couple of
-      // times before their first edit, which would otherwise trip an instant
-      // plateau and end the run with zero changes applied.
-      if (changes.length >= 2 && scores.length >= 2) {
-        const last = scores[scores.length - 1];
-        const prev = scores[scores.length - 2];
-        if (last <= prev) return { stop: true, reason: "plateau" };
-      }
-      return { stop: false };
-    },
   });
 
   const finalData = ensureIdsInArrays(draft);
 
-  if (getLastAction() === "update") {
+  const scores: number[] = [];
+  if (changes.length > 0) {
     const finalScore = await scoreResume(finalData as object, jobDescription, locale, undefined, locale);
-    result.scores.push(finalScore.score);
+    scores.push(finalScore.score);
 
     if (result.stopReason === "completed" && finalScore.score >= TARGET_SCORE) {
       result.stopReason = "target_reached";
     }
   }
+  result.scores = scores;
 
   const lastMessage = result.messages[result.messages.length - 1];
   const modelSummary =

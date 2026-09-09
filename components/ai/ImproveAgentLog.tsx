@@ -75,6 +75,9 @@ export function ImproveAgentLog({
         return t("noImprovement");
       case "no_tool_calls":
         return t("agentNoChanges");
+      case "final_message":
+      case "completed":
+        return t("agentDone");
       default:
         return t("maxRounds");
     }
