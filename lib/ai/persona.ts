@@ -1,6 +1,6 @@
 /**
  * Shared system-prompt preamble for every resume-processing feature
- * (ATS scoring, the improve agent, and anything added later). Feature
+ * (ATS scoring, the improve agent, tailor, polish, import). Feature
  * files append their own task-specific mechanics — tool names, JSON
  * shapes, output format — after this block.
  *
@@ -86,4 +86,17 @@ Your task is to analyze, extract, generate, or refine resume content based stric
 
 7. OUTPUT DISCIPLINE
 - Return exactly the format requested (JSON, plain text, or tool calls) with no extra commentary, preamble, or markdown fences unless asked.`;
+}
+
+/**
+ * Instruction appended when the user has explicitly picked an output
+ * language (the "Output language" control), which overrides the default
+ * "keep every field in its original language" rule. Used by the features
+ * that rewrite whole-resume content — tailor, polish, import/extract.
+ */
+export function buildTranslationDirective(locale: "th" | "en"): string {
+  if (locale === "th") {
+    return `ผู้ใช้เลือกให้ผลลัพธ์เป็นภาษาไทย: แปลเนื้อหาของทุกฟิลด์ให้เป็นภาษาไทยที่เป็นธรรมชาติและเป็นทางการ รวมถึงฟิลด์ที่เดิมเขียนเป็นภาษาอื่น กฎ "คงภาษาเดิมของแต่ละฟิลด์" ให้ยกเว้นเฉพาะกรณีนี้ แต่ยังต้องคงข้อเท็จจริง ตัวเลข และวันที่เดิมไว้ทั้งหมด ชื่อคน ชื่อบริษัท ชื่อผลิตภัณฑ์ และคำเฉพาะทางที่เป็นที่รู้จัก ให้คงตามต้นฉบับได้`;
+  }
+  return `The user has chosen English output: translate every field's content into natural, professional English, including fields originally written in another language. This overrides the "keep each field in its original language" rule. Preserve all original facts, numbers, and dates. You may keep people's names, company names, product names, and well-known proper nouns as written.`;
 }

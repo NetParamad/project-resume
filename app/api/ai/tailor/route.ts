@@ -23,12 +23,13 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, tailorRequestSchema);
     if (parsed.error) return parsed.error;
-    const { resumeData, jobDescription, locale, model } = parsed.data;
+    const { resumeData, jobDescription, locale, outputLocale, model } = parsed.data;
 
     const data = await tailorResume({
       resumeData: resumeData as unknown as ResumeData,
       jobDescription,
       locale: locale || "en",
+      outputLocale,
       modelId: model ?? undefined,
     });
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
+import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { Button } from "@/components/ui/button";
 import { Target, CheckCircle2, X, RotateCcw, Clock } from "lucide-react";
 import { AILoading } from "./AILoading";
@@ -20,6 +21,7 @@ export function TailorPanel() {
   const resumeData = useResumeStore((s) => s.data);
   const setData = useResumeStore((s) => s.setData);
   const model = useAIModelStore((s) => s.override);
+  const outputLocale = useAILanguageStore((s) => s.override) ?? undefined;
 
   const [jobDescription, setJobDescription] = useState("");
   const [phase, setPhase] = useState<Phase>("input");
@@ -56,6 +58,7 @@ export function TailorPanel() {
           resumeData,
           jobDescription,
           locale,
+          outputLocale,
           model,
         }),
         signal: controller.signal,

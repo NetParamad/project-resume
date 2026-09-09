@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
+import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +27,7 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
   const builderT = useTranslations("builder");
   const locale = useLocale();
   const model = useAIModelStore((s) => s.override);
+  const outputLocale = useAILanguageStore((s) => s.override) ?? undefined;
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
@@ -42,7 +44,7 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
       const res = await fetch("/api/ai/auto-fill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section, prompt, locale, model }),
+        body: JSON.stringify({ section, prompt, locale, outputLocale, model }),
       });
       const data = await res.json();
       if (data.content) {

@@ -23,11 +23,12 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, polishRequestSchema);
     if (parsed.error) return parsed.error;
-    const { resumeData, locale, model } = parsed.data;
+    const { resumeData, locale, outputLocale, model } = parsed.data;
 
     const data = await polishResume({
       resumeData: resumeData as unknown as ResumeData,
       locale: locale || "en",
+      outputLocale,
       modelId: model ?? undefined,
     });
 
