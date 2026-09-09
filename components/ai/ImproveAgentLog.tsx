@@ -216,7 +216,7 @@ export function ImproveAgentLog({
         </div>
       )}
 
-      {status === "done" && !applied && (
+      {status === "done" && !applied && result && result.changes.length > 0 && (
         <Button onClick={onApply} className="w-full">
           <CheckCircle2 size={14} className="mr-2" />
           {t("applyChanges")}

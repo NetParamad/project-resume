@@ -20,6 +20,8 @@ export const atsScoreRequestSchema = z.object({
   resumeData: resumeDataSchema,
   jobDescription: boundedText.optional(),
   locale: localeSchema,
+  // Explicit output-language choice. When set it overrides content auto-detection.
+  outputLocale: z.enum(["en", "th"]).optional(),
   model: modelSchema,
 });
 
@@ -27,6 +29,8 @@ export const improveRequestSchema = z.object({
   resumeData: resumeDataSchema,
   jobDescription: boundedText.optional().default(""),
   locale: localeSchema,
+  // Explicit output-language choice. When set it overrides content auto-detection.
+  outputLocale: z.enum(["en", "th"]).optional(),
   model: modelSchema,
 });
 

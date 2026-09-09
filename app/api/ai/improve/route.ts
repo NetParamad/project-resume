@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = await parseJsonBody(req, improveRequestSchema);
   if (parsed.error) return parsed.error;
-  const { resumeData, jobDescription, locale, model } = parsed.data;
+  const { resumeData, jobDescription, locale, outputLocale, model } = parsed.data;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
           resumeData,
           jobDescription,
           locale: locale || "en",
+          outputLocale,
           modelId: model ?? undefined,
           onStep: (step) => send("step", step),
         });

@@ -22,9 +22,15 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, atsScoreRequestSchema);
     if (parsed.error) return parsed.error;
-    const { resumeData, jobDescription, locale, model } = parsed.data;
+    const { resumeData, jobDescription, locale, outputLocale, model } = parsed.data;
 
-    const result = await scoreResume(resumeData, jobDescription, locale || "en", model ?? undefined);
+    const result = await scoreResume(
+      resumeData,
+      jobDescription,
+      locale || "en",
+      model ?? undefined,
+      outputLocale,
+    );
     return NextResponse.json(result);
   } catch (error) {
     console.error("ATS score error:", error);

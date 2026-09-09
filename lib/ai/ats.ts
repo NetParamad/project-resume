@@ -1,5 +1,6 @@
 import { llmText } from "./client";
 import { resolveResumeLocale } from "./detect-locale";
+import { buildPersona } from "./persona";
 
 export interface ATSResult {
   score: number;
@@ -8,18 +9,23 @@ export interface ATSResult {
   suggestions: string[];
 }
 
-function buildSystemPrompt(locale: string): string {
+function buildSystemPrompt(locale: "th" | "en"): string {
+  const persona = buildPersona(locale);
+
   if (locale === "th") {
-    return `คุณคือผู้เชี่ยวชาญด้าน ATS (Applicant Tracking System) วิเคราะห์เรซูเม่นี้และให้คะแนน พร้อมคำแนะนำ
-วิเคราะห์:
+    return `${persona}
+
+### งานนี้: ประเมินความเข้ากันได้กับ ATS
+
+วิเคราะห์เรซูเม่ที่ให้มา แล้วรายงาน:
 1. คะแนน ATS โดยรวม (0-100)
 2. คำหลัก (keywords) ที่พบในเรซูเม่
-3. คำหลักที่สำคัญแต่ขาดหายไป
-4. คำแนะนำในการปรับปรุง
+3. คำหลักสำคัญที่ขาดหายไป
+4. คำแนะนำในการปรับปรุงที่นำไปทำได้จริง
 
-ให้คะแนนจากเนื้อหาที่มีอยู่ในเรซูเม่จริงเท่านั้น ห้ามเพิ่มหรือลดคะแนนเกินจริงเพื่อเอาใจผู้ใช้
+หากมีรายละเอียดงานเป้าหมายแนบมา ให้ประเมินเทียบกับคำหลักและคุณสมบัติของงานนั้น
 
-ตอบเป็น JSON เท่านั้น:
+ตอบเป็น JSON ที่ถูกต้องเท่านั้น ไม่มีข้อความอื่นและไม่ครอบด้วย markdown:
 {
   "score": number,
   "keywordsFound": string[],
@@ -27,17 +33,20 @@ function buildSystemPrompt(locale: string): string {
   "suggestions": string[]
 }`;
   }
-  return `You are an ATS (Applicant Tracking System) expert. Analyze this resume and provide a score, keywords analysis, and suggestions.
 
-Analyze:
+  return `${persona}
+
+### THIS TASK: ATS COMPATIBILITY EVALUATION
+
+Analyze the provided resume and report:
 1. Overall ATS score (0-100)
 2. Keywords found in the resume
 3. Important missing keywords
-4. Suggestions for improvement
+4. Actionable suggestions for improvement
 
-Base the score strictly on content that actually exists in the resume. Never inflate or deflate the score to please the user.
+If a target job description is attached, evaluate against its keywords and requirements.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON, with no other text and no markdown fences:
 {
   "score": number,
   "keywordsFound": string[],
@@ -51,8 +60,9 @@ export async function scoreResume(
   jobDescription?: string,
   uiLocale = "en",
   modelId?: string,
+  forceLocale?: "th" | "en",
 ): Promise<ATSResult> {
-  const locale = resolveResumeLocale(resumeData, jobDescription, uiLocale);
+  const locale = forceLocale ?? resolveResumeLocale(resumeData, jobDescription, uiLocale);
   const systemPrompt = buildSystemPrompt(locale);
   const resumeText = JSON.stringify(resumeData, null, 2);
   const jobContext = jobDescription
