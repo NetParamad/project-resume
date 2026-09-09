@@ -5,6 +5,7 @@ import { parseResumeText } from "@/lib/parse-resume-text";
 import { sanitizeExtractedResume } from "@/lib/normalize-resume";
 import { llmText } from "@/lib/ai/client";
 import { resolveLocale } from "@/lib/ai/detect-locale";
+import { buildTranslationDirective } from "@/lib/ai/persona";
 import { extractResumeRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
 import type { ResumeData } from "@/lib/types/resume";
@@ -130,8 +131,11 @@ async function tryAIExtract(
   text: string,
   locale: string,
   modelId?: string,
+  translateTo?: "th" | "en",
 ): Promise<object | null> {
-  const systemPrompt = buildSystemPrompt(locale);
+  const systemPrompt = translateTo
+    ? `${buildSystemPrompt(locale)}\n\n${buildTranslationDirective(translateTo)}`
+    : buildSystemPrompt(locale);
   // Leave headroom before the route's maxDuration so a second pass never
   // gets started when it can't finish — the heuristic parser covers us then.
   const deadline = Date.now() + 40_000;
@@ -176,7 +180,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = await parseJsonBody(req, extractResumeRequestSchema);
   if (parsed.error) return parsed.error;
-  const { text, locale, model } = parsed.data;
+  const { text, locale, outputLocale, model } = parsed.data;
 
   const resumeText = text.trim();
   if (resumeText.length < 30) {
@@ -187,8 +191,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const contentLocale = resolveLocale(resumeText, locale || "en");
-    const aiResult = await tryAIExtract(resumeText, contentLocale, model ?? undefined);
+    const contentLocale = outputLocale ?? resolveLocale(resumeText, locale || "en");
+    const aiResult = await tryAIExtract(resumeText, contentLocale, model ?? undefined, outputLocale);
     if (aiResult) {
       return NextResponse.json({
         ...sanitizeExtractedResume(aiResult as Partial<ResumeData>),

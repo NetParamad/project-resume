@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
+import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { Button } from "@/components/ui/button";
 import { Sparkles, CheckCircle2, X, RotateCcw, Clock } from "lucide-react";
 import { AILoading } from "./AILoading";
@@ -20,6 +21,7 @@ export function PolishPanel() {
   const resumeData = useResumeStore((s) => s.data);
   const setData = useResumeStore((s) => s.setData);
   const model = useAIModelStore((s) => s.override);
+  const outputLocale = useAILanguageStore((s) => s.override) ?? undefined;
 
   const [phase, setPhase] = useState<Phase>("input");
   const [baseData, setBaseData] = useState<ResumeData | null>(null);
@@ -50,7 +52,7 @@ export function PolishPanel() {
       const res = await fetch("/api/ai/polish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData, locale, model }),
+        body: JSON.stringify({ resumeData, locale, outputLocale, model }),
         signal: controller.signal,
       });
       const data = await res.json();

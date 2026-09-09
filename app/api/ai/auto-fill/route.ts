@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, autoFillRequestSchema);
     if (parsed.error) return parsed.error;
-    const { section, context, prompt: userPrompt, locale: uiLocale, model } = parsed.data;
-    const locale = resolveLocale(userPrompt, uiLocale);
+    const { section, context, prompt: userPrompt, locale: uiLocale, outputLocale, model } = parsed.data;
+    const locale = outputLocale ?? resolveLocale(userPrompt, uiLocale);
 
     const systemPrompt = locale === "th"
       ? `คุณคือผู้เชี่ยวชาญการเขียนเรซูเม่ที่ผ่าน ATS (Applicant Tracking System)

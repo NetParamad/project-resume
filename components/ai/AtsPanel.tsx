@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
+import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertTriangle, CheckCircle2, Lightbulb, Bot, Clock } from "lucide-react";
@@ -40,10 +41,10 @@ export function AtsPanel() {
   const resumeData = useResumeStore((s) => s.data);
   const setData = useResumeStore((s) => s.setData);
   const model = useAIModelStore((s) => s.override);
+  const outputLocale = useAILanguageStore((s) => s.override) ?? undefined;
 
   const [result, setResult] = useState<ATSResult | null>(null);
   const [jobDescription, setJobDescription] = useState("");
-  const [outputLocale, setOutputLocale] = useState<"th" | "en">(locale === "th" ? "th" : "en");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkElapsed, setCheckElapsed] = useState<number | null>(null);
@@ -253,41 +254,18 @@ export function AtsPanel() {
       </div>
 
       {agentStatus === "idle" && !isLoading && (
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("outputLanguage")}
-            </span>
-            <div className="flex gap-2">
-              {(["th", "en"] as const).map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setOutputLocale(lang)}
-                  className={`flex-1 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-                    outputLocale === lang
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background hover:bg-accent"
-                  }`}
-                >
-                  {lang === "th" ? t("outputLanguageTh") : t("outputLanguageEn")}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="ats-job-description" className="text-xs font-medium text-muted-foreground">
-              {t("atsJobDescription")}
-            </label>
-            <textarea
-              id="ats-job-description"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder={t("atsJobDescriptionPlaceholder")}
-              className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              rows={4}
-            />
-          </div>
+        <div className="space-y-1">
+          <label htmlFor="ats-job-description" className="text-xs font-medium text-muted-foreground">
+            {t("atsJobDescription")}
+          </label>
+          <textarea
+            id="ats-job-description"
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            placeholder={t("atsJobDescriptionPlaceholder")}
+            className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            rows={4}
+          />
         </div>
       )}
 

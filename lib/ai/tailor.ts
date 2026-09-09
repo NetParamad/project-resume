@@ -1,6 +1,7 @@
 import { llmText } from "./client";
 import { extractJsonObject, mergeResumeOutput } from "./resume-utils";
 import { resolveResumeLocale } from "./detect-locale";
+import { buildTranslationDirective } from "./persona";
 import type { ResumeData } from "@/lib/types/resume";
 
 function buildSystemPrompt(locale: string): string {
@@ -37,11 +38,15 @@ export async function tailorResume(options: {
   resumeData: ResumeData;
   jobDescription: string;
   locale?: string;
+  outputLocale?: "th" | "en";
   modelId?: string;
 }): Promise<ResumeData> {
-  const { resumeData, jobDescription, modelId } = options;
-  const locale = resolveResumeLocale(resumeData, jobDescription, options.locale);
-  const system = buildSystemPrompt(locale);
+  const { resumeData, jobDescription, outputLocale, modelId } = options;
+  const locale =
+    outputLocale ?? resolveResumeLocale(resumeData, jobDescription, options.locale);
+  const system = outputLocale
+    ? `${buildSystemPrompt(locale)}\n\n${buildTranslationDirective(outputLocale)}`
+    : buildSystemPrompt(locale);
   const user = buildUserPrompt(resumeData, jobDescription);
 
   let parsed: unknown = null;

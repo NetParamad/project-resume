@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
+import { useAILanguageStore, type OutputLocale } from "@/lib/store/ai-language-store";
 import { ALLOWED_MODELS } from "@/lib/ai/models";
 import { cn } from "@/lib/utils";
 import { AtsPanel } from "./AtsPanel";
@@ -50,6 +51,14 @@ export function AIAssistDialog({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const override = useAIModelStore((s) => s.override);
   const setOverride = useAIModelStore((s) => s.setOverride);
+  const langOverride = useAILanguageStore((s) => s.override);
+  const setLangOverride = useAILanguageStore((s) => s.setOverride);
+
+  const LANG_OPTIONS: Array<{ value: OutputLocale | null; labelKey: string }> = [
+    { value: null, labelKey: "outputLanguageAuto" },
+    { value: "th", labelKey: "outputLanguageTh" },
+    { value: "en", labelKey: "outputLanguageEn" },
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,6 +142,30 @@ export function AIAssistDialog({
           >
             <div className="min-h-0 overflow-hidden">
               <div className="mt-3 space-y-1.5 max-h-[40vh] overflow-y-auto pr-1">
+              <div className="pb-1">
+                <p className="text-sm font-medium mb-1.5">{t("outputLanguage")}</p>
+                <div className="flex gap-1.5">
+                  {LANG_OPTIONS.map((opt) => {
+                    const selected = langOverride === opt.value;
+                    return (
+                      <button
+                        key={opt.labelKey}
+                        type="button"
+                        onClick={() => setLangOverride(opt.value)}
+                        className={cn(
+                          "flex-1 rounded-md border px-3 py-1.5 text-sm transition-all active:scale-[0.98]",
+                          selected
+                            ? "border-primary bg-primary/5 font-medium"
+                            : "border-border hover:bg-accent",
+                        )}
+                      >
+                        {t(opt.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1.5">{t("outputLanguageHint")}</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setOverride(null)}

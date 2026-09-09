@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
+import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { normalizeResumeData } from "@/lib/normalize-resume";
 import { extractPdfText } from "@/lib/pdf/extract-pdf-text";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
   const setCurrentResume = useResumeStore((s) => s.setCurrentResume);
   const documentType = useResumeStore((s) => s.documentType);
   const model = useAIModelStore((s) => s.override);
+  const outputLocale = useAILanguageStore((s) => s.override) ?? undefined;
   const startRef = useRef(0);
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
       const res = await fetch("/api/ai/extract-resume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, locale, model }),
+        body: JSON.stringify({ text, locale, outputLocale, model }),
       });
 
       const data = await res.json();

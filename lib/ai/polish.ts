@@ -1,6 +1,7 @@
 import { llmText } from "./client";
 import { extractJsonObject, mergeResumeOutput } from "./resume-utils";
 import { resolveResumeLocale } from "./detect-locale";
+import { buildTranslationDirective } from "./persona";
 import type { ResumeData } from "@/lib/types/resume";
 
 function buildSystemPrompt(locale: string): string {
@@ -31,10 +32,14 @@ Rules:
 export async function polishResume(options: {
   resumeData: ResumeData;
   locale?: string;
+  outputLocale?: "th" | "en";
   modelId?: string;
 }): Promise<ResumeData> {
-  const { resumeData, locale = "en", modelId } = options;
-  const effectiveLocale = resolveResumeLocale(resumeData, null, locale);
+  const { resumeData, locale = "en", outputLocale, modelId } = options;
+  const effectiveLocale = outputLocale ?? resolveResumeLocale(resumeData, null, locale);
+  const baseSystem = outputLocale
+    ? `${buildSystemPrompt(effectiveLocale)}\n\n${buildTranslationDirective(outputLocale)}`
+    : buildSystemPrompt(effectiveLocale);
 
   const user = `Resume JSON:\n${JSON.stringify(resumeData, null, 2)}\n\nReturn the polished resume as a single JSON object.`;
 
@@ -45,8 +50,8 @@ export async function polishResume(options: {
       modelId,
       system:
         attempt === 1
-          ? buildSystemPrompt(effectiveLocale)
-          : `${buildSystemPrompt(effectiveLocale)}\nReturn the raw JSON object without markdown fences, code blocks, or any commentary.`,
+          ? baseSystem
+          : `${baseSystem}\nReturn the raw JSON object without markdown fences, code blocks, or any commentary.`,
       user,
     });
     parsed = extractJsonObject(raw);
