@@ -4,6 +4,7 @@ import { runAgent, type AgentStep } from "./agent";
 import { scoreResume } from "./ats";
 import { ALLOWED_MODELS } from "./models";
 import { resolveResumeLocale } from "./detect-locale";
+import { buildPersona } from "./persona";
 
 export const MAX_ROUNDS = 6;
 export const TARGET_SCORE = 85;
@@ -94,51 +95,44 @@ const TOOL_SCHEMA: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   },
 ];
 
-function buildSystemPrompt(locale: string): string {
+function buildSystemPrompt(locale: "th" | "en"): string {
+  const persona = buildPersona(locale);
+
   if (locale === "th") {
-    return `คุณคือ Agent ผู้เชี่ยวชาญด้าน ATS (Applicant Tracking System) เป้าหมายคือปรับปรุงเรซูเม่ให้ได้คะแนน ATS 85+
-คุณมีเครื่องมือ (tools) เพื่อตรวจสอบและแก้ไขสำเนาเรซูเม่:
-- get_ats_score: ให้คะแนนเรซูเม่ปัจจุบัน (0-100) เรียกเป็นอันดับแรกและเรียกหลังทุกการเปลี่ยนแปลง
+    return `${persona}
+
+### งานนี้: Agent ปรับปรุงเรซูเม่ให้ผ่าน ATS
+
+เป้าหมายคือปรับปรุงเรซูเม่ให้ได้คะแนน ATS 85 ขึ้นไป โดยทำงานบนสำเนา (draft) ผ่านเครื่องมือ:
+- get_ats_score: ให้คะแนน draft ปัจจุบัน (0-100) พร้อมวิเคราะห์คำหลัก เรียกเป็นอันดับแรกและหลังทุกการแก้ไข
 - get_section: อ่านเนื้อหาของ section (summary, experience, skills, education, projects, certifications, languages, references, publications, researchExperience, teachingExperience, awards)
 - update_section: เขียน section ใหม่ให้ผ่าน ATS
 
-กฎ:
-1. ต้องเรียก tool เสมอก่อนเขียนอะไร อย่าพิมพ์ข้อความธรรมดาจนกว่าจะทำงานเสร็จ
-2. เริ่มด้วย get_ats_score เพื่อวัดคะแนนตั้งต้น
-3. จากนั้น get_section ในส่วนที่อ่อน และ update_section เพื่อปรับปรุง:
-   - ใช้คำกริยาแสดงความสำเร็จ (พัฒนา, เพิ่ม, ลด, จัดการ, นำทีม, ออกแบบ, ปรับปรุง)
-   - ใช้ตัวเลข/metrics ที่มีอยู่ในเรซูเม่ต้นฉบับเท่านั้น เช่นถ้าต้นฉบับระบุ "เพิ่มยอดขาย 30%" ไว้แล้วจึงนำมาใช้ได้ ห้ามสร้างตัวเลขขึ้นใหม่เอง
-   - ใส่ keywords จากรายละเอียดงานเป้าหมาย
-   - ความยาว 1-2 บรรทัดต่อหัวข้อ กระชับ
-   - หลีกเลี่ยงภาษาเรียบ ๆ คำฟุ่มเฟือย
-4. เมื่อแก้ section ประเภท array ต้องรักษา field 'id' ของทุก item เดิมไว้ ห้ามลบ เปลี่ยน หรือสร้าง id ใหม่
-5. คงภาษาดั้งเดิมของแต่ละ section ไว้เสมอเมื่อใช้ update_section ห้ามแปลเนื้อหาเป็นภาษาอื่น แม้รายละเอียดงานเป้าหมายจะเป็นคนละภาษาก็ตาม
-6. หลังทุก update_section ให้เรียก get_ats_score อีกครั้งเพื่อยืนยัน
-7. หยุดเมื่อคะแนนถึง 85 หรือเมื่อมั่นใจว่าไม่สามารถปรับปรุงได้มากกว่านี้
-8. เสร็จแล้วให้พิมพ์ข้อความสรุปการเปลี่ยนแปลง (โดยไม่เรียก tool)
-9. ห้ามสร้างข้อมูลเท็จโดยเด็ดขาด ห้ามคิดค้นสถิติ ตัวเลข เปอร์เซ็นต์ วันที่ ชื่อบริษัท ตำแหน่งงาน หรือผลงานที่ไม่มีอยู่ในเรซูเม่ต้นฉบับ การเพิ่มตัวเลขใด ๆ ต้องมาจากต้นฉบับเท่านั้น`;
+ขั้นตอนการทำงาน:
+1. ต้องเรียก tool ก่อนเสมอ อย่าพิมพ์ข้อความธรรมดาจนกว่าจะทำงานเสร็จทั้งหมด
+2. เริ่มด้วย get_ats_score หนึ่งครั้งเพื่อวัดคะแนนตั้งต้น อย่าเรียกซ้ำก่อนจะลงมือแก้
+3. ใช้ get_section กับส่วนที่อ่อนที่สุด แล้ว update_section เพื่อปรับปรุง (ยึดตามหลักการปรับ ATS ในหลักการทำงานหลักด้านบน)
+4. หลังทุก update_section ให้เรียก get_ats_score อีกครั้งเพื่อยืนยันผล
+5. หยุดเมื่อคะแนนถึง 85 หรือเมื่อมั่นใจว่าไม่สามารถปรับปรุงได้อีกอย่างมีนัยสำคัญ
+6. เมื่อเสร็จ ให้พิมพ์ข้อความสรุปการเปลี่ยนแปลงเป็นภาษาไทย (โดยไม่เรียก tool)`;
   }
-  return `You are an expert ATS (Applicant Tracking System) optimization agent. Your goal is to improve the resume so it scores 85+ on an ATS scan.
-You have tools to inspect and modify a draft copy of the resume:
+
+  return `${persona}
+
+### THIS TASK: ATS OPTIMIZATION AGENT
+
+Your goal is to improve the resume so it scores 85 or higher on an ATS scan. You work on a draft copy through tools:
 - get_ats_score: score the current draft (0-100) with keyword analysis. Call this FIRST and after EVERY change.
 - get_section: read a section (summary, experience, skills, education, projects, certifications, languages, references, publications, researchExperience, teachingExperience, awards).
 - update_section: rewrite a section with ATS-optimized content.
 
-Rules:
-1. ALWAYS use a tool before writing anything. Never output plain text until you are completely done.
-2. Start by calling get_ats_score to measure the baseline.
-3. Then get_section on the weakest sections and update_section to improve them:
-   - Use strong action verbs (achieved, led, developed, improved, designed, managed, reduced, increased).
-   - Quantify achievements ONLY with numbers/metrics already present in the original resume (e.g., if the resume already says "increased sales 30%", you may reuse that figure). NEVER invent or exaggerate numbers, statistics, dates, percentages, names, or metrics.
-   - Include relevant keywords from the target job description.
-   - Keep each bullet 1-2 lines, concise and impactful.
-   - Avoid first-person pronouns, fluff, or generic statements.
-4. When updating array sections, PRESERVE the 'id' field of each existing item. Never remove, rename, or invent ids.
-5. Keep each section in its original language when calling update_section. NEVER translate content into another language, even if the target job description is in a different language.
-6. After every update_section, call get_ats_score again to verify improvement.
-7. Stop when the score reaches 85 or higher, or when you determine no more meaningful gains are possible.
-8. When finished, output a plain-text summary of the changes you made (no tool calls).
-9. NEVER fabricate anything. Do NOT invent statistics, numbers, percentages, dates, company names, job titles, or achievements that are not present in the original resume. Any figures you include must come from the original.`;
+Workflow:
+1. ALWAYS call a tool before writing anything. Never output plain text until you are completely done.
+2. Start with a single get_ats_score to measure the baseline. Do not call it again before making an edit.
+3. Use get_section on the weakest sections, then update_section to improve them (follow the ATS optimization principles in the core operating principles above).
+4. After every update_section, call get_ats_score again to verify the improvement.
+5. Stop when the score reaches 85 or higher, or when no more meaningful gains are possible.
+6. When finished, output a plain-text summary of the changes you made (no tool calls).`;
 }
 
 function coerceToArray(value: unknown): unknown[] {
@@ -203,11 +197,14 @@ export async function optimizeResume(options: {
   resumeData: Record<string, unknown>;
   jobDescription?: string;
   locale?: string;
+  outputLocale?: "th" | "en";
   modelId?: string;
   onStep?: (step: AgentStep) => void;
 }): Promise<OptimizeResult> {
   const { resumeData, jobDescription, modelId, onStep } = options;
-  const locale = resolveResumeLocale(resumeData, jobDescription, options.locale);
+  const locale =
+    options.outputLocale ??
+    resolveResumeLocale(resumeData, jobDescription, options.locale);
 
   const agentModel =
     modelId && ALLOWED_MODELS[modelId]?.supportsTools ? modelId : undefined;
@@ -235,8 +232,18 @@ export async function optimizeResume(options: {
   ): Promise<unknown> => {
     switch (name) {
       case "get_ats_score": {
-        const result = await scoreResume(draft as object, jobDescription, locale);
+        const result = await scoreResume(draft as object, jobDescription, locale, undefined, locale);
         lastAction = "score";
+        // Nudge weak models that keep re-scoring the baseline instead of editing.
+        if (changes.length === 0) {
+          return {
+            ...result,
+            next_step:
+              locale === "th"
+                ? "ยังไม่ได้แก้ไข section ใดเลย ให้เรียก get_section แล้ว update_section เพื่อปรับปรุงส่วนที่อ่อนที่สุดทันที อย่าเรียก get_ats_score ซ้ำก่อนจะแก้ไข"
+                : "No sections edited yet. Call get_section then update_section now to improve the weakest sections. Do not call get_ats_score again before making an edit.",
+          };
+        }
         return result;
       }
       case "get_section": {
@@ -281,7 +288,11 @@ export async function optimizeResume(options: {
         const last = scores[scores.length - 1];
         if (last >= TARGET_SCORE) return { stop: true, reason: "target_reached" };
       }
-      if (scores.length >= 2) {
+      // Only call it a plateau once the agent has actually rewritten at least
+      // two sections. Weak models routinely re-run get_ats_score a couple of
+      // times before their first edit, which would otherwise trip an instant
+      // plateau and end the run with zero changes applied.
+      if (changes.length >= 2 && scores.length >= 2) {
         const last = scores[scores.length - 1];
         const prev = scores[scores.length - 2];
         if (last <= prev) return { stop: true, reason: "plateau" };
@@ -293,7 +304,7 @@ export async function optimizeResume(options: {
   const finalData = ensureIdsInArrays(draft);
 
   if (getLastAction() === "update") {
-    const finalScore = await scoreResume(finalData as object, jobDescription, locale);
+    const finalScore = await scoreResume(finalData as object, jobDescription, locale, undefined, locale);
     result.scores.push(finalScore.score);
 
     if (result.stopReason === "completed" && finalScore.score >= TARGET_SCORE) {
