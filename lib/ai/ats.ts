@@ -61,6 +61,7 @@ export async function scoreResume(
   uiLocale = "en",
   modelId?: string,
   forceLocale?: "th" | "en",
+  timeoutMs?: number,
 ): Promise<ATSResult> {
   const locale = forceLocale ?? resolveResumeLocale(resumeData, jobDescription, uiLocale);
   const systemPrompt = buildSystemPrompt(locale);
@@ -74,6 +75,7 @@ export async function scoreResume(
     modelId,
     system: systemPrompt,
     user: `Resume Data:\n${resumeText}${jobContext}`,
+    timeoutMs,
   });
   const text = result ?? "";
 

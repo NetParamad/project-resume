@@ -486,6 +486,7 @@
     "targetReached": "Target score reached (85+)",
     "noImprovement": "No further improvement detected, stopping.",
     "maxRounds": "Reached maximum improvement rounds.",
+    "agentTimeBudget": "Time limit reached — applied the changes made so far.",
     "scoreHistory": "Score History",
     "changesSummary": "Changes made by agent",
     "applyChanges": "Apply Changes",

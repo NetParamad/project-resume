@@ -12,6 +12,14 @@ import { buildPersona } from "./persona";
 export const MAX_ROUNDS = 2;
 export const TARGET_SCORE = 85;
 
+// The improve route is capped at maxDuration = 60s on Vercel. If we run right up
+// to that limit the platform kills the function mid-work and the SSE stream
+// closes with no `done` event, leaving the client stuck. Stop the agent loop
+// early enough to still run (or deliberately skip) the post-loop re-score and
+// emit a real result.
+const TOTAL_BUDGET_MS = 52_000;
+const RESCORE_RESERVE_MS = 16_000;
+
 export const OPTIMIZER_SECTIONS = [
   "summary",
   "experience",
@@ -183,6 +191,8 @@ export async function optimizeResume(options: {
   onStep?: (step: AgentStep) => void;
 }): Promise<OptimizeResult> {
   const { resumeData, jobDescription, modelId, onStep } = options;
+  const startedAt = Date.now();
+  const elapsedMs = () => Date.now() - startedAt;
   const locale =
     options.outputLocale ??
     resolveResumeLocale(resumeData, jobDescription, options.locale);
@@ -234,6 +244,12 @@ export async function optimizeResume(options: {
     maxRounds: MAX_ROUNDS,
     timeoutMs: 40_000,
     modelId: agentModel,
+    checkStop: () => {
+      if (elapsedMs() > TOTAL_BUDGET_MS - RESCORE_RESERVE_MS) {
+        return { stop: true, reason: "time_budget" };
+      }
+      return { stop: false };
+    },
     recoveryPrompt:
       locale === "th"
         ? "คุณตอบกลับด้วยข้อความแต่ไม่ได้เรียกใช้ tool ใด ๆ ให้เรียก update_section ทันทีสำหรับ section ที่อ่อนที่สุด และพิมพ์ข้อความสรุปเป็นภาษาไทยก็ต่อเมื่อแก้ไขเสร็จแล้วเท่านั้น"
@@ -244,12 +260,25 @@ export async function optimizeResume(options: {
   const finalData = ensureIdsInArrays(draft);
 
   const scores: number[] = [];
-  if (changes.length > 0) {
-    const finalScore = await scoreResume(finalData as object, jobDescription, locale, undefined, locale);
-    scores.push(finalScore.score);
+  const rescoreBudgetMs = TOTAL_BUDGET_MS - elapsedMs();
+  if (changes.length > 0 && rescoreBudgetMs > 6_000) {
+    try {
+      const finalScore = await scoreResume(
+        finalData as object,
+        jobDescription,
+        locale,
+        undefined,
+        locale,
+        Math.min(rescoreBudgetMs, 40_000),
+      );
+      scores.push(finalScore.score);
 
-    if (result.stopReason === "completed" && finalScore.score >= TARGET_SCORE) {
-      result.stopReason = "target_reached";
+      if (result.stopReason === "completed" && finalScore.score >= TARGET_SCORE) {
+        result.stopReason = "target_reached";
+      }
+    } catch {
+      // Out of time or the scorer failed — still return the section changes
+      // so the user can apply them; the panel re-scores on demand.
     }
   }
   result.scores = scores;

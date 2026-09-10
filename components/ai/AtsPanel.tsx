@@ -159,6 +159,7 @@ export function AtsPanel() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let sawTerminalEvent = false;
 
       for (;;) {
         const { done, value } = await reader.read();
@@ -169,12 +170,20 @@ export function AtsPanel() {
         while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
           const rawEvent = buffer.slice(0, sepIndex);
           buffer = buffer.slice(sepIndex + 2);
-          handleSSEEvent(rawEvent);
+          const evt = handleSSEEvent(rawEvent);
+          if (evt === "done" || evt === "error") sawTerminalEvent = true;
         }
       }
 
       setAgentElapsed((Date.now() - agentStartRef.current) / 1000);
-      setAgentStatus((prev) => (prev === "error" ? prev : "done"));
+      if (!sawTerminalEvent) {
+        // Stream closed without a done/error event — usually the serverless
+        // function hit its time limit mid-run. Don't leave the UI hanging.
+        setAgentError(t("agentError"));
+        setAgentStatus("error");
+      } else {
+        setAgentStatus((prev) => (prev === "error" ? prev : "done"));
+      }
     } catch {
       if (!controller.signal.aborted) {
         setAgentError(t("agentError"));
@@ -185,7 +194,7 @@ export function AtsPanel() {
     }
   };
 
-  const handleSSEEvent = (raw: string) => {
+  const handleSSEEvent = (raw: string): string | null => {
     const lines = raw.split("\n");
     let event = "message";
     let dataStr = "";
@@ -193,13 +202,13 @@ export function AtsPanel() {
       if (line.startsWith("event:")) event = line.slice(6).trim();
       else if (line.startsWith("data:")) dataStr += line.slice(5).trim();
     }
-    if (!dataStr) return;
+    if (!dataStr) return null;
 
     let data: unknown;
     try {
       data = JSON.parse(dataStr);
     } catch {
-      return;
+      return null;
     }
 
     switch (event) {
@@ -226,6 +235,8 @@ export function AtsPanel() {
         break;
       }
     }
+
+    return event;
   };
 
   const handleApply = () => {
