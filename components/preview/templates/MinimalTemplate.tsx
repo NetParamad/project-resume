@@ -52,8 +52,11 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
           <h2 className="text-[10px] font-semibold tracking-[0.15em] uppercase mb-3" style={{ color: accentColor }}>{t("education")}</h2>
           {education.map((edu) => (
             <div key={edu.id} className="mb-2">
-              <p className="text-xs font-medium">{edu.degree}</p>
-              <p className="text-[10px] text-gray-500">{edu.institution}, {edu.field}</p>
+              <div className="flex justify-between items-baseline">
+                <p className="text-xs font-medium">{edu.degree}</p>
+                <p className="text-[10px] text-gray-400">{edu.startDate} – {edu.endDate}</p>
+              </div>
+              <p className="text-[10px] text-gray-500">{edu.institution}, {edu.field}{edu.gpa ? ` — ${t("gpa")}: ${edu.gpa}` : ""}</p>
             </div>
           ))}
         </div>

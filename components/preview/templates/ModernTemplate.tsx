@@ -80,7 +80,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
                 </p>
               </div>
               <p className="text-xs text-gray-600">
-                {edu.institution} | {edu.field}
+                {edu.institution} | {edu.field}{edu.gpa ? ` | ${t("gpa")}: ${edu.gpa}` : ""}
               </p>
             </div>
           ))}
