@@ -4,7 +4,7 @@ import { runAgent, type AgentStep } from "./agent";
 import { scoreResume } from "./ats";
 import { ALLOWED_MODELS } from "./models";
 import { resolveResumeLocale } from "./detect-locale";
-import { buildPersona } from "./persona";
+import { buildPersona, buildTranslationDirective } from "./persona";
 
 // The improve route runs on Vercel (maxDuration 60s). One agent turn of
 // update_section calls is ~30s and the post-loop re-score is ~20s, so the
@@ -203,7 +203,9 @@ export async function optimizeResume(options: {
   const draft = JSON.parse(JSON.stringify(resumeData)) as Record<string, unknown>;
   const changes: SectionChange[] = [];
 
-  const systemPrompt = buildSystemPrompt(locale);
+  const systemPrompt = options.outputLocale
+    ? `${buildSystemPrompt(locale)}\n\n${buildTranslationDirective(options.outputLocale)}`
+    : buildSystemPrompt(locale);
   const userContent =
     `Resume JSON:\n${JSON.stringify(resumeData, null, 2)}` +
     (jobDescription?.trim()

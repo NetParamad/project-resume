@@ -10,6 +10,21 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // Georgia/Cambria/Times have no Thai glyphs, so Thai characters inside
+        // `font-serif` elements (ClassicTemplate headings, dates, etc.) would
+        // otherwise fall back to an arbitrary OS font instead of the app's
+        // chosen Thai typeface. Chain the Noto Sans Thai variable in before
+        // the generic `serif` so unsupported glyphs land on a font we control.
+        serif: [
+          "Georgia",
+          "Cambria",
+          '"Times New Roman"',
+          "Times",
+          "var(--font-noto-sans-thai)",
+          "serif",
+        ],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

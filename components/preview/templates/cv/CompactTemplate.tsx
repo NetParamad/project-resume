@@ -41,7 +41,7 @@ export function CompactTemplate({ data }: CompactTemplateProps) {
           {education.map((edu) => (
             <div key={edu.id} className="mb-1">
               <p className="text-[12px] font-medium">{edu.degree}</p>
-              <p className="text-[11px] text-gray-500">{edu.institution} • {edu.startDate} - {edu.endDate}</p>
+              <p className="text-[11px] text-gray-500">{edu.institution} • {edu.startDate} - {edu.endDate}{edu.gpa ? ` • ${t("gpa")}: ${edu.gpa}` : ""}</p>
             </div>
           ))}
         </div>

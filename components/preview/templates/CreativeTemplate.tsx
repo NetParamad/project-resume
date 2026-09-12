@@ -55,8 +55,11 @@ export function CreativeTemplate({ data }: { data: ResumeData }) {
             <h2 className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: accentColor }}>{t("education")}</h2>
             {education.map((edu) => (
               <div key={edu.id} className="mb-2">
-                <p className="text-sm font-bold">{edu.degree}</p>
-                <p className="text-xs text-gray-600">{edu.institution} — {edu.field}</p>
+                <div className="flex justify-between items-baseline">
+                  <p className="text-sm font-bold">{edu.degree}</p>
+                  <p className="text-[10px] text-gray-500">{edu.startDate} – {edu.endDate}</p>
+                </div>
+                <p className="text-xs text-gray-600">{edu.institution} — {edu.field}{edu.gpa ? ` — ${t("gpa")}: ${edu.gpa}` : ""}</p>
               </div>
             ))}
           </div>
