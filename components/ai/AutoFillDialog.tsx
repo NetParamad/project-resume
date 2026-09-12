@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { useAILanguageStore } from "@/lib/store/ai-language-store";
+import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,10 +42,11 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
     setError("");
 
     try {
+      const resumeData = useResumeStore.getState().data;
       const res = await fetch("/api/ai/auto-fill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section, prompt, locale, outputLocale, model }),
+        body: JSON.stringify({ section, itemId, prompt, locale, outputLocale, model, resumeData }),
       });
       const data = await res.json();
       if (data.content) {

@@ -47,7 +47,9 @@ export const extractResumeRequestSchema = z.object({
 
 export const autoFillRequestSchema = z.object({
   section: z.string().min(1, "section is required"),
+  itemId: z.string().optional(),
   context: z.record(z.string(), z.unknown()).nullable().default(null),
+  resumeData: resumeDataSchema.optional(),
   prompt: z.string().optional().default(""),
   locale: localeSchema,
   outputLocale: outputLocaleSchema,
