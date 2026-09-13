@@ -27,7 +27,7 @@ async function createCompletion(options: {
   modelId: string;
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
   tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
-  maxTokens: number;
+  maxTokens?: number;
   temperature: number;
   params: Record<string, unknown>;
   timeoutMs: number;
@@ -44,7 +44,10 @@ async function createCompletion(options: {
         messages,
         tools,
         temperature,
-        max_tokens: maxTokens,
+        // Omitted entirely (not just a large number) when unset, so the
+        // provider's own per-model ceiling applies instead of ours cutting
+        // the answer short.
+        ...(maxTokens !== undefined ? { max_tokens: maxTokens } : {}),
         stream: false,
         ...params,
       } as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
@@ -98,7 +101,7 @@ export async function llmCall(options: {
     : chain;
   const limitedChain = roleConfig.maxChain ? activeChain.slice(0, roleConfig.maxChain) : activeChain;
 
-  const maxTokens = options.maxTokens ?? roleConfig.maxTokens ?? 4096;
+  const maxTokens = options.maxTokens ?? roleConfig.maxTokens;
   const temperature = options.temperature ?? roleConfig.temperature ?? 0.5;
   const timeoutMs = options.timeoutMs ?? roleConfig.timeoutMs ?? 25_000;
 
