@@ -69,12 +69,15 @@ export const MODEL_PARAMS: Record<string, Record<string, unknown>> = {
 
 export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
   autofill: {
-    // No maxTokens cap: leaving max_tokens unset lets the provider apply its
-    // own per-model ceiling instead of ours cutting the answer short — matters
-    // most for reasoning models that spend part of the budget on hidden
-    // "thinking" before the real answer.
+    // Generous enough that no real autofill answer is ever cut short, but
+    // bounded — leaving it unset let a slow/verbose reasoning model run
+    // past the route's 60s maxDuration (Vercel kills the function mid-call,
+    // which looks like a hang followed by a generic error on the client).
+    maxTokens: 16384,
     temperature: 0.4,
-    timeoutMs: 50_000,
+    // 3 models × 18s worst case = 54s, under the 60s route maxDuration with
+    // room to spare for auth/rate-limit checks either side of the LLM call.
+    timeoutMs: 18_000,
   },
   tailor: {
     maxTokens: 16384,
