@@ -54,6 +54,18 @@ async function createCompletion(options: {
     const message = response.choices?.[0]?.message;
     if (!message) throw new Error("Empty LLM response");
 
+    // Reasoning models can burn the entire max_tokens budget on hidden
+    // "thinking" before emitting any answer, leaving `content` null/empty
+    // with finish_reason "length" — a 200 response with no real output. Treat
+    // that as a failure so the caller's fallback chain retries the next
+    // model instead of silently returning an empty string as success.
+    const hasToolCalls = (message.tool_calls?.length ?? 0) > 0;
+    if (!hasToolCalls && !message.content?.trim()) {
+      throw new Error(
+        `Empty completion content (finish_reason: ${response.choices?.[0]?.finish_reason ?? "unknown"})`,
+      );
+    }
+
     return message as OpenAI.Chat.Completions.ChatCompletionMessage;
   } finally {
     clearTimeout(timer);
