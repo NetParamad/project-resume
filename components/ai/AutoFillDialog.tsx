@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { useAILanguageStore } from "@/lib/store/ai-language-store";
@@ -36,6 +36,7 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const lastPrefillRef = useRef("");
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -72,20 +73,28 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
       setOpen(false);
       setPrompt("");
       setResult("");
+      lastPrefillRef.current = "";
     }
   };
 
   const sectionTitle = builderT(`${section}.title` as never);
+  const isPristinePrefill = prompt !== "" && prompt === lastPrefillRef.current;
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     // Prefill from what's already saved so "Improve with AI" starts from
-    // the existing content instead of a blank box — but only the first
-    // time, so a draft the user is mid-typing never gets clobbered.
-    if (next && !prompt.trim()) {
+    // the existing content instead of a blank box. Re-sync on every open —
+    // but only while the box still holds what we last auto-filled (or is
+    // empty); once the user types their own words, leave their draft alone.
+    // Without the re-sync, closing the dialog after editing other fields
+    // (e.g. switching this item to a different company) and reopening it
+    // would keep showing the old prefill forever, since `prompt` never
+    // resets on its own.
+    if (next && (prompt === "" || prompt === lastPrefillRef.current)) {
       const resumeData = useResumeStore.getState().data;
       const prefill = buildPrefillPrompt(section, itemId, resumeData);
-      if (prefill) setPrompt(prefill);
+      lastPrefillRef.current = prefill;
+      if (prefill !== prompt) setPrompt(prefill);
     }
   };
 
@@ -108,6 +117,9 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
           <DialogDescription>{t("prompt")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          {isPristinePrefill && (
+            <p className="text-xs text-amber-600 dark:text-amber-500">{t("prefillHint")}</p>
+          )}
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
