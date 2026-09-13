@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
 import { splitFields } from "@/lib/ai/split-fields";
+import { sectionFieldOrder } from "@/lib/ai/section-fields";
 import { Plus, Trash2 } from "lucide-react";
 import type { Publication } from "@/lib/types/resume";
 
@@ -27,12 +28,7 @@ export function PublicationsForm() {
         itemId?: string;
       };
       if (section !== "publications" || !content) return;
-      const patch: Partial<Publication> = splitFields(content, [
-        "title",
-        "authors",
-        "journal",
-        "year",
-      ]);
+      const patch: Partial<Publication> = splitFields(content, sectionFieldOrder("publications"));
       if (itemId) {
         update(itemId, patch);
         return;

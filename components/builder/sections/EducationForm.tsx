@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
 import { splitFields } from "@/lib/ai/split-fields";
+import { sectionFieldOrder } from "@/lib/ai/section-fields";
 import { Plus, Trash2 } from "lucide-react";
 import type { Education } from "@/lib/types/resume";
 
@@ -27,12 +28,7 @@ export function EducationForm() {
         itemId?: string;
       };
       if (section !== "education" || !content) return;
-      const patch: Partial<Education> = splitFields(content, [
-        "degree",
-        "institution",
-        "field",
-        "gpa",
-      ]);
+      const patch: Partial<Education> = splitFields(content, sectionFieldOrder("education"));
       if (itemId) {
         update(itemId, patch);
         return;

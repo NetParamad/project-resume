@@ -14,25 +14,34 @@ export interface SectionFieldSpec {
  * don't use structured multi-field output.
  */
 export const SECTION_FIELDS: Record<string, SectionFieldSpec[]> = {
+  // Field lists mirror each *Form.tsx's actual visible inputs exactly
+  // (labels match messages/th.json's builder.<section> keys) — every input
+  // the form renders gets a slot, and nothing else, so the AI's answer maps
+  // onto the real form 1:1 instead of only ever hitting a couple of fields.
   experience: [
-    { key: "jobTitle", label: "ตำแหน่ง" },
+    { key: "jobTitle", label: "ตำแหน่งงาน" },
     { key: "company", label: "บริษัท" },
-    { key: "location", label: "สถานที่" },
-    { key: "startDate", label: "วันที่เริ่มงาน" },
+    { key: "startDate", label: "วันที่เริ่ม" },
     { key: "endDate", label: "วันที่สิ้นสุด" },
     { key: "description", label: "รายละเอียด" },
   ],
   education: [
     { key: "degree", label: "วุฒิการศึกษา" },
     { key: "institution", label: "สถาบัน" },
-    { key: "field", label: "สาขา" },
-    { key: "gpa", label: "GPA" },
+    { key: "field", label: "สาขาวิชา" },
+    { key: "startDate", label: "วันที่เริ่ม" },
+    { key: "endDate", label: "วันที่สิ้นสุด" },
+    { key: "gpa", label: "เกรดเฉลี่ย" },
   ],
   publications: [
-    { key: "title", label: "ชื่อบทความ" },
+    { key: "title", label: "ชื่อผลงาน" },
     { key: "authors", label: "ผู้แต่ง" },
     { key: "journal", label: "วารสาร" },
     { key: "year", label: "ปี" },
+    { key: "volume", label: "เล่มที่" },
+    { key: "pages", label: "หน้า" },
+    { key: "doi", label: "DOI" },
+    { key: "url", label: "ลิงก์" },
   ],
   awards: [
     { key: "name", label: "ชื่อรางวัล" },
@@ -48,6 +57,8 @@ export const SECTION_FIELDS: Record<string, SectionFieldSpec[]> = {
   researchExperience: [
     { key: "role", label: "บทบาท" },
     { key: "institution", label: "สถาบัน" },
+    { key: "location", label: "สถานที่" },
+    { key: "supervisor", label: "ที่ปรึกษา" },
     { key: "startDate", label: "วันที่เริ่ม" },
     { key: "endDate", label: "วันที่สิ้นสุด" },
     { key: "description", label: "รายละเอียด" },

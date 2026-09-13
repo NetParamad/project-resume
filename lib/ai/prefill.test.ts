@@ -25,7 +25,7 @@ describe("buildPrefillPrompt", () => {
 
   it("builds a labeled dump of an existing list item's non-empty fields", () => {
     const result = buildPrefillPrompt("experience", "e1", baseResume);
-    expect(result).toContain("ตำแหน่ง: Senior Developer");
+    expect(result).toContain("ตำแหน่งงาน: Senior Developer");
     expect(result).toContain("บริษัท: Acme");
     expect(result).toContain("รายละเอียด: Built things.");
     expect(result).not.toContain("สถานที่");
