@@ -69,7 +69,11 @@ export const MODEL_PARAMS: Record<string, Record<string, unknown>> = {
 
 export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
   autofill: {
-    maxTokens: 4096,
+    // Generous headroom so reasoning models (which burn part of the budget
+    // on hidden "thinking" before the real answer) don't run out of tokens
+    // before producing content, and long user prompts/context still get a
+    // full response instead of a truncated one.
+    maxTokens: 8192,
     temperature: 0.4,
     timeoutMs: 50_000,
   },

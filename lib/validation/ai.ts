@@ -50,7 +50,7 @@ export const autoFillRequestSchema = z.object({
   itemId: z.string().optional(),
   context: z.record(z.string(), z.unknown()).nullable().default(null),
   resumeData: resumeDataSchema.optional(),
-  prompt: z.string().optional().default(""),
+  prompt: boundedText.optional().default(""),
   locale: localeSchema,
   outputLocale: outputLocaleSchema,
   model: modelSchema,
