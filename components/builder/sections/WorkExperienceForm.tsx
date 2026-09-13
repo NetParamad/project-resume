@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
+import { splitFields } from "@/lib/ai/split-fields";
+import { sectionFieldOrder } from "@/lib/ai/section-fields";
 import { Plus, Trash2, GripVertical } from "lucide-react";
+import type { WorkExperience } from "@/lib/types/resume";
 
 export function WorkExperienceForm() {
   const t = useTranslations("builder.experience");
@@ -21,14 +24,15 @@ export function WorkExperienceForm() {
     const handler = (e: Event) => {
       const { section, content, itemId } = (e as CustomEvent).detail;
       if (section !== "experience" || !content) return;
+      const patch: Partial<WorkExperience> = splitFields(content, sectionFieldOrder("experience"));
       if (itemId) {
-        update(itemId, { description: content });
+        update(itemId, patch);
       } else if (experience.length > 0) {
-        update(experience[experience.length - 1].id, { description: content });
+        update(experience[experience.length - 1].id, patch);
       } else {
         add();
         const items = useResumeStore.getState().data.experience;
-        if (items.length > 0) update(items[items.length - 1].id, { description: content });
+        if (items.length > 0) update(items[items.length - 1].id, patch);
       }
     };
     window.addEventListener("ai-autofill", handler);

@@ -1,0 +1,49 @@
+import { describe, expect, it } from "vitest";
+import { buildPrefillPrompt } from "./prefill";
+import type { ResumeData } from "@/lib/types/resume";
+
+const baseResume = {
+  personalInfo: {} as ResumeData["personalInfo"],
+  summary: "Full-stack developer with 5 years of experience.",
+  experience: [
+    { id: "e1", jobTitle: "Senior Developer", company: "Acme", location: "", startDate: "", endDate: "", current: false, description: "Built things." },
+  ],
+  education: [],
+  skills: [],
+  certifications: [],
+  projects: [],
+  languages: [],
+  references: [],
+} as unknown as ResumeData;
+
+describe("buildPrefillPrompt", () => {
+  it("returns the current summary text for the summary section", () => {
+    expect(buildPrefillPrompt("summary", undefined, baseResume)).toBe(
+      "Full-stack developer with 5 years of experience.",
+    );
+  });
+
+  it("builds a labeled dump of an existing list item's non-empty fields", () => {
+    const result = buildPrefillPrompt("experience", "e1", baseResume);
+    expect(result).toContain("ตำแหน่ง: Senior Developer");
+    expect(result).toContain("บริษัท: Acme");
+    expect(result).toContain("รายละเอียด: Built things.");
+    expect(result).not.toContain("สถานที่");
+  });
+
+  it("returns empty string for a brand new item with no data yet", () => {
+    expect(buildPrefillPrompt("experience", "missing-id", baseResume)).toBe("");
+  });
+
+  it("returns empty string when there's no itemId for a per-item section", () => {
+    expect(buildPrefillPrompt("experience", undefined, baseResume)).toBe("");
+  });
+
+  it("returns empty string for sections without structured fields", () => {
+    expect(buildPrefillPrompt("skills", undefined, baseResume)).toBe("");
+  });
+
+  it("handles missing resumeData gracefully", () => {
+    expect(buildPrefillPrompt("summary", undefined, null)).toBe("");
+  });
+});

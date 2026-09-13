@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
+import { splitFields } from "@/lib/ai/split-fields";
+import { sectionFieldOrder } from "@/lib/ai/section-fields";
 import { Plus, Trash2 } from "lucide-react";
+import type { Award } from "@/lib/types/resume";
 
 export function AwardsForm() {
   const t = useTranslations("builder.awards");
@@ -21,17 +24,18 @@ export function AwardsForm() {
     const handler = (e: Event) => {
       const { section, content, itemId } = (e as CustomEvent).detail;
       if (section !== "awards" || !content) return;
+      const patch: Partial<Award> = splitFields(content, sectionFieldOrder("awards"));
       if (itemId) {
-        update(itemId, { description: content });
+        update(itemId, patch);
         return;
       }
       const list = useResumeStore.getState().data.awards ?? [];
       if (list.length > 0) {
-        update(list[list.length - 1].id, { description: content });
+        update(list[list.length - 1].id, patch);
       } else {
         add();
         const after = useResumeStore.getState().data.awards ?? [];
-        if (after.length > 0) update(after[after.length - 1].id, { description: content });
+        if (after.length > 0) update(after[after.length - 1].id, patch);
       }
     };
     window.addEventListener("ai-autofill", handler);
