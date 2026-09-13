@@ -1,3 +1,5 @@
+import { splitFields } from "./split-fields";
+
 export interface SectionFieldSpec {
   key: string;
   label: string;
@@ -71,4 +73,25 @@ export const SECTION_PRIMARY_FIELD: Record<string, string> = {
 
 export function sectionFieldOrder(section: string): string[] {
   return (SECTION_FIELDS[section] ?? []).map((f) => f.key);
+}
+
+/**
+ * Turns a raw pipe-delimited AI response into a readable "label: value"
+ * preview for the auto-fill dialog. When a field the user hasn't filled in
+ * yet (e.g. job title/company) is left blank on purpose, the raw response
+ * looks like "| | | | | actual content" — technically correct for
+ * splitFields to parse, but confusing to show verbatim. Reuses the exact
+ * same splitFields() the Form components apply on, so the preview always
+ * matches what actually gets saved.
+ */
+export function formatResultForPreview(section: string, raw: string): string {
+  const fields = SECTION_FIELDS[section];
+  if (!fields || !raw.includes("|")) return raw;
+
+  const parsed = splitFields(raw, fields.map((f) => f.key));
+  const lines = fields
+    .map(({ key, label }) => (parsed[key] ? `${label}: ${parsed[key]}` : null))
+    .filter((line): line is string => line !== null);
+
+  return lines.length > 0 ? lines.join("\n") : raw;
 }

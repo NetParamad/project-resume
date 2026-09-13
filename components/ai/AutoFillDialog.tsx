@@ -6,6 +6,7 @@ import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { buildPrefillPrompt } from "@/lib/ai/prefill";
+import { formatResultForPreview } from "@/lib/ai/section-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -148,7 +149,7 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
           {result && (
             <div className="space-y-2">
               <div className="rounded-md border border-border bg-muted/50 p-3">
-                <p className="text-sm whitespace-pre-wrap">{result}</p>
+                <p className="text-sm whitespace-pre-wrap">{formatResultForPreview(section, result)}</p>
               </div>
               <Button onClick={handleApply} variant="default" className="w-full">
                 {t("apply")}

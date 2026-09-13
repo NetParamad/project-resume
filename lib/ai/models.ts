@@ -82,7 +82,16 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
   tailor: {
     maxTokens: 16384,
     temperature: 0.3,
-    timeoutMs: 90_000,
+    // tailor.ts's 2x retry-on-malformed-JSON loop only helps when a model
+    // *responds* with bad JSON — a thrown timeout/network error propagates
+    // straight out and skips the retry, so the real worst case for a hung
+    // model is just maxChain × timeoutMs, not doubled. Measured latency for
+    // a real full-resume rewrite varies ~7-27s+, so keep a 2nd model to fall
+    // back to: 2 × 25s = 50s, under the 60s route maxDuration — the old 90s
+    // × full 3-model chain could reach 270s worst case (540s counting the
+    // retry loop), guaranteeing the platform kills the function mid-call.
+    timeoutMs: 25_000,
+    maxChain: 2,
   },
   extract: {
     maxTokens: 4096,
@@ -98,7 +107,15 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
   score: {
     maxTokens: 4096,
     temperature: 0.2,
-    timeoutMs: 50_000,
+    // Single model only. optimizer.ts's rescore step passes its own
+    // *remaining budget* as timeoutMs (up to 40s) expecting that to be the
+    // total time spent — but maxChain multiplies it per fallback attempt,
+    // not per call. Confirmed live: with maxChain 2 the rescore step alone
+    // took ~55s (both models tried), pushing total agent-loop time to 62s —
+    // over the 60s route maxDuration. ats.ts's own malformed-JSON retry is
+    // the resilience layer here instead of a model-fallback chain.
+    timeoutMs: 20_000,
+    maxChain: 1,
   },
   agent: {
     // Batched update_section calls carry full section JSON — 8k truncates the
@@ -106,11 +123,23 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
     maxTokens: 16384,
     temperature: 0.4,
     timeoutMs: 90_000,
+    // optimizer.ts overrides timeoutMs to 40s per call and tracks its own
+    // ~52s total budget across up to 2 rounds — but that budget check only
+    // runs *between* rounds. Without this, a single round's tool-capable
+    // chain (lightning + gpt-oss-20b, the latter measured ~70s per call —
+    // see MODEL_CHAIN comment) can burn 2 × 40s = 80s on its own, blowing
+    // the 60s route maxDuration before the between-round check ever fires.
+    // Cap to the lead model only; optimizer's own checkStop is the fallback.
+    maxChain: 1,
   },
   polish: {
     maxTokens: 16384,
     temperature: 0.3,
-    timeoutMs: 60_000,
+    // Same reasoning as tailor — a thrown timeout skips polish.ts's
+    // retry-on-malformed-JSON loop, so keep a 2nd model as the real
+    // fallback: 2 × 25s = 50s, under the 60s route maxDuration.
+    timeoutMs: 25_000,
+    maxChain: 2,
   },
 };
 

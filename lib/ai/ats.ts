@@ -1,6 +1,7 @@
 import { llmText } from "./client";
 import { resolveResumeLocale } from "./detect-locale";
 import { buildPersona } from "./persona";
+import { extractJsonObject } from "./resume-utils";
 
 export interface ATSResult {
   score: number;
@@ -70,27 +71,32 @@ export async function scoreResume(
     ? `\n\nTarget Job Description:\n${jobDescription}`
     : "";
 
-  const result = await llmText({
-    role: "score",
-    modelId,
-    system: systemPrompt,
-    user: `Resume Data:\n${resumeText}${jobContext}`,
-    timeoutMs,
-  });
-  const text = result ?? "";
+  const user = `Resume Data:\n${resumeText}${jobContext}`;
 
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  const jsonStr = jsonMatch ? jsonMatch[0] : text;
+  let parsed: unknown = null;
+  for (let attempt = 1; attempt <= 2 && parsed === null; attempt++) {
+    const raw = await llmText({
+      role: "score",
+      modelId,
+      system:
+        attempt === 1
+          ? systemPrompt
+          : `${systemPrompt}\nReturn the raw JSON object only — no markdown fences, no commentary, and make sure the JSON is complete.`,
+      user,
+      timeoutMs,
+    });
+    parsed = extractJsonObject(raw);
+  }
 
-  try {
-    const parsed = JSON.parse(jsonStr);
-    return {
-      score: Math.max(0, Math.min(100, Number(parsed.score) || 0)),
-      keywordsFound: Array.isArray(parsed.keywordsFound) ? parsed.keywordsFound : [],
-      missingKeywords: Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords : [],
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
-    };
-  } catch {
+  if (parsed === null || typeof parsed !== "object") {
     throw new Error("Failed to parse ATS score");
   }
+
+  const record = parsed as Record<string, unknown>;
+  return {
+    score: Math.max(0, Math.min(100, Number(record.score) || 0)),
+    keywordsFound: Array.isArray(record.keywordsFound) ? record.keywordsFound : [],
+    missingKeywords: Array.isArray(record.missingKeywords) ? record.missingKeywords : [],
+    suggestions: Array.isArray(record.suggestions) ? record.suggestions : [],
+  };
 }
