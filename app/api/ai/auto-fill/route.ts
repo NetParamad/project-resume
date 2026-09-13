@@ -165,14 +165,20 @@ Keep under 25 words per bullet.`;
       return isTh
         ? "แนะนำ 6-10 ทักษะที่เกี่ยวข้องกับตำแหน่งนี้ แบ่งเป็น: ทักษะด้านเทคนิค (เครื่องมือ, ภาษาโปรแกรม), ทักษะด้านกระบวนการ (Agile, Project Management), และทักษะด้านอ่อน (Leadership, Communication) เน้น keywords ที่เป็นที่ต้องการในสายงานนี้"
         : "List 6-10 relevant skills for this role. Categorize as: technical tools & languages, methodologies & processes, and soft skills. Prioritize high-demand keywords for this career field.";
-    case "education":
+    case "education": {
+      const orderTh = SECTION_FIELDS.education.map((f) => f.label).join(" | ");
+      const orderEn = SECTION_FIELDS.education.map((f) => f.key).join(" | ");
       return isTh
-        ? "เขียนข้อมูลการศึกษา 1 รายการในรูปแบบ: วุฒิ | สถาบัน | สาขา | GPA ใช้ชื่อวุฒิ/สาขาเป็นภาษาอังกฤษ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์"
-        : "Return a single education entry in this exact format: Degree | Institution | Field | GPA. Keep degree and field names in English. No extra explanations, and do not use '|' inside the field values.";
-    case "publications":
+        ? `เขียนข้อมูลการศึกษา 1 รายการในรูปแบบ: ${orderTh} ใช้ชื่อวุฒิ/สาขาเป็นภาษาอังกฤษ วันที่ใช้รูปแบบ YYYY-MM ส่วนที่ไม่ทราบให้ปล่อยว่างแต่ยังคงเครื่องหมาย | คั่นตำแหน่งไว้ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์`
+        : `Return a single education entry in this exact format: ${orderEn}. Keep degree and field names in English, dates as YYYY-MM. Leave a part blank if unknown but keep its "|" position. No extra explanations, and do not use '|' inside the field values.`;
+    }
+    case "publications": {
+      const orderTh = SECTION_FIELDS.publications.map((f) => f.label).join(" | ");
+      const orderEn = SECTION_FIELDS.publications.map((f) => f.key).join(" | ");
       return isTh
-        ? "เขียนผลงานวิชาการ 1 รายการในรูปแบบ: ชื่อบทความ | ผู้แต่ง | วารสาร | ปี ใช้รูปแบบ citation วิชาการ (ชื่อเรื่อง, รายชื่อผู้แต่ง, ชื่อวารสาร, ปีพิมพ์) ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์"
-        : "Write one academic publication in this exact format: Title | Authors | Journal | Year. Use standard academic citation style (article title, author list, journal name, publication year). No extra explanations, and do not use '|' inside the field values.";
+        ? `เขียนผลงานวิชาการ 1 รายการในรูปแบบ: ${orderTh} ใช้รูปแบบ citation วิชาการ ส่วนที่ไม่มีข้อมูล (เช่น เล่มที่/หน้า/DOI/ลิงก์) ให้ปล่อยว่างแต่ยังคงเครื่องหมาย | คั่นตำแหน่งไว้ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์`
+        : `Write one academic publication in this exact format: ${orderEn}. Use standard academic citation style. Leave a part blank if unknown (e.g. volume/pages/doi/url) but keep its "|" position. No extra explanations, and do not use '|' inside the field values.`;
+    }
     case "awards": {
       const base = isTh
         ? "เขียนคำอธิบายรางวัล 1-2 ประโยค ระบุ: ชื่อรางวัล, ผู้มอบ, ปี และความสำคัญ/บริบทของรางวัล ใช้โทนวิชาการ กระชับ"
