@@ -106,6 +106,36 @@ function hasBasics(section: string, context: Record<string, unknown> | null): bo
   return Boolean(key && context?.[key]);
 }
 
+/**
+ * The auto-fill dialog prefills its prompt box with the item's own current
+ * text (e.g. an old job's description) so "Improve with AI" has something
+ * to refine. If the user then changes the company/job title field but
+ * doesn't also rewrite that prefilled text, the request still narrates the
+ * old role. A soft "defer to the context above" instruction wasn't enough —
+ * live testing showed the model still repeated old-org details (e.g. a
+ * hospital) most of the time. Naming the actual known values explicitly and
+ * telling it to strip/replace any *other* organization mentioned works far
+ * more reliably. Only relevant when hasBasics() is true, i.e. there's an
+ * actual field value to reconcile against.
+ */
+function staleContentNote(
+  section: string,
+  context: Record<string, unknown> | null,
+  locale?: string,
+): string {
+  const fields = SECTION_FIELDS[section] ?? [];
+  const known = fields
+    .filter((f) => f.key !== "description")
+    .map(({ key, label }) => (context?.[key] ? `${label}: ${context[key]}` : null))
+    .filter((line): line is string => line !== null)
+    .join(", ");
+  if (!known) return "";
+
+  return locale === "th"
+    ? `\n\nเนื้อหานี้เป็นของ ${known} เท่านั้น ห้ามพูดถึงองค์กร/หน่วยงาน/บริบทอื่นที่ไม่ตรงกับข้อมูลนี้ แม้คำขอของผู้ใช้จะอ้างถึงที่อื่นก็ตาม (อาจเป็นข้อความเดิมจากรายการก่อนหน้าที่ยังไม่ได้แก้ไข) — ให้ดึงเฉพาะทักษะ/การกระทำ/ผลลัพธ์ทั่วไปจากคำขอมาปรับใช้ แล้วตัดหรือแทนที่ชื่อองค์กร/บริบทเฉพาะเจาะจงอื่นด้วยบริบทของ ${known} แทน`
+    : `\n\nThis content is specifically for ${known}. Do not mention any organization, department, or domain other than that, even if the user's request refers to a different one (it may be leftover text from a previous entry that wasn't rewritten) — reuse only the general skills, actions, and outcome types from the request, and strip or replace any other organization's name or specific domain with generic phrasing appropriate to ${known} instead.`;
+}
+
 function getSectionContext(
   section: string,
   context: Record<string, unknown> | null,
@@ -129,7 +159,7 @@ Title: ${context?.jobTitle || "N/A"}
 Company: ${context?.company || "N/A"}
 Each bullet: start with a strong action verb, describe the challenge/action/result. Only include a number/metric if it's already present in the user's request or the context above — never invent one. If no real figure is available, describe the result qualitatively instead.
 Keep under 25 words per bullet.`;
-      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "skills":
       return isTh
@@ -147,25 +177,25 @@ Keep under 25 words per bullet.`;
       const base = isTh
         ? "เขียนคำอธิบายรางวัล 1-2 ประโยค ระบุ: ชื่อรางวัล, ผู้มอบ, ปี และความสำคัญ/บริบทของรางวัล ใช้โทนวิชาการ กระชับ"
         : "Write a 1-2 sentence description of the award: award name, issuer, year, and its significance or context. Use a concise, academic tone.";
-      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "teachingExperience": {
       const base = isTh
         ? "เขียนรายละเอียดประสบการณ์สอน 2-3 ข้อ ระบุ: วิชาที่สอน, ระดับผู้เรียน, จำนวนผู้เรียน (ถ้ามี) และผลลัพธ์การเรียนการสอน ใช้คำกริยาวิชาการ กระชับ ไม่เกิน 25 คำต่อข้อ"
         : "Write 2-3 bullet points describing teaching experience: courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, keep under 25 words per bullet.";
-      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "researchExperience": {
       const base = isTh
         ? "เขียนรายละเอียดประสบการณ์วิจัย 2-3 ข้อ ระบุ: คำถาม/ปัญหา, วิธีวิจัย, เครื่องมือ/เทคนิค และผลลัพธ์ (สิ่งพิมพ์/การนำเสนอ) ใช้คำกริยาวิชาการ กระชับ ไม่เกิน 25 คำต่อข้อ"
         : "Write 2-3 bullet points describing research experience: research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, keep under 25 words per bullet.";
-      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "projects": {
       const base = isTh
         ? "เขียนอธิบายโปรเจกต์ 1-2 ข้อ ประกอบด้วย: เทคโนโลยีที่ใช้, ปัญหาที่แก้ไข, ผลลัพธ์ (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ความยาวไม่เกิน 25 คำต่อข้อ"
         : "Write 1-2 bullet points describing the project. Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 25 words each.";
-      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     default:
       return isTh

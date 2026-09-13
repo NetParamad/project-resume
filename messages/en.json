@@ -457,6 +457,7 @@
     "analyzing": "Analyzing...",
     "generating": "Generating...",
     "prompt": "Describe what you want to write",
+    "prefillHint": "The text below is this field's existing content — edit it to match what you want before generating, or clear it and type something new.",
     "apply": "Apply to Resume",
     "extractingPdf": "Extracting text from PDF...",
     "analyzingAI": "Analyzing with AI...",
