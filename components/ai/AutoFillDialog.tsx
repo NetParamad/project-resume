@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { useResumeStore } from "@/lib/store/resume-store";
+import { buildPrefillPrompt } from "@/lib/ai/prefill";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -75,8 +76,20 @@ export function AutoFillDialog({ section, itemId, trigger, children }: AutoFillD
 
   const sectionTitle = builderT(`${section}.title` as never);
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    // Prefill from what's already saved so "Improve with AI" starts from
+    // the existing content instead of a blank box — but only the first
+    // time, so a draft the user is mid-typing never gets clobbered.
+    if (next && !prompt.trim()) {
+      const resumeData = useResumeStore.getState().data;
+      const prefill = buildPrefillPrompt(section, itemId, resumeData);
+      if (prefill) setPrompt(prefill);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children || trigger || (
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">

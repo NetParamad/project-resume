@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
+import { splitFields } from "@/lib/ai/split-fields";
+import { sectionFieldOrder } from "@/lib/ai/section-fields";
 import { Plus, Trash2 } from "lucide-react";
+import type { Project } from "@/lib/types/resume";
 
 export function ProjectsForm() {
   const t = useTranslations("builder.projects");
@@ -21,14 +24,15 @@ export function ProjectsForm() {
     const handler = (e: Event) => {
       const { section, content, itemId } = (e as CustomEvent).detail;
       if (section !== "projects" || !content) return;
+      const patch: Partial<Project> = splitFields(content, sectionFieldOrder("projects"));
       if (itemId) {
-        update(itemId, { description: content });
+        update(itemId, patch);
       } else if (projects.length > 0) {
-        update(projects[projects.length - 1].id, { description: content });
+        update(projects[projects.length - 1].id, patch);
       } else {
         add();
         const items = useResumeStore.getState().data.projects;
-        if (items.length > 0) update(items[items.length - 1].id, { description: content });
+        if (items.length > 0) update(items[items.length - 1].id, patch);
       }
     };
     window.addEventListener("ai-autofill", handler);

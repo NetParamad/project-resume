@@ -5,6 +5,7 @@ import { llmText } from "@/lib/ai/client";
 import { resolveLocale } from "@/lib/ai/detect-locale";
 import { autoFillRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
+import { SECTION_FIELDS, SECTION_PRIMARY_FIELD } from "@/lib/ai/section-fields";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -81,6 +82,30 @@ Rules:
   }
 }
 
+/**
+ * When a list item's own identifying field (job title, award name, etc.) is
+ * still empty, the user is likely pasting one freeform blob to fill the
+ * whole entry at once rather than just the description. Ask the model to
+ * split its answer across all of that section's fields in that case; when
+ * the basics are already filled in, keep the existing plain-description
+ * behavior unchanged.
+ */
+function structuredFallbackInstruction(section: string, locale?: string): string {
+  const fields = SECTION_FIELDS[section];
+  if (!fields) return "";
+  const isTh = locale === "th";
+  const orderTh = fields.map((f) => f.label).join(" | ");
+  const orderEn = fields.map((f) => f.key).join(" | ");
+  return isTh
+    ? `\n\nนอกจากนี้ ถ้าคำขอของผู้ใช้มีข้อมูลที่ยังไม่ได้กรอกในระบบด้วย (เช่น ชื่อ/สถานที่/วันที่) ให้ส่งคำตอบทั้งหมดกลับเป็นบรรทัดเดียวในรูปแบบ: ${orderTh} — ใช้เครื่องหมาย "|" คั่นแต่ละส่วนเท่านั้น ห้ามใช้ "|" ภายในเนื้อหาของส่วนใด ส่วนที่ไม่มีข้อมูลให้ปล่อยว่างแต่ยังคงใส่ "|" คั่นตำแหน่งไว้ตามเดิม ส่วนรายละเอียด/คำอธิบายให้คั่นแต่ละข้อด้วย ";" แทนการขึ้นบรรทัดใหม่`
+    : `\n\nAlso, if the user's request includes information not yet filled in the form (e.g. name/location/dates), return the ENTIRE answer as a single line in this format: ${orderEn} — separate parts with "|" only, never inside any part's own content. Leave a part blank if unknown, but keep its "|" position. Join multiple description bullets with "; " instead of line breaks.`;
+}
+
+function hasBasics(section: string, context: Record<string, unknown> | null): boolean {
+  const key = SECTION_PRIMARY_FIELD[section];
+  return Boolean(key && context?.[key]);
+}
+
 function getSectionContext(
   section: string,
   context: Record<string, unknown> | null,
@@ -92,8 +117,8 @@ function getSectionContext(
       return isTh
         ? "เขียนสรุปภาพรวม (Professional Summary) ความยาว 2-3 บรรทัด ประกอบด้วย: ปีประสบการณ์, ทักษะหลัก 3 อย่าง, อุตสาหกรรมที่เชี่ยวชาญ และความสำเร็จเด่น (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ใช้ภาษาเรียกตัวเองว่า 'มีประสบการณ์' ไม่ใช้ 'ฉัน' หรือ 'ผม'"
         : "Write a 2-3 line professional summary. Include: years of experience, top 3 skills, key industries, and a career highlight (only include a metric if the user actually provided one — never invent one). Keep under 50 words. Use third-person implied voice (e.g., 'Experienced engineer with...').";
-    case "experience":
-      return isTh
+    case "experience": {
+      const base = isTh
         ? `เขียนรายละเอียดประสบการณ์ทำงาน 2-3 ข้อ ในรูปแบบ STAR (Situation-Task-Action-Result)
 ตำแหน่ง: ${context?.jobTitle || "N/A"}
 บริษัท: ${context?.company || "N/A"}
@@ -104,6 +129,8 @@ Title: ${context?.jobTitle || "N/A"}
 Company: ${context?.company || "N/A"}
 Each bullet: start with a strong action verb, describe the challenge/action/result. Only include a number/metric if it's already present in the user's request or the context above — never invent one. If no real figure is available, describe the result qualitatively instead.
 Keep under 25 words per bullet.`;
+      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+    }
     case "skills":
       return isTh
         ? "แนะนำ 6-10 ทักษะที่เกี่ยวข้องกับตำแหน่งนี้ แบ่งเป็น: ทักษะด้านเทคนิค (เครื่องมือ, ภาษาโปรแกรม), ทักษะด้านกระบวนการ (Agile, Project Management), และทักษะด้านอ่อน (Leadership, Communication) เน้น keywords ที่เป็นที่ต้องการในสายงานนี้"
@@ -116,22 +143,30 @@ Keep under 25 words per bullet.`;
       return isTh
         ? "เขียนผลงานวิชาการ 1 รายการในรูปแบบ: ชื่อบทความ | ผู้แต่ง | วารสาร | ปี ใช้รูปแบบ citation วิชาการ (ชื่อเรื่อง, รายชื่อผู้แต่ง, ชื่อวารสาร, ปีพิมพ์) ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์"
         : "Write one academic publication in this exact format: Title | Authors | Journal | Year. Use standard academic citation style (article title, author list, journal name, publication year). No extra explanations, and do not use '|' inside the field values.";
-    case "awards":
-      return isTh
+    case "awards": {
+      const base = isTh
         ? "เขียนคำอธิบายรางวัล 1-2 ประโยค ระบุ: ชื่อรางวัล, ผู้มอบ, ปี และความสำคัญ/บริบทของรางวัล ใช้โทนวิชาการ กระชับ"
         : "Write a 1-2 sentence description of the award: award name, issuer, year, and its significance or context. Use a concise, academic tone.";
-    case "teachingExperience":
-      return isTh
+      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+    }
+    case "teachingExperience": {
+      const base = isTh
         ? "เขียนรายละเอียดประสบการณ์สอน 2-3 ข้อ ระบุ: วิชาที่สอน, ระดับผู้เรียน, จำนวนผู้เรียน (ถ้ามี) และผลลัพธ์การเรียนการสอน ใช้คำกริยาวิชาการ กระชับ ไม่เกิน 25 คำต่อข้อ"
         : "Write 2-3 bullet points describing teaching experience: courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, keep under 25 words per bullet.";
-    case "researchExperience":
-      return isTh
+      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+    }
+    case "researchExperience": {
+      const base = isTh
         ? "เขียนรายละเอียดประสบการณ์วิจัย 2-3 ข้อ ระบุ: คำถาม/ปัญหา, วิธีวิจัย, เครื่องมือ/เทคนิค และผลลัพธ์ (สิ่งพิมพ์/การนำเสนอ) ใช้คำกริยาวิชาการ กระชับ ไม่เกิน 25 คำต่อข้อ"
         : "Write 2-3 bullet points describing research experience: research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, keep under 25 words per bullet.";
-    case "projects":
-      return isTh
+      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+    }
+    case "projects": {
+      const base = isTh
         ? "เขียนอธิบายโปรเจกต์ 1-2 ข้อ ประกอบด้วย: เทคโนโลยีที่ใช้, ปัญหาที่แก้ไข, ผลลัพธ์ (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ความยาวไม่เกิน 25 คำต่อข้อ"
         : "Write 1-2 bullet points describing the project. Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 25 words each.";
+      return hasBasics(section, context) ? base : base + structuredFallbackInstruction(section, locale);
+    }
     default:
       return isTh
         ? `ผู้ใช้กำลังเขียนส่วน ${section} ของเรซูเม่ ให้เนื้อหากระชับ ใช้คำกริยาแสดงความสำเร็จ และใส่ตัวเลขได้เฉพาะเมื่อผู้ใช้ให้มาจริงเท่านั้น ห้ามกุขึ้นเอง`
