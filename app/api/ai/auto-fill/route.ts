@@ -97,8 +97,8 @@ function structuredFallbackInstruction(section: string, locale?: string): string
   const orderTh = fields.map((f) => f.label).join(" | ");
   const orderEn = fields.map((f) => f.key).join(" | ");
   return isTh
-    ? `\n\nนอกจากนี้ ถ้าคำขอของผู้ใช้มีข้อมูลที่ยังไม่ได้กรอกในระบบด้วย (เช่น ชื่อ/สถานที่/วันที่) ให้ส่งคำตอบทั้งหมดกลับเป็นบรรทัดเดียวในรูปแบบ: ${orderTh} — ใช้เครื่องหมาย "|" คั่นแต่ละส่วนเท่านั้น ห้ามใช้ "|" ภายในเนื้อหาของส่วนใด ส่วนที่ไม่มีข้อมูลให้ปล่อยว่างแต่ยังคงใส่ "|" คั่นตำแหน่งไว้ตามเดิม ส่วนรายละเอียด/คำอธิบายให้คั่นแต่ละข้อด้วย ";" แทนการขึ้นบรรทัดใหม่`
-    : `\n\nAlso, if the user's request includes information not yet filled in the form (e.g. name/location/dates), return the ENTIRE answer as a single line in this format: ${orderEn} — separate parts with "|" only, never inside any part's own content. Leave a part blank if unknown, but keep its "|" position. Join multiple description bullets with "; " instead of line breaks.`;
+    ? `\n\nนอกจากนี้ ถ้าคำขอของผู้ใช้มีข้อมูลที่ยังไม่ได้กรอกในระบบด้วย (เช่น ชื่อ/สถานที่/วันที่) ให้ส่งคำตอบทั้งหมดกลับเป็นบรรทัดเดียวในรูปแบบ: ${orderTh} — ใช้เครื่องหมาย "|" คั่นแต่ละส่วนเท่านั้น ห้ามใช้ "|" ภายในเนื้อหาของส่วนใด ส่วนที่ไม่มีข้อมูลให้ปล่อยว่างแต่ยังคงใส่ "|" คั่นตำแหน่งไว้ตามเดิม ส่วนรายละเอียด/คำอธิบายให้เขียนเป็นย่อหน้าเดียวต่อเนื่อง ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า`
+    : `\n\nAlso, if the user's request includes information not yet filled in the form (e.g. name/location/dates), return the ENTIRE answer as a single line in this format: ${orderEn} — separate parts with "|" only, never inside any part's own content. Leave a part blank if unknown, but keep its "|" position. Write the description part as one continuous flowing paragraph, not line breaks or bullet points.`;
 }
 
 function hasBasics(section: string, context: Record<string, unknown> | null): boolean {
@@ -149,16 +149,16 @@ function getSectionContext(
         : "Write a 2-3 line professional summary. Include: years of experience, top 3 skills, key industries, and a career highlight (only include a metric if the user actually provided one — never invent one). Keep under 50 words. Use third-person implied voice (e.g., 'Experienced engineer with...').";
     case "experience": {
       const base = isTh
-        ? `เขียนรายละเอียดประสบการณ์ทำงาน 2-3 ข้อ ในรูปแบบ STAR (Situation-Task-Action-Result)
+        ? `เขียนรายละเอียดประสบการณ์ทำงานเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้าแต่ละประโยคเด็ดขาด) โดยใช้แนวคิด STAR (Situation-Task-Action-Result) ในการเรียบเรียงเนื้อหา
 ตำแหน่ง: ${context?.jobTitle || "N/A"}
 บริษัท: ${context?.company || "N/A"}
-แต่ละข้อ: เริ่มด้วยคำกริยาแสดงความสำเร็จ, อธิบายสิ่งที่ทำและผลลัพธ์ ใส่ตัวเลข/metric ได้เฉพาะเมื่อมีอยู่ในคำขอของผู้ใช้หรือ context ด้านบนเท่านั้น ห้ามกุตัวเลขขึ้นเอง หากไม่มีตัวเลขจริงให้บรรยายผลลัพธ์เชิงคุณภาพแทน
-ความยาวไม่เกิน 25 คำต่อข้อ`
-        : `Write 2-3 bullet points for this role using STAR format (Situation-Task-Action-Result).
+เริ่มประโยคแรกด้วยคำกริยาแสดงความสำเร็จ อธิบายสิ่งที่ทำและผลลัพธ์ต่อเนื่องกันไปเป็นร้อยแก้ว ใส่ตัวเลข/metric ได้เฉพาะเมื่อมีอยู่ในคำขอของผู้ใช้หรือ context ด้านบนเท่านั้น ห้ามกุตัวเลขขึ้นเอง หากไม่มีตัวเลขจริงให้บรรยายผลลัพธ์เชิงคุณภาพแทน
+ความยาวไม่เกิน 60 คำ`
+        : `Write the experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading "-" or bullet markers) using STAR (Situation-Task-Action-Result) to structure the content.
 Title: ${context?.jobTitle || "N/A"}
 Company: ${context?.company || "N/A"}
-Each bullet: start with a strong action verb, describe the challenge/action/result. Only include a number/metric if it's already present in the user's request or the context above — never invent one. If no real figure is available, describe the result qualitatively instead.
-Keep under 25 words per bullet.`;
+Start the first sentence with a strong action verb, then describe the challenge/action/result as continuous prose. Only include a number/metric if it's already present in the user's request or the context above — never invent one. If no real figure is available, describe the result qualitatively instead.
+Keep under 60 words total.`;
       return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "skills":
@@ -187,20 +187,20 @@ Keep under 25 words per bullet.`;
     }
     case "teachingExperience": {
       const base = isTh
-        ? "เขียนรายละเอียดประสบการณ์สอน 2-3 ข้อ ระบุ: วิชาที่สอน, ระดับผู้เรียน, จำนวนผู้เรียน (ถ้ามี) และผลลัพธ์การเรียนการสอน ใช้คำกริยาวิชาการ กระชับ ไม่เกิน 25 คำต่อข้อ"
-        : "Write 2-3 bullet points describing teaching experience: courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, keep under 25 words per bullet.";
+        ? "เขียนรายละเอียดประสบการณ์สอนเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ระบุ: วิชาที่สอน, ระดับผู้เรียน, จำนวนผู้เรียน (ถ้ามี) และผลลัพธ์การเรียนการสอน ใช้คำกริยาวิชาการ กระชับ ความยาวไม่เกิน 60 คำ"
+        : "Write the teaching experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading \"-\" or bullet markers): courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, concise. Keep under 60 words total.";
       return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "researchExperience": {
       const base = isTh
-        ? "เขียนรายละเอียดประสบการณ์วิจัย 2-3 ข้อ ระบุ: คำถาม/ปัญหา, วิธีวิจัย, เครื่องมือ/เทคนิค และผลลัพธ์ (สิ่งพิมพ์/การนำเสนอ) ใช้คำกริยาวิชาการ กระชับ ไม่เกิน 25 คำต่อข้อ"
-        : "Write 2-3 bullet points describing research experience: research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, keep under 25 words per bullet.";
+        ? "เขียนรายละเอียดประสบการณ์วิจัยเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ระบุ: คำถาม/ปัญหา, วิธีวิจัย, เครื่องมือ/เทคนิค และผลลัพธ์ (สิ่งพิมพ์/การนำเสนอ) ใช้คำกริยาวิชาการ กระชับ ความยาวไม่เกิน 60 คำ"
+        : "Write the research experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading \"-\" or bullet markers): research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, concise. Keep under 60 words total.";
       return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     case "projects": {
       const base = isTh
-        ? "เขียนอธิบายโปรเจกต์ 1-2 ข้อ ประกอบด้วย: เทคโนโลยีที่ใช้, ปัญหาที่แก้ไข, ผลลัพธ์ (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ความยาวไม่เกิน 25 คำต่อข้อ"
-        : "Write 1-2 bullet points describing the project. Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 25 words each.";
+        ? "เขียนอธิบายโปรเจกต์เป็นย่อหน้าเดียวต่อเนื่อง 1-3 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ประกอบด้วย: เทคโนโลยีที่ใช้, ปัญหาที่แก้ไข, ผลลัพธ์ (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ความยาวไม่เกิน 50 คำ"
+        : "Write the project description as a single flowing paragraph of 1-3 sentences (no line breaks, no leading \"-\" or bullet markers). Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 50 words total.";
       return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
     }
     default:
