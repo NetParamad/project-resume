@@ -38,3 +38,17 @@ Test coverage is currently limited to pure logic in `lib/` (rate limiting, resum
 - A4 preview width constant is `794`px; zoom "fit" scale is computed from container width via ResizeObserver (`components/builder/PreviewPanel.tsx`).
 - Resume content has its own language setting (Thai/English) separate from UI locale: `resume-lang-store` + `hasThaiInResume()` auto-detect; Thai resumes get the `font-thai` class (Noto Sans Thai).
 - Dialogs are centered fixed elements sized `w-[calc(100%-2rem)] max-h-[calc(100dvh-2rem)] overflow-y-auto` in `components/ui/dialog.tsx` — keep mobile margins if editing that base class.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub Issues on `NetParamad/project-resume`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` at the repo root (not yet created) + `docs/adr/` (already in use). See `docs/agents/domain.md`.
