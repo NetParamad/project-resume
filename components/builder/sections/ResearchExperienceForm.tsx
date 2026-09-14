@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
-import { splitFields } from "@/lib/ai/split-fields";
-import { sectionFieldOrder } from "@/lib/ai/section-fields";
+import { useAiAutofillListener } from "@/lib/hooks/use-ai-autofill-listener";
 import { Plus, Trash2 } from "lucide-react";
 import type { ResearchExperience } from "@/lib/types/resume";
 
@@ -21,27 +19,7 @@ export function ResearchExperienceForm() {
   const update = useResumeStore((s) => s.updateResearchExperience);
   const remove = useResumeStore((s) => s.removeResearchExperience);
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { section, content, itemId } = (e as CustomEvent).detail;
-      if (section !== "researchExperience" || !content) return;
-      const patch: Partial<ResearchExperience> = splitFields(content, sectionFieldOrder("researchExperience"));
-      if (itemId) {
-        update(itemId, patch);
-        return;
-      }
-      const list = useResumeStore.getState().data.researchExperience ?? [];
-      if (list.length > 0) {
-        update(list[list.length - 1].id, patch);
-      } else {
-        add();
-        const after = useResumeStore.getState().data.researchExperience ?? [];
-        if (after.length > 0) update(after[after.length - 1].id, patch);
-      }
-    };
-    window.addEventListener("ai-autofill", handler);
-    return () => window.removeEventListener("ai-autofill", handler);
-  }, [update, add]);
+  useAiAutofillListener<ResearchExperience>("researchExperience", update, add);
 
   return (
     <Card>

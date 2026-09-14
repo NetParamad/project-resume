@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
@@ -8,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
-import { splitFields } from "@/lib/ai/split-fields";
-import { sectionFieldOrder } from "@/lib/ai/section-fields";
+import { useAiAutofillListener } from "@/lib/hooks/use-ai-autofill-listener";
 import { Plus, Trash2 } from "lucide-react";
 import type { TeachingExperience } from "@/lib/types/resume";
 
@@ -20,27 +18,7 @@ export function TeachingExperienceForm() {
   const update = useResumeStore((s) => s.updateTeachingExperience);
   const remove = useResumeStore((s) => s.removeTeachingExperience);
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { section, content, itemId } = (e as CustomEvent).detail;
-      if (section !== "teachingExperience" || !content) return;
-      const patch: Partial<TeachingExperience> = splitFields(content, sectionFieldOrder("teachingExperience"));
-      if (itemId) {
-        update(itemId, patch);
-        return;
-      }
-      const list = useResumeStore.getState().data.teachingExperience ?? [];
-      if (list.length > 0) {
-        update(list[list.length - 1].id, patch);
-      } else {
-        add();
-        const after = useResumeStore.getState().data.teachingExperience ?? [];
-        if (after.length > 0) update(after[after.length - 1].id, patch);
-      }
-    };
-    window.addEventListener("ai-autofill", handler);
-    return () => window.removeEventListener("ai-autofill", handler);
-  }, [update, add]);
+  useAiAutofillListener<TeachingExperience>("teachingExperience", update, add);
 
   return (
     <Card>

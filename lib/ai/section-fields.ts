@@ -1,4 +1,5 @@
 import { splitFields } from "./split-fields";
+import type { SectionType } from "@/lib/types/resume";
 
 export interface SectionFieldSpec {
   key: string;
@@ -13,7 +14,7 @@ export interface SectionFieldSpec {
  * prefill text (prefill.ts). Sections not listed here (summary, skills)
  * don't use structured multi-field output.
  */
-export const SECTION_FIELDS: Record<string, SectionFieldSpec[]> = {
+export const SECTION_FIELDS: Partial<Record<SectionType, SectionFieldSpec[]>> = {
   // Field lists mirror each *Form.tsx's actual visible inputs exactly
   // (labels match messages/th.json's builder.<section> keys) — every input
   // the form renders gets a slot, and nothing else, so the AI's answer maps
@@ -74,7 +75,7 @@ export const SECTION_FIELDS: Record<string, SectionFieldSpec[]> = {
 };
 
 /** The field whose presence in the item means "basics already filled in". */
-export const SECTION_PRIMARY_FIELD: Record<string, string> = {
+export const SECTION_PRIMARY_FIELD: Partial<Record<SectionType, string>> = {
   experience: "jobTitle",
   awards: "name",
   projects: "name",
@@ -82,7 +83,7 @@ export const SECTION_PRIMARY_FIELD: Record<string, string> = {
   teachingExperience: "courseName",
 };
 
-export function sectionFieldOrder(section: string): string[] {
+export function sectionFieldOrder(section: SectionType): string[] {
   return (SECTION_FIELDS[section] ?? []).map((f) => f.key);
 }
 
@@ -95,7 +96,7 @@ export function sectionFieldOrder(section: string): string[] {
  * same splitFields() the Form components apply on, so the preview always
  * matches what actually gets saved.
  */
-export function formatResultForPreview(section: string, raw: string): string {
+export function formatResultForPreview(section: SectionType, raw: string): string {
   const fields = SECTION_FIELDS[section];
   if (!fields || !raw.includes("|")) return raw;
 

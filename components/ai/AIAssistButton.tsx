@@ -4,9 +4,10 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { AutoFillDialog } from "./AutoFillDialog";
+import type { SectionType } from "@/lib/types/resume";
 
 interface AIAssistButtonProps {
-  section: string;
+  section: SectionType;
   itemId?: string;
 }
 

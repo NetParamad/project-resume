@@ -17,9 +17,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Sparkles, Loader2, RotateCcw } from "lucide-react";
+import type { SectionType } from "@/lib/types/resume";
 
 interface AutoFillDialogProps {
-  section: string;
+  section: SectionType;
   itemId?: string;
   trigger?: React.ReactNode;
   children?: React.ReactNode;

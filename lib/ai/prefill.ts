@@ -1,4 +1,4 @@
-import type { ResumeData } from "@/lib/types/resume";
+import type { ResumeData, SectionType } from "@/lib/types/resume";
 import { SECTION_FIELDS } from "./section-fields";
 
 /**
@@ -8,7 +8,7 @@ import { SECTION_FIELDS } from "./section-fields";
  * item, or a section with no structured fields), leaving the box empty.
  */
 export function buildPrefillPrompt(
-  section: string,
+  section: SectionType,
   itemId: string | undefined,
   resumeData: ResumeData | null | undefined,
 ): string {
@@ -21,9 +21,13 @@ export function buildPrefillPrompt(
   const fields = SECTION_FIELDS[section];
   if (!fields || !itemId) return "";
 
-  const sectionData = (resumeData as unknown as Record<string, unknown>)[section];
+  // Every list section holds an array of items shaped differently per
+  // section (WorkExperience, Education, ...), but all share an `id` field
+  // and are addressed here by field name from `fields` above — genuinely
+  // dynamic, so a narrow cast to the shared shape is unavoidable here.
+  const sectionData = resumeData[section as keyof ResumeData];
   const item = Array.isArray(sectionData)
-    ? (sectionData as Array<Record<string, unknown>>).find((it) => it?.id === itemId)
+    ? (sectionData as unknown as Array<Record<string, unknown>>).find((it) => it?.id === itemId)
     : undefined;
   if (!item) return "";
 
