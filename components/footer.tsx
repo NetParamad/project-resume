@@ -3,7 +3,6 @@
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { UNIVERSITY } from "@/lib/seo";
 
 export function Footer() {
   const t = useTranslations();
@@ -69,14 +68,6 @@ export function Footer() {
               >
                 {f("resourcesHub")}
               </Link>
-              <a
-                href={UNIVERSITY.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {f("university")}
-              </a>
             </div>
           </div>
           <div>

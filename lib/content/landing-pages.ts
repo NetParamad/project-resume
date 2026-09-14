@@ -13,12 +13,12 @@ export const LANDING_PAGES: LandingPage[] = [
     related: ["ats-resume", "ai-resume-builder", "resume-for-fresh-graduate"],
     readMore: ["how-to-write-resume", "ats-resume-guide"],
     th: {
-      title: "สร้าง Resume ออนไลน์ฟรี ภาษาไทย/อังกฤษ | RMUTL Resume",
+      title: "สร้าง Resume ออนไลน์ฟรี ภาษาไทย/อังกฤษ | Resume Builder",
       description:
         "โปรแกรมสร้าง Resume ออนไลน์ฟรี ไม่ต้องติดตั้ง เลือกเทมเพลตที่ผ่าน ATS กรอกข้อมูล พรีวิวสด แล้วดาวน์โหลดเป็น PDF หรือแชร์ลิงก์ รองรับภาษาไทยและอังกฤษ",
       h1: "สร้าง Resume ออนไลน์ฟรี ภายในไม่กี่นาที",
       intro:
-        "RMUTL Resume คือเครื่องมือสร้างเรซูเม่ออนไลน์ที่ใช้งานได้ฟรีเต็มรูปแบบ ไม่ต้องดาวน์โหลดโปรแกรม ไม่ต้องมีความรู้ด้านการออกแบบ เพียงเลือกเทมเพลต กรอกข้อมูลของคุณ แล้วระบบจะจัดหน้าให้อ่านง่ายและผ่านระบบคัดกรองใบสมัคร (ATS) โดยอัตโนมัติ",
+        "Resume Builder คือเครื่องมือสร้างเรซูเม่ออนไลน์ที่ใช้งานได้ฟรีเต็มรูปแบบ ไม่ต้องดาวน์โหลดโปรแกรม ไม่ต้องมีความรู้ด้านการออกแบบ เพียงเลือกเทมเพลต กรอกข้อมูลของคุณ แล้วระบบจะจัดหน้าให้อ่านง่ายและผ่านระบบคัดกรองใบสมัคร (ATS) โดยอัตโนมัติ",
       sections: [
         {
           heading: "ใช้งานได้ทันทีบนเบราว์เซอร์",
@@ -67,12 +67,12 @@ export const LANDING_PAGES: LandingPage[] = [
       ctaBody: "เลือกเทมเพลต กรอกข้อมูล ดาวน์โหลด PDF — ฟรี ไม่มีข้อจำกัด",
     },
     en: {
-      title: "Free Online Resume Builder — Thai & English | RMUTL Resume",
+      title: "Free Online Resume Builder — Thai & English | Resume Builder",
       description:
         "Build a resume online for free — no install. Pick an ATS-friendly template, fill in your details with a live preview, then export to PDF or share a link. Thai and English.",
       h1: "Build Your Resume Online for Free",
       intro:
-        "RMUTL Resume is a fully free online resume builder. There is nothing to install and no design skill required — pick a template, enter your details, and the layout stays readable and parseable by Applicant Tracking Systems (ATS) automatically.",
+        "Resume Builder is a fully free online resume builder. There is nothing to install and no design skill required — pick a template, enter your details, and the layout stays readable and parseable by Applicant Tracking Systems (ATS) automatically.",
       sections: [
         {
           heading: "Works straight from the browser",
@@ -129,12 +129,12 @@ export const LANDING_PAGES: LandingPage[] = [
     related: ["resume-builder", "ai-resume-builder", "resume-for-software-developer"],
     readMore: ["ats-resume-guide", "how-to-write-resume"],
     th: {
-      title: "สร้าง Resume ที่ผ่าน ATS พร้อมตรวจคะแนน | RMUTL Resume",
+      title: "สร้าง Resume ที่ผ่าน ATS พร้อมตรวจคะแนน | Resume Builder",
       description:
         "สร้างเรซูเม่ที่ระบบ ATS อ่านได้ครบถ้วน พร้อมเครื่องมือตรวจ ATS Score และคำแนะนำคีย์เวิร์ดที่ขาด เพื่อเพิ่มโอกาสผ่านด่านคัดกรองใบสมัคร",
       h1: "Resume ที่ผ่าน ATS — ตรวจคะแนนก่อนส่งจริง",
       intro:
-        "บริษัทจำนวนมากใช้ระบบ Applicant Tracking System (ATS) กรองใบสมัครก่อนถึงมือ HR หากเรซูเม่จัดรูปแบบไม่ถูกต้องหรือขาดคีย์เวิร์ดสำคัญ ใบสมัครอาจถูกตัดออกตั้งแต่ต้น RMUTL Resume ช่วยให้เรซูเม่ของคุณอ่านได้ครบและวัดผลได้ก่อนส่ง",
+        "บริษัทจำนวนมากใช้ระบบ Applicant Tracking System (ATS) กรองใบสมัครก่อนถึงมือ HR หากเรซูเม่จัดรูปแบบไม่ถูกต้องหรือขาดคีย์เวิร์ดสำคัญ ใบสมัครอาจถูกตัดออกตั้งแต่ต้น Resume Builder ช่วยให้เรซูเม่ของคุณอ่านได้ครบและวัดผลได้ก่อนส่ง",
       sections: [
         {
           heading: "ATS คืออะไร และทำไมต้องสนใจ",
@@ -164,7 +164,7 @@ export const LANDING_PAGES: LandingPage[] = [
       faq: [
         {
           q: "รูปแบบไฟล์ไหนที่ ATS อ่านได้ดีที่สุด",
-          a: "PDF ที่สร้างจากข้อความ (ไม่ใช่ภาพ) อ่านได้ดีที่สุดในระบบส่วนใหญ่ ไฟล์ PDF ที่ RMUTL Resume ส่งออกเป็นข้อความจริงทั้งหมด",
+          a: "PDF ที่สร้างจากข้อความ (ไม่ใช่ภาพ) อ่านได้ดีที่สุดในระบบส่วนใหญ่ ไฟล์ PDF ที่ Resume Builder ส่งออกเป็นข้อความจริงทั้งหมด",
         },
         {
           q: "ควรใส่คีย์เวิร์ดมากแค่ไหน",
@@ -183,12 +183,12 @@ export const LANDING_PAGES: LandingPage[] = [
       ctaBody: "สร้างเรซูเม่ วางประกาศงาน ดูคะแนนและคีย์เวิร์ดที่ขาด — ฟรี",
     },
     en: {
-      title: "ATS Resume Builder with ATS Score Check | RMUTL Resume",
+      title: "ATS Resume Builder with ATS Score Check | Resume Builder",
       description:
         "Build a resume ATS software can fully parse, then check your ATS score and see the keywords you are missing to get past the screening stage.",
       h1: "ATS Resume Builder — Check Your Score Before You Apply",
       intro:
-        "Many companies screen applications with an Applicant Tracking System (ATS) before a recruiter sees them. A poorly formatted resume — or one missing key terms — can be filtered out early. RMUTL Resume keeps your resume parseable and lets you measure it before you send.",
+        "Many companies screen applications with an Applicant Tracking System (ATS) before a recruiter sees them. A poorly formatted resume — or one missing key terms — can be filtered out early. Resume Builder keeps your resume parseable and lets you measure it before you send.",
       sections: [
         {
           heading: "What an ATS is and why it matters",
@@ -218,7 +218,7 @@ export const LANDING_PAGES: LandingPage[] = [
       faq: [
         {
           q: "Which file format do ATS read best?",
-          a: "A text-based PDF (not an image) is read most reliably by the majority of systems. Every PDF RMUTL Resume exports is real text.",
+          a: "A text-based PDF (not an image) is read most reliably by the majority of systems. Every PDF Resume Builder exports is real text.",
         },
         {
           q: "How many keywords should I add?",
@@ -245,12 +245,12 @@ export const LANDING_PAGES: LandingPage[] = [
     related: ["resume-builder", "ats-resume", "resume-for-software-developer"],
     readMore: ["how-to-write-resume", "resume-for-fresh-graduate"],
     th: {
-      title: "AI ช่วยเขียน Resume ภาษาไทย/อังกฤษ | RMUTL Resume",
+      title: "AI ช่วยเขียน Resume ภาษาไทย/อังกฤษ | Resume Builder",
       description:
         "ใช้ AI ช่วยเขียนและปรับ Resume — เปลี่ยนหน้าที่งานให้เป็นประโยคที่วัดผลได้ ตรวจไวยากรณ์ ปรับให้ตรงกับตำแหน่งที่สมัคร รองรับภาษาไทยและอังกฤษ",
       h1: "ให้ AI ช่วยเขียน Resume ที่อ่านแล้วน่าจ้าง",
       intro:
-        "จุดที่คนส่วนใหญ่ติดคือ 'จะเขียนยังไงให้ดูมืออาชีพ' RMUTL Resume มีผู้ช่วย AI ที่ช่วยยกร่าง ปรับสำนวน และทำให้แต่ละบรรทัดสื่อถึงผลงานจริง โดยที่คุณยังคุมเนื้อหาทั้งหมด",
+        "จุดที่คนส่วนใหญ่ติดคือ 'จะเขียนยังไงให้ดูมืออาชีพ' Resume Builder มีผู้ช่วย AI ที่ช่วยยกร่าง ปรับสำนวน และทำให้แต่ละบรรทัดสื่อถึงผลงานจริง โดยที่คุณยังคุมเนื้อหาทั้งหมด",
       sections: [
         {
           heading: "เปลี่ยนหน้าที่งานให้เป็นผลลัพธ์",
@@ -299,12 +299,12 @@ export const LANDING_PAGES: LandingPage[] = [
       ctaBody: "ยกร่าง ปรับสำนวน แก้ไวยากรณ์ — ฟรี ทั้งไทยและอังกฤษ",
     },
     en: {
-      title: "AI Resume Builder — Thai & English Writing Assistant | RMUTL Resume",
+      title: "AI Resume Builder — Thai & English Writing Assistant | Resume Builder",
       description:
         "Use AI to draft and refine your resume — turn duties into measurable results, fix grammar, and tailor to each job. Works in Thai and English.",
       h1: "Let AI Help You Write a Resume Worth Hiring",
       intro:
-        "The hardest part is usually 'how do I make this sound professional?' RMUTL Resume has an AI assistant that helps you draft, rephrase, and make every line show real impact — while you stay in control of the content.",
+        "The hardest part is usually 'how do I make this sound professional?' Resume Builder has an AI assistant that helps you draft, rephrase, and make every line show real impact — while you stay in control of the content.",
       sections: [
         {
           heading: "Turn duties into results",
@@ -361,7 +361,7 @@ export const LANDING_PAGES: LandingPage[] = [
     related: ["ats-resume", "ai-resume-builder", "resume-for-fresh-graduate"],
     readMore: ["how-to-write-resume", "ats-resume-guide"],
     th: {
-      title: "วิธีเขียน Resume สำหรับ Software Developer + สร้างฟรี | RMUTL Resume",
+      title: "วิธีเขียน Resume สำหรับ Software Developer + สร้างฟรี | Resume Builder",
       description:
         "แนวทางเขียนเรซูเม่สำหรับโปรแกรมเมอร์และนักพัฒนาซอฟต์แวร์ — ทักษะ ภาษาโปรแกรม โปรเจกต์ ประสบการณ์ และวิธีให้ผ่าน ATS พร้อมสร้างออนไลน์ฟรี",
       h1: "Resume สำหรับ Software Developer — เขียนยังไงให้ได้สัมภาษณ์",
@@ -415,7 +415,7 @@ export const LANDING_PAGES: LandingPage[] = [
       ctaBody: "มีเทมเพลตที่มีส่วน Projects และ Skills แบบจัดกลุ่ม — ฟรี",
     },
     en: {
-      title: "Software Developer Resume Guide + Free Builder | RMUTL Resume",
+      title: "Software Developer Resume Guide + Free Builder | Resume Builder",
       description:
         "How to write a resume as a software developer — skills, languages, projects, experience and passing ATS. Build one online for free.",
       h1: "Software Developer Resume — How to Land the Interview",
@@ -477,7 +477,7 @@ export const LANDING_PAGES: LandingPage[] = [
     related: ["resume-builder", "ai-resume-builder", "resume-for-software-developer"],
     readMore: ["how-to-write-resume", "ats-resume-guide"],
     th: {
-      title: "Resume สำหรับเด็กจบใหม่ ไม่มีประสบการณ์ — สร้างฟรี | RMUTL Resume",
+      title: "Resume สำหรับเด็กจบใหม่ ไม่มีประสบการณ์ — สร้างฟรี | Resume Builder",
       description:
         "วิธีเขียนเรซูเม่สำหรับนักศึกษาจบใหม่และคนไม่มีประสบการณ์ทำงาน — ใช้โปรเจกต์ การฝึกงาน กิจกรรม และทักษะให้เป็นจุดแข็ง พร้อมสร้างออนไลน์ฟรี",
       h1: "Resume สำหรับเด็กจบใหม่ — เขียนยังไงเมื่อยังไม่มีประสบการณ์",
@@ -531,7 +531,7 @@ export const LANDING_PAGES: LandingPage[] = [
       ctaBody: "เทมเพลตที่จัดลำดับ Education และ Projects มาให้ — ฟรี",
     },
     en: {
-      title: "Fresh Graduate Resume with No Experience — Free Builder | RMUTL Resume",
+      title: "Fresh Graduate Resume with No Experience — Free Builder | Resume Builder",
       description:
         "How to write a resume as a new graduate with no work experience — turn projects, internships, activities and skills into strengths. Build one online for free.",
       h1: "Fresh Graduate Resume — What to Write With No Experience",

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { getSiteUrl } from "@/lib/site-url";
-import { SITE_NAME, SEO_KEYWORDS, ogImage, UNIVERSITY } from "@/lib/seo";
+import { SITE_NAME, SEO_KEYWORDS, ogImage } from "@/lib/seo";
 import "./globals.css";
 
 /**
@@ -11,13 +11,13 @@ import "./globals.css";
  */
 
 const description =
-  `Free online resume builder for students and graduates of ${UNIVERSITY.nameEn} (${UNIVERSITY.abbr}). ` +
-  "Create an ATS-friendly resume with professional templates, an AI writing assistant, an ATS score checker and PDF export — in Thai or English.";
+  "Free online resume builder with an AI writing assistant. " +
+  "Create an ATS-friendly resume with professional templates, an ATS score checker and PDF export — in Thai or English.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} Students`,
+    default: `${SITE_NAME} — Free AI-Powered ATS Resume Builder`,
     template: `%s | ${SITE_NAME}`,
   },
   description,
@@ -41,13 +41,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} Students`,
+    title: `${SITE_NAME} — Free AI-Powered ATS Resume Builder`,
     description,
     images: [ogImage()],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} Students`,
+    title: `${SITE_NAME} — Free AI-Powered ATS Resume Builder`,
     description,
     images: [ogImage()],
   },

@@ -1,8 +1,7 @@
-<h1 align="center">RMUTL Resume</h1>
+<h1 align="center">Resume Builder</h1>
 
 <p align="center">
-  A free online résumé &amp; CV builder for students and graduates of
-  Rajamangala University of Technology Lanna (มทร.ล้านนา).
+  A free, AI-powered online résumé &amp; CV builder (AIRB).
 </p>
 
 <p align="center">
@@ -33,7 +32,7 @@
 - **Shareable link** — publish a résumé at a public, slug‑scoped URL (see [ADR‑0002](docs/adr/0002-public-share-rpc.md)).
 - **Cloud storage** — résumés are saved to Supabase and available from any device.
 
-> This is an independent project built for the RMUTL student community. It is not an official service of the university.
+> This is an independent project, not an official service of any university.
 
 ## Tech stack
 

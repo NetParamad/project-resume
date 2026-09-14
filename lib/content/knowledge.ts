@@ -14,7 +14,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
     related: ["ats-resume-guide", "resume-summary-guide"],
     seeAlso: ["resume-builder", "resume-for-fresh-graduate"],
     th: {
-      title: "วิธีเขียน Resume ทีละขั้นตอน สำหรับสมัครงาน | RMUTL Resume",
+      title: "วิธีเขียน Resume ทีละขั้นตอน สำหรับสมัครงาน | Resume Builder",
       description:
         "คู่มือเขียนเรซูเม่ตั้งแต่เริ่มต้น — โครงสร้างที่ควรมี วิธีเขียนแต่ละส่วน การใช้ตัวเลขวัดผล การจัดให้พอดี 1 หน้า และการปรับให้ผ่าน ATS",
       h1: "วิธีเขียน Resume ทีละขั้นตอน",
@@ -46,7 +46,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
         {
           heading: "4. จัดให้พอดี 1 หน้า",
           body: [
-            "สำหรับผู้มีประสบการณ์ไม่เกิน 10 ปี เรซูเม่ควรยาว 1 หน้า ตัดสิ่งที่ไม่เกี่ยวข้องออก เลือกเฉพาะประสบการณ์ที่ดีที่สุด 3–4 รายการ RMUTL Resume จะปรับสัดส่วนให้พอดีหน้าอัตโนมัติ",
+            "สำหรับผู้มีประสบการณ์ไม่เกิน 10 ปี เรซูเม่ควรยาว 1 หน้า ตัดสิ่งที่ไม่เกี่ยวข้องออก เลือกเฉพาะประสบการณ์ที่ดีที่สุด 3–4 รายการ Resume Builder จะปรับสัดส่วนให้พอดีหน้าอัตโนมัติ",
           ],
         },
         {
@@ -78,7 +78,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
       ctaBody: "ใช้เทมเพลตที่วางโครงสร้างมาให้แล้ว พร้อม AI ช่วยเขียน — ฟรี",
     },
     en: {
-      title: "How to Write a Resume, Step by Step | RMUTL Resume",
+      title: "How to Write a Resume, Step by Step | Resume Builder",
       description:
         "A guide to writing a resume from scratch — the standard structure, how to write each section, using numbers to show impact, fitting one page, and passing ATS.",
       h1: "How to Write a Resume, Step by Step",
@@ -110,7 +110,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
         {
           heading: "4. Fit one page",
           body: [
-            "For up to ~10 years of experience, a resume should be one page. Cut what isn't relevant and keep your best 3–4 experiences. RMUTL Resume scales the layout to fit automatically.",
+            "For up to ~10 years of experience, a resume should be one page. Cut what isn't relevant and keep your best 3–4 experiences. Resume Builder scales the layout to fit automatically.",
           ],
         },
         {
@@ -151,7 +151,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
     related: ["how-to-write-resume", "resume-summary-guide"],
     seeAlso: ["ats-resume", "resume-for-software-developer"],
     th: {
-      title: "ATS คืออะไร และวิธีทำ Resume ให้ผ่าน ATS | RMUTL Resume",
+      title: "ATS คืออะไร และวิธีทำ Resume ให้ผ่าน ATS | Resume Builder",
       description:
         "อธิบาย Applicant Tracking System (ATS) แบบเข้าใจง่าย — ระบบทำงานอย่างไร รูปแบบไหนที่ทำให้ตก และเช็กลิสต์สำหรับทำเรซูเม่ให้ผ่านการคัดกรอง",
       h1: "ATS คืออะไร และทำ Resume ให้ผ่านได้อย่างไร",
@@ -205,14 +205,14 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
         },
         {
           q: "เรซูเม่ดีไซน์สวย ๆ ผ่าน ATS ได้ไหม",
-          a: "ได้ ถ้าดีไซน์นั้นวางอยู่บนโครงสร้างข้อความจริงและคอลัมน์เดียวในเชิงข้อมูล เทมเพลตของ RMUTL Resume ออกแบบตามหลักนี้",
+          a: "ได้ ถ้าดีไซน์นั้นวางอยู่บนโครงสร้างข้อความจริงและคอลัมน์เดียวในเชิงข้อมูล เทมเพลตของ Resume Builder ออกแบบตามหลักนี้",
         },
       ],
       ctaTitle: "ทำ Resume ที่ผ่าน ATS",
       ctaBody: "เทมเพลตผ่าน ATS + เครื่องมือตรวจคะแนน — ฟรี",
     },
     en: {
-      title: "What Is ATS and How to Make Your Resume Pass It | RMUTL Resume",
+      title: "What Is ATS and How to Make Your Resume Pass It | Resume Builder",
       description:
         "A plain-language explanation of the Applicant Tracking System (ATS) — how it works, which formats fail, and a checklist for a resume that clears screening.",
       h1: "What Is ATS, and How to Pass It",
@@ -266,7 +266,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
         },
         {
           q: "Can a nicely designed resume pass ATS?",
-          a: "Yes, if the design sits on real text structure and a single-column information layout. RMUTL Resume templates are built this way.",
+          a: "Yes, if the design sits on real text structure and a single-column information layout. Resume Builder templates are built this way.",
         },
       ],
       ctaTitle: "Build an ATS-passing resume",
@@ -282,7 +282,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
     related: ["how-to-write-resume", "ats-resume-guide"],
     seeAlso: ["ai-resume-builder", "resume-for-fresh-graduate"],
     th: {
-      title: "วิธีเขียน Summary ใน Resume ให้น่าสนใจ + ตัวอย่าง | RMUTL Resume",
+      title: "วิธีเขียน Summary ใน Resume ให้น่าสนใจ + ตัวอย่าง | Resume Builder",
       description:
         "วิธีเขียนส่วนสรุป (Summary) ที่หัวเรซูเม่ให้ HR สนใจใน 5 วินาที พร้อมโครงประโยค ตัวอย่างสำหรับเด็กจบใหม่และผู้มีประสบการณ์ และข้อผิดพลาดที่พบบ่อย",
       h1: "วิธีเขียน Summary ใน Resume",
@@ -336,7 +336,7 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
       ctaBody: "ยกร่างและปรับ Summary ให้ตรงแต่ละงาน — ฟรี",
     },
     en: {
-      title: "How to Write a Resume Summary That Works (+ Examples) | RMUTL Resume",
+      title: "How to Write a Resume Summary That Works (+ Examples) | Resume Builder",
       description:
         "How to write the summary at the top of your resume so a recruiter is interested in 5 seconds — a sentence template, examples for new grads and experienced candidates, and common mistakes.",
       h1: "How to Write a Resume Summary",

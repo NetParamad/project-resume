@@ -7,7 +7,7 @@ export function EditorPreview() {
           <div className="h-3 w-3 rounded-full bg-primary/40" />
           <div className="h-3 w-3 rounded-full bg-muted-foreground/30" />
           <span className="ml-2 text-xs text-muted-foreground">
-            RMUTL Resume
+            Resume Builder
           </span>
         </div>
         <div className="grid gap-0 sm:grid-cols-3">
