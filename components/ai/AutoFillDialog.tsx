@@ -120,7 +120,7 @@ export function AutoFillDialog({
     // resets on its own.
     if (next && (prompt === "" || prompt === lastPrefillRef.current)) {
       const resumeData = useResumeStore.getState().data;
-      const prefill = buildPrefillPrompt(section, itemId, resumeData);
+      const prefill = buildPrefillPrompt(section, itemId, resumeData, locale);
       lastPrefillRef.current = prefill;
       if (prefill !== prompt) setPrompt(prefill);
     }
@@ -224,7 +224,7 @@ export function AutoFillDialog({
             <div className="space-y-2">
               <div className="rounded-md border border-border bg-muted/50 p-3">
                 <p className="text-sm whitespace-pre-wrap">
-                  {formatResultForPreview(section, result)}
+                  {formatResultForPreview(section, result, locale)}
                 </p>
               </div>
               <Button

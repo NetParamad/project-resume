@@ -1,5 +1,5 @@
 import type { ResumeData, SectionType } from "@/lib/types/resume";
-import { SECTION_FIELDS } from "./section-fields";
+import { SECTION_FIELDS, fieldLabel } from "./section-fields";
 
 /**
  * Text to pre-populate the auto-fill dialog's prompt box with when it opens,
@@ -11,6 +11,7 @@ export function buildPrefillPrompt(
   section: SectionType,
   itemId: string | undefined,
   resumeData: ResumeData | null | undefined,
+  locale?: string
 ): string {
   if (!resumeData) return "";
 
@@ -27,14 +28,18 @@ export function buildPrefillPrompt(
   // dynamic, so a narrow cast to the shared shape is unavoidable here.
   const sectionData = resumeData[section as keyof ResumeData];
   const item = Array.isArray(sectionData)
-    ? (sectionData as unknown as Array<Record<string, unknown>>).find((it) => it?.id === itemId)
+    ? (sectionData as unknown as Array<Record<string, unknown>>).find(
+        (it) => it?.id === itemId
+      )
     : undefined;
   if (!item) return "";
 
   const lines = fields
-    .map(({ key, label }) => {
-      const value = item[key];
-      return typeof value === "string" && value.trim() ? `${label}: ${value.trim()}` : null;
+    .map((field) => {
+      const value = item[field.key];
+      return typeof value === "string" && value.trim()
+        ? `${fieldLabel(field, locale)}: ${value.trim()}`
+        : null;
     })
     .filter((line): line is string => line !== null);
 

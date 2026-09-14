@@ -5,7 +5,11 @@ import { llmText } from "@/lib/ai/client";
 import { resolveLocale } from "@/lib/ai/detect-locale";
 import { autoFillRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
-import { SECTION_FIELDS, SECTION_PRIMARY_FIELD } from "@/lib/ai/section-fields";
+import {
+  SECTION_FIELDS,
+  SECTION_PRIMARY_FIELD,
+  fieldLabel,
+} from "@/lib/ai/section-fields";
 import type { SectionType } from "@/lib/types/resume";
 
 export const runtime = "nodejs";
@@ -145,8 +149,8 @@ function structuredFallbackInstruction(
   const fields = SECTION_FIELDS[section];
   if (!fields) return "";
   const isTh = locale === "th";
-  const orderTh = fields.map((f) => f.label).join(" | ");
-  const orderEn = fields.map((f) => f.key).join(" | ");
+  const orderTh = fields.map((f) => f.label.th).join(" | ");
+  const orderEn = fields.map((f) => f.label.en).join(" | ");
   return isTh
     ? `\n\nนอกจากนี้ ถ้าคำขอของผู้ใช้มีข้อมูลที่ยังไม่ได้กรอกในระบบด้วย (เช่น ชื่อ/สถานที่/วันที่) ให้ส่งคำตอบทั้งหมดกลับเป็นบรรทัดเดียวในรูปแบบ: ${orderTh} — ใช้เครื่องหมาย "|" คั่นแต่ละส่วนเท่านั้น ห้ามใช้ "|" ภายในเนื้อหาของส่วนใด ส่วนที่ไม่มีข้อมูลให้ปล่อยว่างแต่ยังคงใส่ "|" คั่นตำแหน่งไว้ตามเดิม ส่วนรายละเอียด/คำอธิบายให้เขียนเป็นย่อหน้าเดียวต่อเนื่อง ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า`
     : `\n\nAlso, if the user's request includes information not yet filled in the form (e.g. name/location/dates), return the ENTIRE answer as a single line in this format: ${orderEn} — separate parts with "|" only, never inside any part's own content. Leave a part blank if unknown, but keep its "|" position. Write the description part as one continuous flowing paragraph, not line breaks or bullet points.`;
@@ -180,8 +184,10 @@ function staleContentNote(
   const fields = SECTION_FIELDS[section] ?? [];
   const known = fields
     .filter((f) => f.key !== "description")
-    .map(({ key, label }) =>
-      context?.[key] ? `${label}: ${context[key]}` : null
+    .map((field) =>
+      context?.[field.key]
+        ? `${fieldLabel(field, locale)}: ${context[field.key]}`
+        : null
     )
     .filter((line): line is string => line !== null)
     .join(", ");
@@ -241,16 +247,16 @@ Keep under 60 words total.`;
         : "List 6-10 relevant skills for this role. Categorize as: technical tools & languages, methodologies & processes, and soft skills. Prioritize high-demand keywords for this career field.";
     case "education": {
       const fields = SECTION_FIELDS.education ?? [];
-      const orderTh = fields.map((f) => f.label).join(" | ");
-      const orderEn = fields.map((f) => f.key).join(" | ");
+      const orderTh = fields.map((f) => f.label.th).join(" | ");
+      const orderEn = fields.map((f) => f.label.en).join(" | ");
       return isTh
         ? `เขียนข้อมูลการศึกษา 1 รายการในรูปแบบ: ${orderTh} ใช้ชื่อวุฒิ/สาขาเป็นภาษาอังกฤษ วันที่ใช้รูปแบบ YYYY-MM ส่วนที่ไม่ทราบให้ปล่อยว่างแต่ยังคงเครื่องหมาย | คั่นตำแหน่งไว้ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์`
         : `Return a single education entry in this exact format: ${orderEn}. Keep degree and field names in English, dates as YYYY-MM. Leave a part blank if unknown but keep its "|" position. No extra explanations, and do not use '|' inside the field values.`;
     }
     case "publications": {
       const fields = SECTION_FIELDS.publications ?? [];
-      const orderTh = fields.map((f) => f.label).join(" | ");
-      const orderEn = fields.map((f) => f.key).join(" | ");
+      const orderTh = fields.map((f) => f.label.th).join(" | ");
+      const orderEn = fields.map((f) => f.label.en).join(" | ");
       return isTh
         ? `เขียนผลงานวิชาการ 1 รายการในรูปแบบ: ${orderTh} ใช้รูปแบบ citation วิชาการ ส่วนที่ไม่มีข้อมูล (เช่น เล่มที่/หน้า/DOI/ลิงก์) ให้ปล่อยว่างแต่ยังคงเครื่องหมาย | คั่นตำแหน่งไว้ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์`
         : `Write one academic publication in this exact format: ${orderEn}. Use standard academic citation style. Leave a part blank if unknown (e.g. volume/pages/doi/url) but keep its "|" position. No extra explanations, and do not use '|' inside the field values.`;
