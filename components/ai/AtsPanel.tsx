@@ -7,13 +7,21 @@ import { useAIModelStore } from "@/lib/store/ai-model-store";
 import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle, CheckCircle2, Lightbulb, Bot, Clock } from "lucide-react";
+import {
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  Lightbulb,
+  Bot,
+  Clock,
+} from "lucide-react";
 import {
   ImproveAgentLog,
   type AgentLogEntry,
   type AgentConfig,
   type AgentDoneResult,
 } from "./ImproveAgentLog";
+import { useElapsedSeconds } from "@/lib/hooks/use-elapsed-seconds";
 import type { ResumeData } from "@/lib/types/resume";
 
 interface ATSResult {
@@ -61,6 +69,7 @@ export function AtsPanel() {
   const abortRef = useRef<AbortController | null>(null);
   const checkStartRef = useRef(0);
   const agentStartRef = useRef(0);
+  const checkSeconds = useElapsedSeconds(isLoading);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -249,11 +258,13 @@ export function AtsPanel() {
     result && result.score >= 80
       ? "text-green-600"
       : result && result.score >= 60
-      ? "text-yellow-600"
-      : "text-red-600";
+        ? "text-yellow-600"
+        : "text-red-600";
 
   const lastScore =
-    agentScores.length > 0 ? agentScores[agentScores.length - 1] : result?.score ?? "—";
+    agentScores.length > 0
+      ? agentScores[agentScores.length - 1]
+      : (result?.score ?? "—");
 
   return (
     <div className="space-y-4">
@@ -266,7 +277,10 @@ export function AtsPanel() {
 
       {agentStatus === "idle" && !isLoading && (
         <div className="space-y-1">
-          <label htmlFor="ats-job-description" className="text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="ats-job-description"
+            className="text-xs font-medium text-muted-foreground"
+          >
             {t("atsJobDescription")}
           </label>
           <textarea
@@ -301,8 +315,11 @@ export function AtsPanel() {
           }}
         />
       ) : isLoading ? (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex flex-col items-center justify-center gap-2 py-8">
           <Loader2 size={24} className="animate-spin text-muted-foreground" />
+          <p className="text-xs text-muted-foreground/60 font-mono tabular-nums">
+            {t("elapsedTime", { seconds: checkSeconds })}
+          </p>
         </div>
       ) : result ? (
         <div className="space-y-4">
@@ -344,7 +361,11 @@ export function AtsPanel() {
                 </h4>
                 <div className="flex flex-wrap gap-1">
                   {result.missingKeywords.map((kw) => (
-                    <Badge key={kw} variant="outline" className="text-xs text-yellow-600">
+                    <Badge
+                      key={kw}
+                      variant="outline"
+                      className="text-xs text-yellow-600"
+                    >
                       {kw}
                     </Badge>
                   ))}
@@ -360,7 +381,10 @@ export function AtsPanel() {
                 </h4>
                 <ul className="space-y-1">
                   {result.suggestions.map((s, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                    <li
+                      key={i}
+                      className="text-sm text-muted-foreground flex gap-2"
+                    >
                       <span className="text-blue-500 shrink-0">•</span>
                       {s}
                     </li>
@@ -385,7 +409,9 @@ export function AtsPanel() {
           </Button>
         </div>
       )}
-      {error && agentStatus === "idle" && <p className="text-sm text-red-500">{error}</p>}
+      {error && agentStatus === "idle" && (
+        <p className="text-sm text-red-500">{error}</p>
+      )}
     </div>
   );
 }

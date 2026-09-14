@@ -4,8 +4,11 @@ import { resolveResumeLocale } from "./detect-locale";
 import { buildTranslationDirective } from "./persona";
 import type { ResumeData } from "@/lib/types/resume";
 
-function buildSystemPrompt(locale: string): string {
+function buildSystemPrompt(locale: string, translating: boolean): string {
   if (locale === "th") {
+    const languageRule = translating
+      ? "ผู้ใช้เลือกภาษาผลลัพธ์ไว้ชัดเจนแล้ว (ดูคำสั่งภาษาที่ต่อท้ายด้านล่าง) ให้ทำตามคำสั่งนั้นแทนการคงภาษาเดิมของแต่ละฟิลด์"
+      : "ห้ามแปลข้อความเป็นภาษาอื่นเด็ดขาด แต่ละฟิลด์ต้องคงภาษาดั้งเดิมไว้ตามที่ผู้ใช้เขียน (ไทยคงเป็นไทย อังกฤษคงเป็นอังกฤษ) แม้เนื้อหาจะปนกันหลายภาษาในเรซูเม่เดียวกันก็ตาม";
     return `คุณคือบรรณาธิการเรซูเม่มืออาชีพ
 คุณจะได้รับเรซูเม่ในรูปแบบ JSON
 กฎ:
@@ -13,10 +16,13 @@ function buildSystemPrompt(locale: string): string {
 2. ทำให้ข้อความกระชับโดยคงความหมายเดิมไว้
 3. ห้ามเปลี่ยนแปลงข้อมูลข้อเท็จจริง ตำแหน่งงาน ชื่อบริษัท ทักษะ หรือเพิ่มเติมประสบการณ์ใหม่
 4. ห้ามเติมตัวเลข สถิติ เปอร์เซ็นต์ วันที่ หรือข้อมูลใด ๆ ที่ไม่มีอยู่ในเรซูเม่ต้นฉบับ ห้ามปรับปรุงข้อความให้ดูเกินจริง
-5. ห้ามแปลข้อความเป็นภาษาอื่นเด็ดขาด แต่ละฟิลด์ต้องคงภาษาดั้งเดิมไว้ตามที่ผู้ใช้เขียน (ไทยคงเป็นไทย อังกฤษคงเป็นอังกฤษ) แม้เนื้อหาจะปนกันหลายภาษาในเรซูเม่เดียวกันก็ตาม
+5. ${languageRule}
 6. เก็บโครงสร้าง JSON เดิมทุกฟิลด์ และฟิลด์ id ของทุก item ต้องคงเดิมทุกตัว
 7. ตอบเป็น JSON เท่านั้น ไม่มีข้อความอื่นใด`;
   }
+  const languageRule = translating
+    ? "The user has explicitly selected a target output language (see the language instruction appended below) — follow that instead of keeping each field's original language."
+    : "NEVER translate any text into another language. Keep each field in the same language the user originally wrote it in (Thai stays Thai, English stays English), even if the resume mixes both languages.";
   return `You are a professional resume editor.
 You will receive a resume as JSON.
 Rules:
@@ -24,7 +30,7 @@ Rules:
 2. Make the text more concise while keeping the exact same meaning.
 3. NEVER change factual details, job titles, company names, skills, or add new experience.
 4. NEVER add numbers, statistics, percentages, dates, or any data that is not present in the original resume. Do not embellish or make the text sound more impressive than the original facts.
-5. NEVER translate any text into another language. Keep each field in the same language the user originally wrote it in (Thai stays Thai, English stays English), even if the resume mixes both languages.
+5. ${languageRule}
 6. Keep the exact same JSON structure and every field; keep the 'id' of every array item identical to the original.
 7. Return ONLY valid JSON, no other text.`;
 }
@@ -36,10 +42,11 @@ export async function polishResume(options: {
   modelId?: string;
 }): Promise<ResumeData> {
   const { resumeData, locale = "en", outputLocale, modelId } = options;
-  const effectiveLocale = outputLocale ?? resolveResumeLocale(resumeData, null, locale);
+  const effectiveLocale =
+    outputLocale ?? resolveResumeLocale(resumeData, null, locale);
   const baseSystem = outputLocale
-    ? `${buildSystemPrompt(effectiveLocale)}\n\n${buildTranslationDirective(outputLocale)}`
-    : buildSystemPrompt(effectiveLocale);
+    ? `${buildSystemPrompt(effectiveLocale, true)}\n\n${buildTranslationDirective(outputLocale)}`
+    : buildSystemPrompt(effectiveLocale, false);
 
   const user = `Resume JSON:\n${JSON.stringify(resumeData, null, 2)}\n\nReturn the polished resume as a single JSON object.`;
 

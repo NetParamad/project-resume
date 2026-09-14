@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Sparkles, Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useElapsedSeconds } from "@/lib/hooks/use-elapsed-seconds";
 import type { SectionType } from "@/lib/types/resume";
 
 const LANG_OPTIONS: Array<{ value: OutputLocale | null; labelKey: string }> = [
@@ -55,6 +56,7 @@ export function AutoFillDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const lastPrefillRef = useRef("");
+  const seconds = useElapsedSeconds(isLoading);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -199,6 +201,11 @@ export function AutoFillDialog({
               </>
             )}
           </Button>
+          {isLoading && (
+            <p className="text-xs text-muted-foreground/60 text-right font-mono tabular-nums">
+              {t("elapsedTime", { seconds })}
+            </p>
+          )}
           {error && (
             <div className="space-y-2">
               <p className="text-sm text-red-500">{error}</p>

@@ -28,27 +28,80 @@ const RESUME_JSON_SCHEMA = {
     avatar: "",
   },
   summary: "",
-  experience: [{ jobTitle: "", company: "", location: "", startDate: "", endDate: "", current: false, description: "" }],
-  education: [{ degree: "", institution: "", field: "", startDate: "", endDate: "", gpa: "" }],
+  experience: [
+    {
+      jobTitle: "",
+      company: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+    },
+  ],
+  education: [
+    {
+      degree: "",
+      institution: "",
+      field: "",
+      startDate: "",
+      endDate: "",
+      gpa: "",
+    },
+  ],
   skills: [{ name: "", level: "intermediate" }],
   certifications: [{ name: "", issuer: "", date: "" }],
   projects: [{ name: "", url: "", description: "" }],
   languages: [{ name: "", proficiency: "intermediate" }],
   references: [{ name: "", title: "", company: "", email: "", phone: "" }],
-  publications: [{ title: "", authors: "", journal: "", year: "", volume: "", pages: "", doi: "", url: "" }],
-  researchExperience: [{ role: "", institution: "", location: "", startDate: "", endDate: "", current: false, description: "", supervisor: "" }],
-  teachingExperience: [{ courseName: "", institution: "", role: "", startDate: "", endDate: "", description: "" }],
+  publications: [
+    {
+      title: "",
+      authors: "",
+      journal: "",
+      year: "",
+      volume: "",
+      pages: "",
+      doi: "",
+      url: "",
+    },
+  ],
+  researchExperience: [
+    {
+      role: "",
+      institution: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+      supervisor: "",
+    },
+  ],
+  teachingExperience: [
+    {
+      courseName: "",
+      institution: "",
+      role: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    },
+  ],
   awards: [{ name: "", issuer: "", date: "", description: "" }],
 };
 
-function buildSystemPrompt(locale: string): string {
+function buildSystemPrompt(locale: string, translating: boolean): string {
   const schema = JSON.stringify(RESUME_JSON_SCHEMA, null, 2);
+  const languageRuleTh = translating
+    ? "ผู้ใช้เลือกภาษาผลลัพธ์ไว้ชัดเจนแล้ว (ดูคำสั่งภาษาที่ต่อท้ายด้านล่าง) ให้ทำตามคำสั่งนั้นแทนการคงภาษาเดิมของแต่ละฟิลด์"
+    : "ห้ามแปลค่าที่ดึงมาเป็นภาษาอื่นเด็ดขาด ให้คงภาษาดั้งเดิมของแต่ละฟิลด์ไว้ตามที่ปรากฏในเรซูเม่ (ถ้าต้นฉบับเป็นภาษาไทยให้คงเป็นไทย ถ้าเป็นอังกฤษให้คงเป็นอังกฤษ) แม้ว่าคำสั่งนี้จะเป็นภาษาไทยก็ตาม";
   if (locale === "th") {
     return `คุณคือผู้เชี่ยวชาญด้านการดึงข้อมูลจากเรซูเม่ ดึงข้อมูลทั้งหมดจากเรซูเม่ที่อัปโหลดแล้วตอบเป็น JSON เท่านั้นตามโครงสร้างด้านล่าง
 
 กฎ:
 - เนื้อหาของเรซูเม่อาจเป็นภาษาไทย อังกฤษ หรือทั้งสองภาษา (แบบสองภาษา) ให้ดึงข้อมูลทั้งหมดไม่จำกัดภาษา
-- ห้ามแปลค่าที่ดึงมาเป็นภาษาอื่นเด็ดขาด ให้คงภาษาดั้งเดิมของแต่ละฟิลด์ไว้ตามที่ปรากฏในเรซูเม่ (ถ้าต้นฉบับเป็นภาษาไทยให้คงเป็นไทย ถ้าเป็นอังกฤษให้คงเป็นอังกฤษ) แม้ว่าคำสั่งนี้จะเป็นภาษาไทยก็ตาม
+- ${languageRuleTh}
 - แยกแต่ละตำแหน่งงาน/บริษัท/โครงการ/การศึกษาออกเป็น 1 element ใน array ต่างหาก ห้ามรวมหลายรายการเข้าด้วยกัน และห้ามเหลือแค่รายการเดียว
 - วันที่, ตำแหน่ง, บริษัท, และรายละเอียด ต้องตรงกับรายการนั้น ๆ ห้ามสลับหรือปนกับรายการอื่น
 - ใส่รายละเอียดให้มากที่สุดเท่าที่มีในเรซูเม่ (สถานที่, ผู้ควบคุมงาน supervisor, เกรด gpa ฯลฯ)
@@ -65,11 +118,14 @@ function buildSystemPrompt(locale: string): string {
 โครงสร้าง:
 ${schema}`;
   }
+  const languageRuleEn = translating
+    ? "The user has explicitly selected a target output language (see the language instruction appended below) — follow that instead of keeping each field's original language."
+    : "NEVER translate extracted values into another language. Keep each field in its original language exactly as written in the resume (Thai stays Thai, English stays English), even though these instructions are in English.";
   return `You are a resume data extraction expert. Extract ALL information from the uploaded resume and return ONLY valid JSON matching the structure below.
 
 Rules:
 - The resume content may be in Thai, English, or both (bilingual). Extract ALL information regardless of language.
-- NEVER translate extracted values into another language. Keep each field in its original language exactly as written in the resume (Thai stays Thai, English stays English), even though these instructions are in English.
+- ${languageRuleEn}
 - Put each distinct job/company/project/education into its OWN separate element in the array. Never merge multiple entries into one, and never output just a single entry.
 - Dates, job title, company, and description must belong to the correct entry. Never shift or mix them across entries.
 - Include as much detail as available in the resume (location, supervisor, GPA, etc.).
@@ -123,7 +179,7 @@ function hasValidShape(result: object): boolean {
   if (typeof result !== "object" || Array.isArray(result)) return false;
   const record = result as Record<string, unknown>;
   return REQUIRED_ARRAY_FIELDS.every(
-    (field) => record[field] === undefined || Array.isArray(record[field]),
+    (field) => record[field] === undefined || Array.isArray(record[field])
   );
 }
 
@@ -131,11 +187,11 @@ async function tryAIExtract(
   text: string,
   locale: string,
   modelId?: string,
-  translateTo?: "th" | "en",
+  translateTo?: "th" | "en"
 ): Promise<object | null> {
   const systemPrompt = translateTo
-    ? `${buildSystemPrompt(locale)}\n\n${buildTranslationDirective(translateTo)}`
-    : buildSystemPrompt(locale);
+    ? `${buildSystemPrompt(locale, true)}\n\n${buildTranslationDirective(translateTo)}`
+    : buildSystemPrompt(locale, false);
   // Leave headroom before the route's maxDuration so a second pass never
   // gets started when it can't finish — the heuristic parser covers us then.
   const deadline = Date.now() + 40_000;
@@ -161,7 +217,10 @@ async function tryAIExtract(
 
     const parsed = extractJSON(raw);
     if (parsed && hasValidShape(parsed)) return parsed;
-    console.warn("AI extract returned invalid JSON, retrying:", raw.slice(0, 200));
+    console.warn(
+      "AI extract returned invalid JSON, retrying:",
+      raw.slice(0, 200)
+    );
   }
 
   return null;
@@ -169,7 +228,10 @@ async function tryAIExtract(
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -184,15 +246,22 @@ export async function POST(req: NextRequest) {
 
   const resumeText = text.trim();
   if (resumeText.length < 30) {
-    const msg = locale === "th"
-      ? "อ่านข้อความจากไฟล์ PDF ไม่ได้ ไฟล์อาจเป็นรูปสแกน กรุณาลองไฟล์อื่นหรือวางข้อความเอง"
-      : "Couldn't read text from this PDF — it may be a scan. Try another file or paste the text.";
+    const msg =
+      locale === "th"
+        ? "อ่านข้อความจากไฟล์ PDF ไม่ได้ ไฟล์อาจเป็นรูปสแกน กรุณาลองไฟล์อื่นหรือวางข้อความเอง"
+        : "Couldn't read text from this PDF — it may be a scan. Try another file or paste the text.";
     return NextResponse.json({ error: msg }, { status: 422 });
   }
 
   try {
-    const contentLocale = outputLocale ?? resolveLocale(resumeText, locale || "en");
-    const aiResult = await tryAIExtract(resumeText, contentLocale, model ?? undefined, outputLocale);
+    const contentLocale =
+      outputLocale ?? resolveLocale(resumeText, locale || "en");
+    const aiResult = await tryAIExtract(
+      resumeText,
+      contentLocale,
+      model ?? undefined,
+      outputLocale
+    );
     if (aiResult) {
       return NextResponse.json({
         ...sanitizeExtractedResume(aiResult as Partial<ResumeData>),
@@ -200,7 +269,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const heuristic = parseResumeText(resumeText) as unknown as Partial<ResumeData>;
+    const heuristic = parseResumeText(
+      resumeText
+    ) as unknown as Partial<ResumeData>;
     return NextResponse.json({
       ...sanitizeExtractedResume(heuristic),
       source: "heuristic",
@@ -208,8 +279,12 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Extract resume error:", error);
     return NextResponse.json(
-      { code: "ai_error", detail: error instanceof Error ? error.message.slice(0, 500) : undefined },
-      { status: 500 },
+      {
+        code: "ai_error",
+        detail:
+          error instanceof Error ? error.message.slice(0, 500) : undefined,
+      },
+      { status: 500 }
     );
   }
 }

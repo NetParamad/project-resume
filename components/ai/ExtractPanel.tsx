@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
@@ -8,7 +8,16 @@ import { useAILanguageStore } from "@/lib/store/ai-language-store";
 import { normalizeResumeData } from "@/lib/normalize-resume";
 import { extractPdfText } from "@/lib/pdf/extract-pdf-text";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, FileText, CheckCircle2, RotateCcw, Eye, Clock } from "lucide-react";
+import {
+  Upload,
+  Loader2,
+  FileText,
+  CheckCircle2,
+  RotateCcw,
+  Eye,
+  Clock,
+} from "lucide-react";
+import { useElapsedSeconds } from "@/lib/hooks/use-elapsed-seconds";
 import type { ResumeData } from "@/lib/types/resume";
 
 const ARRAY_KEYS = [
@@ -35,22 +44,13 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
   const [done, setDone] = useState(false);
   const [missing, setMissing] = useState<string[]>([]);
   const [usedFallback, setUsedFallback] = useState(false);
-  const [seconds, setSeconds] = useState(0);
   const [finalElapsed, setFinalElapsed] = useState<number | null>(null);
   const setCurrentResume = useResumeStore((s) => s.setCurrentResume);
   const documentType = useResumeStore((s) => s.documentType);
   const model = useAIModelStore((s) => s.override);
   const outputLocale = useAILanguageStore((s) => s.override) ?? undefined;
   const startRef = useRef(0);
-
-  useEffect(() => {
-    if (!isLoading) {
-      setSeconds(0);
-      return;
-    }
-    const tick = setInterval(() => setSeconds((prev) => prev + 1), 1000);
-    return () => clearInterval(tick);
-  }, [isLoading]);
+  const seconds = useElapsedSeconds(isLoading);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -103,7 +103,10 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
         const empty: string[] = [];
         if (!normalized.summary) empty.push("summary");
         for (const key of ARRAY_KEYS) {
-          if ((normalized as unknown as Record<string, unknown[]>)[key].length === 0) {
+          if (
+            (normalized as unknown as Record<string, unknown[]>)[key].length ===
+            0
+          ) {
             empty.push(key);
           }
         }
@@ -111,7 +114,13 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
         setUsedFallback(data.source === "heuristic");
         setFinalElapsed((Date.now() - startRef.current) / 1000);
         const defaultTemplate = documentType === "cv" ? "academic" : "modern";
-        setCurrentResume(null, "Imported Resume", documentType, defaultTemplate, normalized);
+        setCurrentResume(
+          null,
+          "Imported Resume",
+          documentType,
+          defaultTemplate,
+          normalized
+        );
         setDone(true);
         setFile(null);
       }
@@ -126,7 +135,9 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
     <div className="space-y-4">
       <div>
         <h2 className="text-base font-semibold">{t("extractResume")}</h2>
-        <p className="text-sm text-muted-foreground">{t("extractDescription")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("extractDescription")}
+        </p>
       </div>
 
       {done ? (
@@ -159,7 +170,9 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
             onClick={() => {
               onClose?.();
               window.setTimeout(() => {
-                document.getElementById("preview-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                document
+                  .getElementById("preview-panel")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }, 300);
             }}
           >
@@ -184,7 +197,10 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
       ) : isLoading ? (
         <div className="space-y-3">
           <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full animate-indeterminate" style={{ width: "40%" }} />
+            <div
+              className="h-full bg-primary rounded-full animate-indeterminate"
+              style={{ width: "40%" }}
+            />
           </div>
           <div className="border-2 border-border rounded-lg p-6 space-y-3">
             <div className="h-4 bg-muted rounded animate-pulse" />
@@ -196,7 +212,9 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
             {t("analyzing")}
           </p>
           <p className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground/60">{t("extractTimeNotice")}</span>
+            <span className="text-xs text-muted-foreground/60">
+              {t("extractTimeNotice")}
+            </span>
             <span className="text-xs text-muted-foreground/60 font-mono tabular-nums shrink-0">
               {t("elapsedTime", { seconds })}
             </span>
@@ -229,7 +247,9 @@ export function ExtractPanel({ onClose }: { onClose?: () => void }) {
               )}
             </label>
           </div>
-          <p className="text-xs text-muted-foreground/70">{t("uploadPdfHint")}</p>
+          <p className="text-xs text-muted-foreground/70">
+            {t("uploadPdfHint")}
+          </p>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </>
       )}

@@ -14,6 +14,7 @@ import {
   Clock,
 } from "lucide-react";
 import { sectionTitle, renderValue, truncate } from "./section-utils";
+import { useElapsedSeconds } from "@/lib/hooks/use-elapsed-seconds";
 
 export type AgentLogEntry =
   | { kind: "analyze" }
@@ -64,6 +65,7 @@ export function ImproveAgentLog({
 }: ImproveAgentLogProps) {
   const t = useTranslations("ai");
   const builderT = useTranslations("builder");
+  const liveSeconds = useElapsedSeconds(status === "running");
 
   const sectionTitleFor = (section: string) => sectionTitle(builderT, section);
 
@@ -89,13 +91,29 @@ export function ImproveAgentLog({
     <div className="space-y-4">
       {status === "running" && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 size={16} className="animate-spin" />
-            {config
-              ? t("agentStatus", { round: Math.min(log.filter((l) => l.kind === "score").length + 1, config.maxRounds), maxRounds: config.maxRounds })
-              : t("agentStart")}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 size={16} className="animate-spin" />
+              {config
+                ? t("agentStatus", {
+                    round: Math.min(
+                      log.filter((l) => l.kind === "score").length + 1,
+                      config.maxRounds
+                    ),
+                    maxRounds: config.maxRounds,
+                  })
+                : t("agentStart")}
+            </div>
+            <span className="text-xs text-muted-foreground/60 font-mono tabular-nums shrink-0">
+              {t("elapsedTime", { seconds: liveSeconds })}
+            </span>
           </div>
-          <Button variant="outline" size="sm" onClick={onStop} className="w-full">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onStop}
+            className="w-full"
+          >
             <Square size={14} className="mr-2" />
             {t("stop")}
           </Button>
@@ -122,10 +140,14 @@ export function ImproveAgentLog({
               >
                 {score}
               </span>
-              {i < scores.length - 1 && <TrendingUp size={14} className="text-muted-foreground" />}
+              {i < scores.length - 1 && (
+                <TrendingUp size={14} className="text-muted-foreground" />
+              )}
             </div>
           ))}
-          <span className="text-xs text-muted-foreground">/100 · {t("scoreHistory")}</span>
+          <span className="text-xs text-muted-foreground">
+            /100 · {t("scoreHistory")}
+          </span>
         </div>
       )}
 
@@ -137,28 +159,43 @@ export function ImproveAgentLog({
           switch (entry.kind) {
             case "analyze":
               return (
-                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-xs text-muted-foreground"
+                >
                   <Sparkles size={12} className="text-amber-500 shrink-0" />
                   {t("agentAnalyzing")}
                 </div>
               );
             case "improve":
               return (
-                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-xs text-muted-foreground"
+                >
                   <FileText size={12} className="text-blue-500 shrink-0" />
-                  {t("agentImproving", { section: sectionTitleFor(entry.section) })}
+                  {t("agentImproving", {
+                    section: sectionTitleFor(entry.section),
+                  })}
                 </div>
               );
             case "score":
               return (
-                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-xs text-muted-foreground"
+                >
                   <TrendingUp size={12} className="text-green-500 shrink-0" />
-                  {t("agentRescoring")} {t("agentScore", { score: entry.score })}
+                  {t("agentRescoring")}{" "}
+                  {t("agentScore", { score: entry.score })}
                 </div>
               );
             case "stop":
               return (
-                <div key={i} className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-xs font-medium text-foreground"
+                >
                   <CheckCircle2 size={12} className="text-green-500 shrink-0" />
                   {stopLabel(entry.reason)}
                 </div>
@@ -167,7 +204,9 @@ export function ImproveAgentLog({
               return (
                 <div key={i} className="text-xs text-foreground">
                   <span className="font-medium">{t("agentSummary")}: </span>
-                  <span className="whitespace-pre-wrap">{truncate(entry.text, 220)}</span>
+                  <span className="whitespace-pre-wrap">
+                    {truncate(entry.text, 220)}
+                  </span>
                 </div>
               );
           }
@@ -205,7 +244,10 @@ export function ImproveAgentLog({
           <h4 className="text-sm font-medium">{t("changesSummary")}</h4>
           <div className="space-y-2 max-h-[220px] overflow-y-auto">
             {result.changes.map((change, i) => (
-              <div key={i} className="rounded-md border border-border p-2 text-xs">
+              <div
+                key={i}
+                className="rounded-md border border-border p-2 text-xs"
+              >
                 <div className="font-medium text-foreground mb-1">
                   {sectionTitleFor(change.section)}
                 </div>
