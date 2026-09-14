@@ -3,49 +3,38 @@ import { getSiteUrl } from "@/lib/site-url";
 import { routing } from "@/i18n/routing";
 
 /** Public brand name. Used in <title> template, Open Graph, JSON-LD, footer. */
-export const SITE_NAME = "RMUTL Resume";
+export const SITE_NAME = "Resume Builder";
+
+/** Short-form abbreviation, surfaced in structured data and card alt text. */
+export const SITE_ABBR = "AIRB";
 
 /**
  * Alternate names people actually type for this site. Fed to WebSite JSON-LD
  * `alternateName` so Google can resolve these queries to the same entity.
  */
 export const SITE_ALTERNATE_NAMES = [
-  "RMUTL Resume Builder",
-  "Resume RMUTL",
-  "Resume มทร.ล้านนา",
-  "เรซูเม่ มทร.ล้านนา",
-  "เรซูเม่ราชมงคลล้านนา",
+  "AI Resume Builder",
+  "AIRB",
+  "Resume Builder AI",
+  "เรซูเม่บิลเดอร์",
 ];
-
-/** The university this tool is built for. Referenced (not impersonated) in schema. */
-export const UNIVERSITY = {
-  name: "มหาวิทยาลัยเทคโนโลยีราชมงคลล้านนา",
-  nameEn: "Rajamangala University of Technology Lanna",
-  abbr: "RMUTL",
-  url: "https://www.rmutl.ac.th",
-};
 
 /** Broad, brand-relevant keywords reused across pages (EN + TH). */
 export const SEO_KEYWORDS = [
-  "RMUTL Resume",
-  "RMUTL Resume Builder",
-  "Resume RMUTL",
   "resume builder",
+  "AI resume builder",
   "free resume builder",
   "ATS resume",
-  "AI resume builder",
+  "ATS resume builder",
   "resume templates",
-  "resume for students",
-  "student resume builder",
+  "online resume builder",
+  "cv builder",
   "สร้างเรซูเม่",
   "เรซูเม่ออนไลน์",
-  "เรซูเม่ นักศึกษา",
-  "เรซูเม่ มทร.ล้านนา",
-  "resume มทร.ล้านนา",
-  "resume ราชมงคลล้านนา",
   "สร้าง resume ออนไลน์",
   "เรซูเม่ ATS",
   "ทำเรซูเม่ฟรี",
+  "ทำ resume ด้วย AI",
 ];
 
 const OG_LOCALE: Record<string, string> = {
@@ -64,7 +53,7 @@ export function ogImage() {
     url: `${getSiteUrl()}/opengraph-image`,
     width: 1200,
     height: 630,
-    alt: `${SITE_NAME} — free ATS resume builder for ${UNIVERSITY.abbr} students`,
+    alt: `${SITE_NAME} (${SITE_ABBR}) — free AI-powered ATS resume builder`,
   };
 }
 
@@ -95,7 +84,7 @@ type BuildMetadataOptions = {
   type?: "website" | "article";
   /** Override the card image. Defaults to the dynamic brand OG image. */
   images?: Array<{ url: string; width?: number; height?: number; alt?: string }>;
-  /** When true, `title` is used verbatim without the "… — RMUTL Resume" template. */
+  /** When true, `title` is used verbatim without the "… — Resume Builder" template. */
   absoluteTitle?: boolean;
 };
 
@@ -221,20 +210,12 @@ export function softwareAppJsonLd(locale: string, description: string): JsonLdOb
 }
 
 /**
- * Structured data for the home page: identifies the site as "RMUTL Resume",
- * lists the aliases users search for, and states (via `about`) that the tool
- * serves มทร.ล้านนา students — without claiming to be the university itself.
+ * Structured data for the home page: identifies the site as "Resume
+ * Builder" (AIRB) and lists the aliases users search for.
  */
 export function homeJsonLd(locale: string, description: string): JsonLdObject[] {
   const base = getSiteUrl();
   const url = `${base}/${locale}`;
-
-  const university: JsonLdObject = {
-    "@type": "CollegeOrUniversity",
-    name: UNIVERSITY.name,
-    alternateName: UNIVERSITY.nameEn,
-    url: UNIVERSITY.url,
-  };
 
   return [
     {
@@ -247,7 +228,6 @@ export function homeJsonLd(locale: string, description: string): JsonLdObject[] 
       inLanguage: locale === "th" ? "th-TH" : "en-US",
       description,
       publisher: { "@id": `${base}/#organization` },
-      about: university,
     },
     {
       "@context": "https://schema.org",
@@ -259,8 +239,8 @@ export function homeJsonLd(locale: string, description: string): JsonLdObject[] 
       logo: `${base}/icon.svg`,
       description:
         locale === "th"
-          ? `เครื่องมือสร้างเรซูเม่ออนไลน์สำหรับนักศึกษาและบัณฑิต${UNIVERSITY.name} (${UNIVERSITY.abbr})`
-          : `Online resume builder for students and graduates of ${UNIVERSITY.nameEn} (${UNIVERSITY.abbr}).`,
+          ? `เครื่องมือสร้างเรซูเม่ออนไลน์ด้วย AI ที่ผ่านมาตรฐาน ATS ใช้งานได้ฟรี`
+          : `Free, AI-powered, ATS-friendly online resume builder.`,
     },
     {
       "@context": "https://schema.org",
@@ -276,12 +256,6 @@ export function homeJsonLd(locale: string, description: string): JsonLdObject[] 
       description,
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "THB" },
-      audience: {
-        "@type": "EducationalAudience",
-        educationalRole: "student",
-        audienceType: `${UNIVERSITY.abbr} students and graduates`,
-      },
-      about: university,
       publisher: { "@id": `${base}/#organization` },
       featureList: [
         "ATS-friendly resume templates",

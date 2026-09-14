@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
-import { SITE_NAME, UNIVERSITY } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/seo";
 
-export const alt = `${SITE_NAME} — Free ATS Resume Builder for ${UNIVERSITY.abbr} students`;
+export const alt = `${SITE_NAME} — Free AI-Powered ATS Resume Builder`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -55,7 +55,7 @@ export default function OpengraphImage() {
             Free ATS Resume Builder
           </div>
           <div style={{ display: "flex", fontSize: "32px", color: "#57534e", lineHeight: 1.3 }}>
-            {`For students and graduates of ${UNIVERSITY.nameEn} (${UNIVERSITY.abbr})`}
+            AI writing assistant, ATS score checker, and PDF export
           </div>
         </div>
 
