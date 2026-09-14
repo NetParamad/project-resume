@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AIAssistButton } from "@/components/ai/AIAssistButton";
-import { useAiAutofillListener } from "@/lib/hooks/use-ai-autofill-listener";
 import { Plus, Trash2 } from "lucide-react";
-import type { Education } from "@/lib/types/resume";
 
 export function EducationForm() {
   const t = useTranslations("builder.education");
@@ -17,8 +14,6 @@ export function EducationForm() {
   const add = useResumeStore((s) => s.addEducation);
   const update = useResumeStore((s) => s.updateEducation);
   const remove = useResumeStore((s) => s.removeEducation);
-
-  useAiAutofillListener<Education>("education", update, add);
 
   return (
     <Card>
@@ -90,7 +85,6 @@ export function EducationForm() {
                 />
               </div>
               <div className="flex items-center gap-1">
-                <AIAssistButton section="education" itemId={edu.id} />
                 <Button
                   variant="ghost"
                   size="sm"
