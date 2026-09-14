@@ -13,7 +13,10 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,19 +28,50 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonBody(req, autoFillRequestSchema);
     if (parsed.error) return parsed.error;
-    const { section, itemId, context, resumeData, prompt: userPrompt, locale: uiLocale, outputLocale, model } = parsed.data;
+    const {
+      section,
+      itemId,
+      context,
+      resumeData,
+      prompt: userPrompt,
+      locale: uiLocale,
+      outputLocale,
+      model,
+    } = parsed.data;
     const locale = outputLocale ?? resolveLocale(userPrompt, uiLocale);
 
     // If editing an existing list item, pull its own fields (jobTitle, company, etc.)
     // in as context so the model can reference real data instead of guessing.
-    const sectionData = resumeData ? (resumeData as unknown as Record<string, unknown>)[section] : undefined;
-    const activeItem = itemId && Array.isArray(sectionData)
-      ? (sectionData as Array<Record<string, unknown>>).find((it) => it?.id === itemId)
+    const sectionData = resumeData
+      ? (resumeData as unknown as Record<string, unknown>)[section]
       : undefined;
+    const activeItem =
+      itemId && Array.isArray(sectionData)
+        ? (sectionData as Array<Record<string, unknown>>).find(
+            (it) => it?.id === itemId
+          )
+        : undefined;
     const mergedContext = { ...(context ?? {}), ...(activeItem ?? {}) };
 
-    const systemPrompt = locale === "th"
-      ? `คุณคือผู้เชี่ยวชาญการเขียนเรซูเม่ที่ผ่าน ATS (Applicant Tracking System)
+    // When the user explicitly picked an output language (rather than
+    // leaving it on auto-detect), the "User request" text embedded in the
+    // prompt below is often the field's *existing* content in whatever
+    // language it was originally written in (the dialog prefills it for
+    // "Improve with AI"). Without an explicit instruction, the model tends
+    // to mirror that embedded text's language instead of the one the Thai/
+    // English system prompt above it is merely *written* in — so the
+    // locale picker silently did nothing for anyone editing existing
+    // content. State the requirement outright, and only when it's an
+    // explicit choice: auto mode should keep detecting from the prompt.
+    const forcedLanguageNote = outputLocale
+      ? locale === "th"
+        ? '\n- ผู้ใช้เลือกภาษาผลลัพธ์เป็นภาษาไทยไว้อย่างชัดเจน: เขียนคำตอบเป็นภาษาไทยเท่านั้น ไม่ว่า "User request" ด้านล่างหรือข้อมูลอ้างอิงที่แนบมาจะเป็นภาษาอะไรก็ตาม แปลความหมายแล้วเรียบเรียงใหม่เป็นภาษาไทยที่เป็นธรรมชาติและเป็นทางการ'
+        : '\n- The user has explicitly chosen English output: write your answer only in English, regardless of what language the "User request" below or any attached reference data is written in. Translate the meaning and rephrase it naturally in English.'
+      : "";
+
+    const systemPrompt =
+      (locale === "th"
+        ? `คุณคือผู้เชี่ยวชาญการเขียนเรซูเม่ที่ผ่าน ATS (Applicant Tracking System)
 กฎ:
 - ใช้คำกริยาที่แสดงความสำเร็จ (พัฒนา, เพิ่ม, ลด, จัดการ, นำทีม, ออกแบบ, ปรับปรุง)
 - ห้ามกุตัวเลข เปอร์เซ็นต์ หรือ metric ขึ้นมาเองโดยเด็ดขาด ใส่ตัวเลข/metric ได้เฉพาะเมื่อผู้ใช้ระบุไว้ในคำขอหรือใน context ที่ให้มาเท่านั้น หากไม่มีตัวเลขจริง ให้เขียนบรรยายผลลัพธ์เชิงคุณภาพแทน (เช่น "ปรับปรุงกระบวนการทำงานให้มีประสิทธิภาพมากขึ้น") โดยไม่ใส่ตัวเลขที่คาดเดาขึ้นเอง
@@ -46,7 +80,7 @@ export async function POST(req: NextRequest) {
 - หากมีข้อมูลเรซูเม่ของผู้ใช้แนบมาด้วย ให้ใช้อ้างอิงเพื่อความสอดคล้องกับส่วนอื่น (เช่น ทักษะ ตำแหน่งงานอื่น ถ้อยคำที่เคยใช้) แต่ห้ามยกข้อมูลนั้นมาทั้งหมด และห้ามใช้เป็นแหล่งกุข้อเท็จจริงใหม่
 - หลีกเลี่ยงภาษาพูด คำฟุ่มเฟือย หรือเนื้อหาที่ไม่เฉพาะเจาะจง
 - ตอบเฉพาะเนื้อหาที่ขอเท่านั้น ไม่ต้องมีคำอธิบายเพิ่มเติม`
-      : `You are an ATS-optimized resume writing expert.
+        : `You are an ATS-optimized resume writing expert.
 Rules:
 - Use strong action verbs (achieved, led, developed, improved, designed, managed, reduced, increased)
 - NEVER invent numbers, percentages, or metrics on your own. Only include a number/metric if the user's request or the provided context explicitly gives you one. If no real figure is available, describe the outcome qualitatively instead (e.g. "streamlined the workflow for greater efficiency") without making up a number.
@@ -54,14 +88,18 @@ Rules:
 - Include relevant keywords from the target role/industry
 - If the user's existing resume data is attached below, use it for consistency (e.g. skills already listed, other roles, phrasing already used) — but don't dump it back verbatim, and don't use it as license to invent new facts.
 - Avoid first-person pronouns, fluff, or generic statements
-- Output only the requested content, no explanations`;
+- Output only the requested content, no explanations`) + forcedLanguageNote;
 
     // `section` is validated only as a non-empty string by the request schema
     // (arbitrary client input, not an enum) — cast once here at the boundary;
     // an unrecognized value just falls through to getSectionContext's
     // `default:` case and the SECTION_FIELDS lookups below return undefined,
     // both handled gracefully rather than crashing.
-    const sectionContext = getSectionContext(section as SectionType, mergedContext, locale);
+    const sectionContext = getSectionContext(
+      section as SectionType,
+      mergedContext,
+      locale
+    );
 
     const referenceBlock = resumeData
       ? locale === "th"
@@ -82,8 +120,12 @@ Rules:
   } catch (error) {
     console.error("AI auto-fill error:", error);
     return NextResponse.json(
-      { code: "ai_error", detail: error instanceof Error ? error.message.slice(0, 500) : undefined },
-      { status: 500 },
+      {
+        code: "ai_error",
+        detail:
+          error instanceof Error ? error.message.slice(0, 500) : undefined,
+      },
+      { status: 500 }
     );
   }
 }
@@ -96,7 +138,10 @@ Rules:
  * the basics are already filled in, keep the existing plain-description
  * behavior unchanged.
  */
-function structuredFallbackInstruction(section: SectionType, locale?: string): string {
+function structuredFallbackInstruction(
+  section: SectionType,
+  locale?: string
+): string {
   const fields = SECTION_FIELDS[section];
   if (!fields) return "";
   const isTh = locale === "th";
@@ -107,7 +152,10 @@ function structuredFallbackInstruction(section: SectionType, locale?: string): s
     : `\n\nAlso, if the user's request includes information not yet filled in the form (e.g. name/location/dates), return the ENTIRE answer as a single line in this format: ${orderEn} — separate parts with "|" only, never inside any part's own content. Leave a part blank if unknown, but keep its "|" position. Write the description part as one continuous flowing paragraph, not line breaks or bullet points.`;
 }
 
-function hasBasics(section: SectionType, context: Record<string, unknown> | null): boolean {
+function hasBasics(
+  section: SectionType,
+  context: Record<string, unknown> | null
+): boolean {
   const key = SECTION_PRIMARY_FIELD[section];
   return Boolean(key && context?.[key]);
 }
@@ -127,12 +175,14 @@ function hasBasics(section: SectionType, context: Record<string, unknown> | null
 function staleContentNote(
   section: SectionType,
   context: Record<string, unknown> | null,
-  locale?: string,
+  locale?: string
 ): string {
   const fields = SECTION_FIELDS[section] ?? [];
   const known = fields
     .filter((f) => f.key !== "description")
-    .map(({ key, label }) => (context?.[key] ? `${label}: ${context[key]}` : null))
+    .map(({ key, label }) =>
+      context?.[key] ? `${label}: ${context[key]}` : null
+    )
     .filter((line): line is string => line !== null)
     .join(", ");
   if (!known) return "";
@@ -153,7 +203,7 @@ function withBasicsAwareSuffix(
   section: SectionType,
   context: Record<string, unknown> | null,
   locale: string | undefined,
-  base: string,
+  base: string
 ): string {
   return hasBasics(section, context)
     ? base + staleContentNote(section, context, locale)
@@ -163,7 +213,7 @@ function withBasicsAwareSuffix(
 function getSectionContext(
   section: SectionType,
   context: Record<string, unknown> | null,
-  locale?: string,
+  locale?: string
 ): string {
   const isTh = locale === "th";
   switch (section) {
@@ -214,19 +264,19 @@ Keep under 60 words total.`;
     case "teachingExperience": {
       const base = isTh
         ? "เขียนรายละเอียดประสบการณ์สอนเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ระบุ: วิชาที่สอน, ระดับผู้เรียน, จำนวนผู้เรียน (ถ้ามี) และผลลัพธ์การเรียนการสอน ใช้คำกริยาวิชาการ กระชับ ความยาวไม่เกิน 60 คำ"
-        : "Write the teaching experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading \"-\" or bullet markers): courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, concise. Keep under 60 words total.";
+        : 'Write the teaching experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading "-" or bullet markers): courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, concise. Keep under 60 words total.';
       return withBasicsAwareSuffix(section, context, locale, base);
     }
     case "researchExperience": {
       const base = isTh
         ? "เขียนรายละเอียดประสบการณ์วิจัยเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ระบุ: คำถาม/ปัญหา, วิธีวิจัย, เครื่องมือ/เทคนิค และผลลัพธ์ (สิ่งพิมพ์/การนำเสนอ) ใช้คำกริยาวิชาการ กระชับ ความยาวไม่เกิน 60 คำ"
-        : "Write the research experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading \"-\" or bullet markers): research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, concise. Keep under 60 words total.";
+        : 'Write the research experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading "-" or bullet markers): research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, concise. Keep under 60 words total.';
       return withBasicsAwareSuffix(section, context, locale, base);
     }
     case "projects": {
       const base = isTh
         ? "เขียนอธิบายโปรเจกต์เป็นย่อหน้าเดียวต่อเนื่อง 1-3 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ประกอบด้วย: เทคโนโลยีที่ใช้, ปัญหาที่แก้ไข, ผลลัพธ์ (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ความยาวไม่เกิน 50 คำ"
-        : "Write the project description as a single flowing paragraph of 1-3 sentences (no line breaks, no leading \"-\" or bullet markers). Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 50 words total.";
+        : 'Write the project description as a single flowing paragraph of 1-3 sentences (no line breaks, no leading "-" or bullet markers). Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 50 words total.';
       return withBasicsAwareSuffix(section, context, locale, base);
     }
     default:
