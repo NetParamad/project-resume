@@ -6,7 +6,7 @@
 npm run dev                # dev server (localhost:3000)
 npm run build              # production build — run before finishing any change
 npm run lint               # eslint .  (baseline: 8 known warnings, 0 errors)
-npx tsc --noEmit           # typecheck (no `typecheck` script exists)
+npm run typecheck          # tsc --noEmit
 npm test                   # vitest run — unit tests for lib/ (co-located *.test.ts files)
 ```
 
