@@ -6,6 +6,7 @@ import { resolveLocale } from "@/lib/ai/detect-locale";
 import { autoFillRequestSchema } from "@/lib/validation/ai";
 import { parseJsonBody } from "@/lib/validation/parse";
 import { SECTION_FIELDS, SECTION_PRIMARY_FIELD } from "@/lib/ai/section-fields";
+import type { SectionType } from "@/lib/types/resume";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -55,7 +56,12 @@ Rules:
 - Avoid first-person pronouns, fluff, or generic statements
 - Output only the requested content, no explanations`;
 
-    const sectionContext = getSectionContext(section, mergedContext, locale);
+    // `section` is validated only as a non-empty string by the request schema
+    // (arbitrary client input, not an enum) — cast once here at the boundary;
+    // an unrecognized value just falls through to getSectionContext's
+    // `default:` case and the SECTION_FIELDS lookups below return undefined,
+    // both handled gracefully rather than crashing.
+    const sectionContext = getSectionContext(section as SectionType, mergedContext, locale);
 
     const referenceBlock = resumeData
       ? locale === "th"
@@ -90,7 +96,7 @@ Rules:
  * the basics are already filled in, keep the existing plain-description
  * behavior unchanged.
  */
-function structuredFallbackInstruction(section: string, locale?: string): string {
+function structuredFallbackInstruction(section: SectionType, locale?: string): string {
   const fields = SECTION_FIELDS[section];
   if (!fields) return "";
   const isTh = locale === "th";
@@ -101,7 +107,7 @@ function structuredFallbackInstruction(section: string, locale?: string): string
     : `\n\nAlso, if the user's request includes information not yet filled in the form (e.g. name/location/dates), return the ENTIRE answer as a single line in this format: ${orderEn} — separate parts with "|" only, never inside any part's own content. Leave a part blank if unknown, but keep its "|" position. Write the description part as one continuous flowing paragraph, not line breaks or bullet points.`;
 }
 
-function hasBasics(section: string, context: Record<string, unknown> | null): boolean {
+function hasBasics(section: SectionType, context: Record<string, unknown> | null): boolean {
   const key = SECTION_PRIMARY_FIELD[section];
   return Boolean(key && context?.[key]);
 }
@@ -119,7 +125,7 @@ function hasBasics(section: string, context: Record<string, unknown> | null): bo
  * actual field value to reconcile against.
  */
 function staleContentNote(
-  section: string,
+  section: SectionType,
   context: Record<string, unknown> | null,
   locale?: string,
 ): string {
@@ -136,8 +142,26 @@ function staleContentNote(
     : `\n\nThis content is specifically for ${known}. Do not mention any organization, department, or domain other than that, even if the user's request refers to a different one (it may be leftover text from a previous entry that wasn't rewritten) — reuse only the general skills, actions, and outcome types from the request, and strip or replace any other organization's name or specific domain with generic phrasing appropriate to ${known} instead.`;
 }
 
+/**
+ * Appends whichever follow-on instruction applies to a "base" prompt: when
+ * the item's basics are already filled in, warn the model off stale
+ * leftover context (staleContentNote); otherwise invite it to split its
+ * answer across every field (structuredFallbackInstruction). Shared by
+ * every section below instead of repeating the same ternary five times.
+ */
+function withBasicsAwareSuffix(
+  section: SectionType,
+  context: Record<string, unknown> | null,
+  locale: string | undefined,
+  base: string,
+): string {
+  return hasBasics(section, context)
+    ? base + staleContentNote(section, context, locale)
+    : base + structuredFallbackInstruction(section, locale);
+}
+
 function getSectionContext(
-  section: string,
+  section: SectionType,
   context: Record<string, unknown> | null,
   locale?: string,
 ): string {
@@ -159,22 +183,24 @@ Title: ${context?.jobTitle || "N/A"}
 Company: ${context?.company || "N/A"}
 Start the first sentence with a strong action verb, then describe the challenge/action/result as continuous prose. Only include a number/metric if it's already present in the user's request or the context above — never invent one. If no real figure is available, describe the result qualitatively instead.
 Keep under 60 words total.`;
-      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
+      return withBasicsAwareSuffix(section, context, locale, base);
     }
     case "skills":
       return isTh
         ? "แนะนำ 6-10 ทักษะที่เกี่ยวข้องกับตำแหน่งนี้ แบ่งเป็น: ทักษะด้านเทคนิค (เครื่องมือ, ภาษาโปรแกรม), ทักษะด้านกระบวนการ (Agile, Project Management), และทักษะด้านอ่อน (Leadership, Communication) เน้น keywords ที่เป็นที่ต้องการในสายงานนี้"
         : "List 6-10 relevant skills for this role. Categorize as: technical tools & languages, methodologies & processes, and soft skills. Prioritize high-demand keywords for this career field.";
     case "education": {
-      const orderTh = SECTION_FIELDS.education.map((f) => f.label).join(" | ");
-      const orderEn = SECTION_FIELDS.education.map((f) => f.key).join(" | ");
+      const fields = SECTION_FIELDS.education ?? [];
+      const orderTh = fields.map((f) => f.label).join(" | ");
+      const orderEn = fields.map((f) => f.key).join(" | ");
       return isTh
         ? `เขียนข้อมูลการศึกษา 1 รายการในรูปแบบ: ${orderTh} ใช้ชื่อวุฒิ/สาขาเป็นภาษาอังกฤษ วันที่ใช้รูปแบบ YYYY-MM ส่วนที่ไม่ทราบให้ปล่อยว่างแต่ยังคงเครื่องหมาย | คั่นตำแหน่งไว้ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์`
         : `Return a single education entry in this exact format: ${orderEn}. Keep degree and field names in English, dates as YYYY-MM. Leave a part blank if unknown but keep its "|" position. No extra explanations, and do not use '|' inside the field values.`;
     }
     case "publications": {
-      const orderTh = SECTION_FIELDS.publications.map((f) => f.label).join(" | ");
-      const orderEn = SECTION_FIELDS.publications.map((f) => f.key).join(" | ");
+      const fields = SECTION_FIELDS.publications ?? [];
+      const orderTh = fields.map((f) => f.label).join(" | ");
+      const orderEn = fields.map((f) => f.key).join(" | ");
       return isTh
         ? `เขียนผลงานวิชาการ 1 รายการในรูปแบบ: ${orderTh} ใช้รูปแบบ citation วิชาการ ส่วนที่ไม่มีข้อมูล (เช่น เล่มที่/หน้า/DOI/ลิงก์) ให้ปล่อยว่างแต่ยังคงเครื่องหมาย | คั่นตำแหน่งไว้ ห้ามมีคำอธิบายเพิ่มเติม และห้ามใช้เครื่องหมาย | ในเนื้อหาของแต่ละฟิลด์`
         : `Write one academic publication in this exact format: ${orderEn}. Use standard academic citation style. Leave a part blank if unknown (e.g. volume/pages/doi/url) but keep its "|" position. No extra explanations, and do not use '|' inside the field values.`;
@@ -183,25 +209,25 @@ Keep under 60 words total.`;
       const base = isTh
         ? "เขียนคำอธิบายรางวัล 1-2 ประโยค ระบุ: ชื่อรางวัล, ผู้มอบ, ปี และความสำคัญ/บริบทของรางวัล ใช้โทนวิชาการ กระชับ"
         : "Write a 1-2 sentence description of the award: award name, issuer, year, and its significance or context. Use a concise, academic tone.";
-      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
+      return withBasicsAwareSuffix(section, context, locale, base);
     }
     case "teachingExperience": {
       const base = isTh
         ? "เขียนรายละเอียดประสบการณ์สอนเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ระบุ: วิชาที่สอน, ระดับผู้เรียน, จำนวนผู้เรียน (ถ้ามี) และผลลัพธ์การเรียนการสอน ใช้คำกริยาวิชาการ กระชับ ความยาวไม่เกิน 60 คำ"
         : "Write the teaching experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading \"-\" or bullet markers): courses taught, student level, class sizes (if known), and teaching outcomes. Use academic action verbs, concise. Keep under 60 words total.";
-      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
+      return withBasicsAwareSuffix(section, context, locale, base);
     }
     case "researchExperience": {
       const base = isTh
         ? "เขียนรายละเอียดประสบการณ์วิจัยเป็นย่อหน้าเดียวต่อเนื่อง 2-4 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ระบุ: คำถาม/ปัญหา, วิธีวิจัย, เครื่องมือ/เทคนิค และผลลัพธ์ (สิ่งพิมพ์/การนำเสนอ) ใช้คำกริยาวิชาการ กระชับ ความยาวไม่เกิน 60 คำ"
         : "Write the research experience description as a single flowing paragraph of 2-4 sentences (no line breaks, no leading \"-\" or bullet markers): research question or problem, methodology, tools or techniques, and outcomes (publications or presentations). Use academic action verbs, concise. Keep under 60 words total.";
-      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
+      return withBasicsAwareSuffix(section, context, locale, base);
     }
     case "projects": {
       const base = isTh
         ? "เขียนอธิบายโปรเจกต์เป็นย่อหน้าเดียวต่อเนื่อง 1-3 ประโยค (ห้ามขึ้นบรรทัดใหม่หรือใช้เครื่องหมาย - นำหน้า) ประกอบด้วย: เทคโนโลยีที่ใช้, ปัญหาที่แก้ไข, ผลลัพธ์ (ใส่ตัวเลขเฉพาะเมื่อผู้ใช้ให้มาจริง ห้ามกุขึ้นเอง) ความยาวไม่เกิน 50 คำ"
         : "Write the project description as a single flowing paragraph of 1-3 sentences (no line breaks, no leading \"-\" or bullet markers). Include: technologies used, problem solved, and the outcome (only include a number if the user actually provided one — never invent one). Keep under 50 words total.";
-      return hasBasics(section, context) ? base + staleContentNote(section, context, locale) : base + structuredFallbackInstruction(section, locale);
+      return withBasicsAwareSuffix(section, context, locale, base);
     }
     default:
       return isTh

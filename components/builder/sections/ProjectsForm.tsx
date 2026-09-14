@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
@@ -8,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
-import { splitFields } from "@/lib/ai/split-fields";
-import { sectionFieldOrder } from "@/lib/ai/section-fields";
+import { useAiAutofillListener } from "@/lib/hooks/use-ai-autofill-listener";
 import { Plus, Trash2 } from "lucide-react";
 import type { Project } from "@/lib/types/resume";
 
@@ -20,24 +18,7 @@ export function ProjectsForm() {
   const update = useResumeStore((s) => s.updateProject);
   const remove = useResumeStore((s) => s.removeProject);
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const { section, content, itemId } = (e as CustomEvent).detail;
-      if (section !== "projects" || !content) return;
-      const patch: Partial<Project> = splitFields(content, sectionFieldOrder("projects"));
-      if (itemId) {
-        update(itemId, patch);
-      } else if (projects.length > 0) {
-        update(projects[projects.length - 1].id, patch);
-      } else {
-        add();
-        const items = useResumeStore.getState().data.projects;
-        if (items.length > 0) update(items[items.length - 1].id, patch);
-      }
-    };
-    window.addEventListener("ai-autofill", handler);
-    return () => window.removeEventListener("ai-autofill", handler);
-  }, [update, projects, add]);
+  useAiAutofillListener<Project>("projects", update, add);
 
   return (
     <Card>
