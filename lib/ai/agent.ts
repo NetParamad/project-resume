@@ -14,12 +14,19 @@ export type AgentStep = {
 export interface AgentOptions {
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
   tools: OpenAI.Chat.Completions.ChatCompletionTool[];
-  executeTool: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+  executeTool: (
+    name: string,
+    args: Record<string, unknown>
+  ) => Promise<unknown>;
   maxRounds: number;
   modelId?: string;
+  maxTokens?: number;
   onStep?: (step: AgentStep) => void;
   timeoutMs?: number;
-  checkStop?: (ctx: { round: number; scores: number[] }) => { stop: boolean; reason?: string };
+  checkStop?: (ctx: { round: number; scores: number[] }) => {
+    stop: boolean;
+    reason?: string;
+  };
   recoveryPrompt?: string;
 }
 
@@ -37,6 +44,7 @@ export async function runAgent(options: AgentOptions): Promise<AgentResult> {
     executeTool,
     maxRounds,
     modelId,
+    maxTokens,
     onStep,
     timeoutMs,
     checkStop,
@@ -50,7 +58,14 @@ export async function runAgent(options: AgentOptions): Promise<AgentResult> {
   for (let round = 1; round <= maxRounds; round++) {
     onStep?.({ type: "round", round });
 
-    const message = await llmCall({ role: "agent", messages, tools, timeoutMs, modelId });
+    const message = await llmCall({
+      role: "agent",
+      messages,
+      tools,
+      timeoutMs,
+      modelId,
+      maxTokens,
+    });
 
     if (!message.tool_calls || message.tool_calls.length === 0) {
       messages.push({
@@ -105,7 +120,9 @@ export async function runAgent(options: AgentOptions): Promise<AgentResult> {
       try {
         result = await executeTool(tc.function.name, args);
       } catch (err) {
-        result = { error: err instanceof Error ? err.message : "Tool execution failed" };
+        result = {
+          error: err instanceof Error ? err.message : "Tool execution failed",
+        };
       }
 
       toolCallsExecuted++;
