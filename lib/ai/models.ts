@@ -1,10 +1,5 @@
 export type ModelRole =
-  | "autofill"
-  | "tailor"
-  | "extract"
-  | "score"
-  | "agent"
-  | "polish";
+  "autofill" | "tailor" | "extract" | "score" | "agent" | "polish";
 
 export interface ModelMeta {
   label: string;
@@ -146,3 +141,25 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
 export function validateModel(modelId: string): boolean {
   return modelId in ALLOWED_MODELS;
 }
+
+// Paid safety net for when every free model in MODEL_CHAIN fails — used by
+// client.ts only after the chain above is exhausted, never counted against
+// a role's maxChain and not selectable via the `modelId` override (it's
+// intentionally excluded from ALLOWED_MODELS/MODEL_CHAIN so the override
+// logic in llmCall can't route it through the NVIDIA client by mistake).
+// Verified live against this account: supports tool calls over the OpenAI
+// compat endpoint. Priced ~$0.25/$1.50 per M input/output tokens (Sep 2026)
+// — cheap enough that even a bad day of fallbacks won't dent a small
+// prepaid balance, but it's still real money, hence fallback-only.
+export const GEMINI_FALLBACK_MODEL = "gemini-3.1-flash-lite";
+
+// Every AI route caps maxDuration at 60s (Vercel Hobby limit — see
+// app/api/ai/*/route.ts). These bound the one extra network call so it
+// can't push a request past that ceiling: skip the fallback entirely once
+// less than GEMINI_MIN_TIMEOUT_MS would be left, cap its own timeout at
+// GEMINI_MAX_TIMEOUT_MS, and always leave GEMINI_SAFETY_MARGIN_MS of
+// headroom for whatever the caller does with the response afterward.
+export const GEMINI_TOTAL_BUDGET_MS = 55_000;
+export const GEMINI_SAFETY_MARGIN_MS = 5_000;
+export const GEMINI_MIN_TIMEOUT_MS = 4_000;
+export const GEMINI_MAX_TIMEOUT_MS = 15_000;
