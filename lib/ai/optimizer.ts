@@ -92,7 +92,7 @@ function buildSystemPrompt(locale: "th" | "en"): string {
 JSON เรซูเม่ฉบับเต็มและรายละเอียดงานเป้าหมายอยู่ในข้อความด้านล่างแล้ว
 
 ขั้นตอน:
-1. เวลาจริงมีแค่เทิร์นเดียว (เทิร์นที่ 2 มักไม่ทันเพราะหมดเวลา) — ในเทิร์นแรกนี้ ให้เรียก update_section พร้อมกันในคราวเดียวสำหรับ "ทุก" section ที่มีเนื้อหาอยู่แล้วและปรับปรุงให้ดีขึ้นได้ ไม่ใช่แค่ summary, experience, skills เท่านั้น — รวมถึง education, projects, certifications, publications, researchExperience, teachingExperience, awards ด้วยถ้ามีข้อมูลอยู่ ข้ามเฉพาะ section ที่ไม่มีข้อมูลอยู่เลย
+1. เวลาจริงมีแค่เทิร์นเดียว (เทิร์นที่ 2 มักไม่ทันเพราะหมดเวลา) — ในเทิร์นแรกนี้ ให้พิจารณาทุก section ที่มีเนื้อหาอยู่แล้ว (ไม่ใช่แค่ summary, experience, skills — รวมถึง education, projects, certifications, publications, researchExperience, teachingExperience, awards ด้วย) แล้วเรียก update_section พร้อมกันในคราวเดียว เฉพาะ section ที่ปรับปรุงแล้วได้ประโยชน์จริง เช่น ขาดคำหลักจากรายละเอียดงาน เขียนกว้างๆ ไม่ชัดเจน หรือไม่มีตัวเลขผลลัพธ์ ถ้า section ไหนดีอยู่แล้วไม่มีอะไรให้ปรับปรุงจริงๆ ให้ข้ามไป ไม่ต้องฝืนแก้ทุก section เพราะจะสิ้นเปลือง token โดยเปล่าประโยชน์
 2. ยึดหลักการปรับ ATS ในหลักการทำงานหลักด้านบน แทรกคำหลักจากรายละเอียดงานเป้าหมายเท่าที่ข้อเท็จจริงรองรับ และห้ามกุข้อมูล
 3. สำหรับ section ที่เป็น array ต้องคง field 'id' ของทุก item เดิมไว้
 4. เมื่อแก้ไขเสร็จ ให้พิมพ์ข้อความสรุปการเปลี่ยนแปลงสั้น ๆ เป็นภาษาไทย (โดยไม่เรียก tool)`;
@@ -107,7 +107,7 @@ Improve the resume's ATS readiness. You are on a very tight time budget and have
 The full resume JSON and the target job description are already in the message below.
 
 Steps:
-1. You realistically only get ONE turn (a second turn almost never fits in the time budget). On this first turn, issue update_section calls together for EVERY section that already has content and can be improved — not just summary, experience, and skills. Also cover education, projects, certifications, publications, researchExperience, teachingExperience, and awards whenever they contain data. Skip only sections that are genuinely empty.
+1. You realistically only get ONE turn (a second turn almost never fits in the time budget). On this first turn, review every section that already has content — not just summary, experience, and skills, but also education, projects, certifications, publications, researchExperience, teachingExperience, and awards whenever they contain data — and issue update_section calls together only for the sections that would genuinely benefit: missing job-description keywords, weak or vague wording, no quantified results, etc. If a section is already strong and there's nothing meaningful to improve, leave it alone — don't force a rewrite just to touch every section, that wastes your limited output budget.
 2. Follow the ATS optimization principles in the core operating principles above, working in keywords from the target job description only where the facts support them. Never fabricate.
 3. For array sections, preserve the 'id' field of every existing item.
 4. When the edits are done, output a short plain-text summary of the changes (no tool calls).`;
@@ -169,6 +169,48 @@ function normalizeSection(
   });
 }
 
+// Scale the agent's output budget with how much resume content there
+// actually is, instead of always paying for MODEL_ROLES.agent's 16384-token
+// ceiling. Rewritten content runs roughly 2x the source character count
+// (longer bullets, added keywords, tool-call JSON scaffolding); dividing by
+// ~3.5 chars/token is conservative enough to cover mixed Thai/English text.
+// The floor stays well above the empirically-observed truncation point (see
+// the "8k truncates" note on MODEL_ROLES.agent) since a small resume can
+// still expand a lot once the model adds JD keywords and quantified results.
+const AGENT_MAX_TOKENS_FLOOR = 6_144;
+const AGENT_MAX_TOKENS_CEILING = 16_384;
+const CHARS_PER_TOKEN = 3.5;
+const OUTPUT_EXPANSION_FACTOR = 2;
+const SUMMARY_TEXT_OVERHEAD_TOKENS = 400;
+
+function estimateResumeContentChars(
+  resumeData: Record<string, unknown>
+): number {
+  let chars = 0;
+  for (const key of OPTIMIZER_SECTIONS) {
+    const value = resumeData[key];
+    if (key === "summary") {
+      if (typeof value === "string") chars += value.length;
+      continue;
+    }
+    if (Array.isArray(value) && value.length > 0) {
+      chars += JSON.stringify(value).length;
+    }
+  }
+  return chars;
+}
+
+function estimateAgentMaxTokens(resumeData: Record<string, unknown>): number {
+  const contentChars = estimateResumeContentChars(resumeData);
+  const estimated =
+    Math.ceil((contentChars / CHARS_PER_TOKEN) * OUTPUT_EXPANSION_FACTOR) +
+    SUMMARY_TEXT_OVERHEAD_TOKENS;
+  return Math.min(
+    AGENT_MAX_TOKENS_CEILING,
+    Math.max(AGENT_MAX_TOKENS_FLOOR, estimated)
+  );
+}
+
 function ensureIdsInArrays(
   data: Record<string, unknown>
 ): Record<string, unknown> {
@@ -222,7 +264,7 @@ export async function optimizeResume(options: {
     (jobDescription?.trim()
       ? `\n\nTarget Job Description:\n${jobDescription.trim()}`
       : "") +
-    `\n\nRewrite every non-empty section now with update_section, in one batch of tool calls — don't limit yourself to summary, experience, and skills.`;
+    `\n\nReview every section now and call update_section, in one batch of tool calls, only for the ones that would genuinely improve — don't limit yourself to summary, experience, and skills, but don't force-rewrite sections that are already strong either.`;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
@@ -261,6 +303,7 @@ export async function optimizeResume(options: {
     maxRounds: MAX_ROUNDS,
     timeoutMs: 40_000,
     modelId: agentModel,
+    maxTokens: estimateAgentMaxTokens(resumeData),
     checkStop: () => {
       if (elapsedMs() > TOTAL_BUDGET_MS - RESCORE_RESERVE_MS) {
         return { stop: true, reason: "time_budget" };
