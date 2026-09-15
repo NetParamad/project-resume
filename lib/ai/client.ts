@@ -136,8 +136,28 @@ export async function llmCall(options: {
   const timeoutMs = options.timeoutMs ?? roleConfig.timeoutMs ?? 25_000;
 
   const errors: string[] = [];
+  const geminiConfigured = Boolean(process.env.GEMINI_API_KEY);
 
-  for (const modelId of limitedChain) {
+  for (const [i, modelId] of limitedChain.entries()) {
+    // A role's worst-case free-chain time (maxChain × timeoutMs) can exceed
+    // what's left of GEMINI_TOTAL_BUDGET_MS once one model has already
+    // failed — e.g. polish's 2×25s leaves 0ms for Gemini afterward, silently
+    // defeating the fallback on exactly the day both free models struggle.
+    // Always let the first attempt run at its full configured timeout (keeps
+    // today's fast-success path untouched); only skip further free attempts
+    // once trying one more would leave no real time for Gemini to help.
+    if (i > 0 && geminiConfigured) {
+      const elapsed = Date.now() - startedAt;
+      const remainingAfterAttempt =
+        GEMINI_TOTAL_BUDGET_MS -
+        (elapsed + timeoutMs) -
+        GEMINI_SAFETY_MARGIN_MS;
+      if (remainingAfterAttempt < GEMINI_MIN_TIMEOUT_MS) {
+        errors.push(`${modelId}: skipped — reserving time for Gemini fallback`);
+        break;
+      }
+    }
+
     const params = { ...mergeParams(modelId), ...(roleConfig.params ?? {}) };
     try {
       return await createCompletion({
