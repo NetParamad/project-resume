@@ -1,6 +1,6 @@
 /**
  * Shared system-prompt preamble for every resume-processing feature
- * (ATS scoring, the improve agent, tailor, polish, import). Feature
+ * (ATS scoring, the improve agent, polish, import). Feature
  * files append their own task-specific mechanics — tool names, JSON
  * shapes, output format — after this block.
  *
@@ -92,7 +92,7 @@ Your task is to analyze, extract, generate, or refine resume content based stric
  * Instruction appended when the user has explicitly picked an output
  * language (the "Output language" control), which overrides the default
  * "keep every field in its original language" rule. Used by the features
- * that rewrite whole-resume content — tailor, polish, import/extract.
+ * that rewrite whole-resume content — the improve agent, polish, import/extract.
  */
 export function buildTranslationDirective(locale: "th" | "en"): string {
   if (locale === "th") {

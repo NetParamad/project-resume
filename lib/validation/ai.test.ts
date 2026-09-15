@@ -1,41 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  tailorRequestSchema,
   polishRequestSchema,
   atsScoreRequestSchema,
   autoFillRequestSchema,
   extractResumeRequestSchema,
 } from "./ai";
-
-describe("tailorRequestSchema", () => {
-  it("accepts a minimal valid payload and defaults jobDescription", () => {
-    const result = tailorRequestSchema.safeParse({ resumeData: {} });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.jobDescription).toBe("");
-  });
-
-  it("rejects a missing resumeData", () => {
-    const result = tailorRequestSchema.safeParse({ jobDescription: "job" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects resumeData that is not an object", () => {
-    const result = tailorRequestSchema.safeParse({ resumeData: "oops" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects an unknown locale", () => {
-    const result = tailorRequestSchema.safeParse({ resumeData: {}, locale: "fr" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects experience entries that are not objects", () => {
-    const result = tailorRequestSchema.safeParse({
-      resumeData: { experience: ["not an object"] },
-    });
-    expect(result.success).toBe(false);
-  });
-});
 
 describe("polishRequestSchema", () => {
   it("accepts resumeData with only some sections populated", () => {
@@ -45,11 +14,21 @@ describe("polishRequestSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("rejects an unknown locale", () => {
+    const result = polishRequestSchema.safeParse({
+      resumeData: {},
+      locale: "fr",
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("atsScoreRequestSchema", () => {
   it("allows jobDescription and model to be omitted", () => {
-    const result = atsScoreRequestSchema.safeParse({ resumeData: { summary: "x" } });
+    const result = atsScoreRequestSchema.safeParse({
+      resumeData: { summary: "x" },
+    });
     expect(result.success).toBe(true);
   });
 });
@@ -64,16 +43,21 @@ describe("extractResumeRequestSchema", () => {
   });
 
   it("rejects a missing text field", () => {
-    expect(extractResumeRequestSchema.safeParse({ locale: "en" }).success).toBe(false);
+    expect(extractResumeRequestSchema.safeParse({ locale: "en" }).success).toBe(
+      false
+    );
   });
 
   it("rejects an empty text field", () => {
-    expect(extractResumeRequestSchema.safeParse({ text: "" }).success).toBe(false);
+    expect(extractResumeRequestSchema.safeParse({ text: "" }).success).toBe(
+      false
+    );
   });
 
   it("rejects text over the size cap", () => {
     expect(
-      extractResumeRequestSchema.safeParse({ text: "a".repeat(100_001) }).success,
+      extractResumeRequestSchema.safeParse({ text: "a".repeat(100_001) })
+        .success
     ).toBe(false);
   });
 });
