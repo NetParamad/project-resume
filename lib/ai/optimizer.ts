@@ -5,6 +5,7 @@ import { scoreResume } from "./ats";
 import { ALLOWED_MODELS, GEMINI_PRIMARY_OVERRIDE_ID } from "./models";
 import { resolveResumeLocale } from "./detect-locale";
 import { buildPersona, buildTranslationDirective } from "./persona";
+import { normalizeSummaryString } from "./resume-utils";
 
 // The improve route runs on Vercel (maxDuration 60s). One agent turn of
 // update_section calls is ~30s and the post-loop re-score is ~20s, so the
@@ -147,7 +148,7 @@ function normalizeSection(
   current: unknown
 ): unknown {
   if (section === "summary") {
-    return typeof value === "string" ? value : "";
+    return typeof value === "string" ? normalizeSummaryString(value) : "";
   }
 
   const currentArray = Array.isArray(current) ? current : [];

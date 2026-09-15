@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { extractJsonObject, mergeResumeOutput } from "./resume-utils";
+import {
+  extractJsonObject,
+  mergeResumeOutput,
+  normalizeSummaryString,
+} from "./resume-utils";
 import type { ResumeData } from "@/lib/types/resume";
 
 function baseResume(): ResumeData {
@@ -58,10 +62,7 @@ describe("mergeResumeOutput", () => {
   it("assigns a new id when incoming has more items than the original", () => {
     const original = baseResume();
     const merged = mergeResumeOutput(original, {
-      experience: [
-        { jobTitle: "Senior Engineer" },
-        { jobTitle: "Also new" },
-      ],
+      experience: [{ jobTitle: "Senior Engineer" }, { jobTitle: "Also new" }],
     });
 
     expect(merged.experience[0].id).toBe("exp-1");
@@ -81,7 +82,10 @@ describe("mergeResumeOutput", () => {
   it("merges personalInfo but always preserves the original avatar", () => {
     const original = baseResume();
     const merged = mergeResumeOutput(original, {
-      personalInfo: { fullName: "New Name", avatar: "https://evil.example/x.png" },
+      personalInfo: {
+        fullName: "New Name",
+        avatar: "https://evil.example/x.png",
+      },
     });
 
     expect(merged.personalInfo.fullName).toBe("New Name");
@@ -97,9 +101,36 @@ describe("mergeResumeOutput", () => {
   function threeExpResume(): ResumeData {
     const base = baseResume();
     base.experience = [
-      { id: "exp-1", jobTitle: "Junior Engineer", company: "Acme", location: "", startDate: "", endDate: "", current: false, description: "A" },
-      { id: "exp-2", jobTitle: "Engineer", company: "Beta", location: "", startDate: "", endDate: "", current: false, description: "B" },
-      { id: "exp-3", jobTitle: "Senior Engineer", company: "Gamma", location: "", startDate: "", endDate: "", current: false, description: "C" },
+      {
+        id: "exp-1",
+        jobTitle: "Junior Engineer",
+        company: "Acme",
+        location: "",
+        startDate: "",
+        endDate: "",
+        current: false,
+        description: "A",
+      },
+      {
+        id: "exp-2",
+        jobTitle: "Engineer",
+        company: "Beta",
+        location: "",
+        startDate: "",
+        endDate: "",
+        current: false,
+        description: "B",
+      },
+      {
+        id: "exp-3",
+        jobTitle: "Senior Engineer",
+        company: "Gamma",
+        location: "",
+        startDate: "",
+        endDate: "",
+        current: false,
+        description: "C",
+      },
     ];
     return base;
   }
@@ -124,13 +155,25 @@ describe("mergeResumeOutput", () => {
     const original = threeExpResume();
     const merged = mergeResumeOutput(original, {
       experience: [
-        { id: "exp-3", jobTitle: "Senior Engineer II", description: "C refined" },
-        { id: "exp-1", jobTitle: "Junior Engineer II", description: "A refined" },
+        {
+          id: "exp-3",
+          jobTitle: "Senior Engineer II",
+          description: "C refined",
+        },
+        {
+          id: "exp-1",
+          jobTitle: "Junior Engineer II",
+          description: "A refined",
+        },
         { id: "exp-2", jobTitle: "Engineer II", description: "B refined" },
       ],
     });
 
-    expect(merged.experience.map((e) => e.id)).toEqual(["exp-1", "exp-2", "exp-3"]);
+    expect(merged.experience.map((e) => e.id)).toEqual([
+      "exp-1",
+      "exp-2",
+      "exp-3",
+    ]);
     expect(merged.experience[0].jobTitle).toBe("Junior Engineer II");
     expect(merged.experience[2].jobTitle).toBe("Senior Engineer II");
   });
@@ -144,8 +187,48 @@ describe("mergeResumeOutput", () => {
       ],
     });
 
-    expect(merged.experience.map((e) => e.id)).toEqual(["exp-1", "exp-2", "exp-3"]);
+    expect(merged.experience.map((e) => e.id)).toEqual([
+      "exp-1",
+      "exp-2",
+      "exp-3",
+    ]);
     expect(merged.experience[1].jobTitle).toBe("Engineer");
+  });
+});
+
+describe("normalizeSummaryString", () => {
+  it("leaves a normal paragraph untouched", () => {
+    const text = "Senior Backend Developer with 5+ years of experience.";
+    expect(normalizeSummaryString(text)).toBe(text);
+  });
+
+  it("joins a JSON-array-shaped string into a single paragraph", () => {
+    const raw = JSON.stringify([
+      "Senior Backend Developer with 5+ years of experience building scalable services.",
+      "Proficient in PostgreSQL database schema design and optimization.",
+      "Hands-on expertise deploying applications with Docker and Kubernetes on AWS.",
+    ]);
+    expect(normalizeSummaryString(raw)).toBe(
+      "Senior Backend Developer with 5+ years of experience building scalable services. " +
+        "Proficient in PostgreSQL database schema design and optimization. " +
+        "Hands-on expertise deploying applications with Docker and Kubernetes on AWS."
+    );
+  });
+
+  it("falls back to the original string when it looks like an array but isn't valid JSON", () => {
+    const raw =
+      "[not really json, just text that happens to start and end with brackets]";
+    expect(normalizeSummaryString(raw)).toBe(raw);
+  });
+
+  it("falls back to the original string when the array contains non-string items", () => {
+    const raw = JSON.stringify(["ok", { nested: true }]);
+    expect(normalizeSummaryString(raw)).toBe(raw);
+  });
+
+  it("falls back to the original string for an empty array", () => {
+    const raw = "[]";
+    expect(normalizeSummaryString(raw)).toBe(raw);
   });
 });
 

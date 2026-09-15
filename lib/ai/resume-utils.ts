@@ -48,6 +48,34 @@ export function extractJsonObject(raw: string): unknown | null {
   return null;
 }
 
+/**
+ * Models sometimes ignore a "this field is a plain string" instruction and
+ * return a JSON-array-shaped string instead (one bullet per array entry).
+ * Detect that shape and join it back into a single paragraph instead of
+ * leaking raw `["...", "..."]` syntax into a user-facing text field.
+ */
+export function normalizeSummaryString(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) return value;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (
+      Array.isArray(parsed) &&
+      parsed.length > 0 &&
+      parsed.every((item) => typeof item === "string")
+    ) {
+      return parsed
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .join(" ");
+    }
+  } catch {
+    // Not valid JSON — fall through and keep the original string.
+  }
+  return value;
+}
+
 function getExistingIds(current: unknown): string[] {
   if (!Array.isArray(current)) return [];
   return current
