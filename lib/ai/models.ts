@@ -127,16 +127,23 @@ export function validateModel(modelId: string): boolean {
   return modelId in ALLOWED_MODELS;
 }
 
-// Paid safety net for when every free model in MODEL_CHAIN fails — used by
-// client.ts only after the chain above is exhausted, never counted against
-// a role's maxChain and not selectable via the `modelId` override (it's
-// intentionally excluded from ALLOWED_MODELS/MODEL_CHAIN so the override
-// logic in llmCall can't route it through the NVIDIA client by mistake).
+// Paid model, deliberately excluded from ALLOWED_MODELS/MODEL_CHAIN so the
+// normal `modelId` override path (which routes through the NVIDIA client)
+// can never reach it by accident. client.ts special-cases two ways in:
+// as the automatic last-resort fallback once every free model fails, or —
+// when a caller explicitly passes GEMINI_PRIMARY_OVERRIDE_ID as `modelId`
+// (the "Use Gemini first" advanced setting) — as the first model tried,
+// with the free chain kept as its own one-shot fallback.
 // Verified live against this account: supports tool calls over the OpenAI
 // compat endpoint. Priced ~$0.25/$1.50 per M input/output tokens (Sep 2026)
 // — cheap enough that even a bad day of fallbacks won't dent a small
-// prepaid balance, but it's still real money, hence fallback-only.
+// prepaid balance, but it's still real money, hence opt-in/fallback-only.
 export const GEMINI_FALLBACK_MODEL = "gemini-3.1-flash-lite";
+export const GEMINI_FALLBACK_LABEL = "Gemini 3.1 Flash-Lite";
+
+// Sentinel `modelId` value the UI passes to mean "try Gemini before the
+// free chain" — not a real model id, never valid against validateModel().
+export const GEMINI_PRIMARY_OVERRIDE_ID = "gemini";
 
 // Every AI route caps maxDuration at 60s (Vercel Hobby limit — see
 // app/api/ai/*/route.ts). These bound the one extra network call so it

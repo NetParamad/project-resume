@@ -504,6 +504,7 @@
     "modelSelect": "AI Model",
     "modelTools": "Supports agent & tools",
     "modelNoTools": "Fast & cheap (no agent)",
+    "modelGeminiHint": "Paid — tries Gemini first, falls back to a free model if it fails",
     "aiAssistTitle": "AI Assistant",
     "aiAssistDescription": "All AI tools in one place: check & improve your ATS score, polish the language, or import from an old resume.",
     "aiTabAts": "ATS Check & Improve",

@@ -2,7 +2,7 @@ import type OpenAI from "openai";
 import { nanoid } from "nanoid";
 import { runAgent, type AgentStep } from "./agent";
 import { scoreResume } from "./ats";
-import { ALLOWED_MODELS } from "./models";
+import { ALLOWED_MODELS, GEMINI_PRIMARY_OVERRIDE_ID } from "./models";
 import { resolveResumeLocale } from "./detect-locale";
 import { buildPersona, buildTranslationDirective } from "./persona";
 
@@ -247,8 +247,15 @@ export async function optimizeResume(options: {
     options.outputLocale ??
     resolveResumeLocale(resumeData, jobDescription, options.locale);
 
+  // The Gemini-primary sentinel isn't a real ALLOWED_MODELS entry (see
+  // GEMINI_PRIMARY_OVERRIDE_ID in models.ts) so it must bypass the
+  // supportsTools lookup below — client.ts handles it as its own branch
+  // before ever reaching the tool-support filter.
   const agentModel =
-    modelId && ALLOWED_MODELS[modelId]?.supportsTools ? modelId : undefined;
+    modelId === GEMINI_PRIMARY_OVERRIDE_ID ||
+    (modelId && ALLOWED_MODELS[modelId]?.supportsTools)
+      ? modelId
+      : undefined;
 
   const draft = JSON.parse(JSON.stringify(resumeData)) as Record<
     string,

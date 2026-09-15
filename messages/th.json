@@ -504,6 +504,7 @@
     "modelSelect": "โมเดล AI",
     "modelTools": "รองรับ Agent และเครื่องมือ",
     "modelNoTools": "เร็วและประหยัด (ไม่รองรับ Agent)",
+    "modelGeminiHint": "เสียเงิน — ลองใช้ Gemini ก่อน หากไม่สำเร็จจะสำรองด้วยโมเดลฟรี",
     "aiAssistTitle": "ผู้ช่วย AI",
     "aiAssistDescription": "เครื่องมือ AI ทั้งหมดในที่เดียว: ตรวจและปรับปรุงคะแนน ATS, ปรับภาษา หรือนำเข้าจากเรซูเม่เก่า",
     "aiTabAts": "ตรวจ & ปรับปรุง ATS",

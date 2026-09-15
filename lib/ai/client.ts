@@ -4,6 +4,7 @@ import {
   GEMINI_FALLBACK_MODEL,
   GEMINI_MAX_TIMEOUT_MS,
   GEMINI_MIN_TIMEOUT_MS,
+  GEMINI_PRIMARY_OVERRIDE_ID,
   GEMINI_SAFETY_MARGIN_MS,
   GEMINI_TOTAL_BUDGET_MS,
   MODEL_CHAIN,
@@ -12,6 +13,18 @@ import {
   validateModel,
   type ModelRole,
 } from "./models";
+
+// Worst-case time budget for the "Use Gemini first" path: capped low
+// because Gemini is normally fast (seconds, not tens of seconds) and this
+// number is added on top of a full free-chain fallback attempt below it —
+// see the call site for the combined-worst-case math.
+const GEMINI_PRIMARY_TIMEOUT_MS = GEMINI_MAX_TIMEOUT_MS;
+// The one free-model fallback tried if the Gemini-first attempt fails is
+// capped independently of the role's own timeoutMs (which can run up to 90s
+// for the agent role) so "Gemini first" can never itself blow the route's
+// 60s maxDuration: GEMINI_PRIMARY_TIMEOUT_MS (15s) + this (20s) stays well
+// under it for every role.
+const GEMINI_PRIMARY_FALLBACK_TIMEOUT_MS = 20_000;
 
 export const client = new OpenAI({
   baseURL: "https://integrate.api.nvidia.com/v1",
@@ -115,8 +128,9 @@ export async function llmCall(options: {
   const startedAt = Date.now();
 
   const roleConfig = MODEL_ROLES[options.role];
+  const forceGeminiPrimary = options.modelId === GEMINI_PRIMARY_OVERRIDE_ID;
   const override =
-    options.modelId && validateModel(options.modelId)
+    options.modelId && !forceGeminiPrimary && validateModel(options.modelId)
       ? options.modelId
       : undefined;
 
@@ -137,6 +151,59 @@ export async function llmCall(options: {
 
   const errors: string[] = [];
   const geminiConfigured = Boolean(process.env.GEMINI_API_KEY);
+
+  // "Use Gemini first" advanced setting: try the paid model before the free
+  // chain instead of after it. Bounded to a short timeout of its own (not
+  // the role's, which can run up to 90s) plus exactly one capped free-model
+  // fallback if it fails — see the constants above for why that combination
+  // can never blow the route's 60s maxDuration regardless of role.
+  if (forceGeminiPrimary) {
+    if (!geminiConfigured) {
+      throw new Error(
+        "Gemini was selected as the primary model but GEMINI_API_KEY is not set"
+      );
+    }
+    try {
+      return await createCompletion({
+        apiClient: geminiClient,
+        modelId: GEMINI_FALLBACK_MODEL,
+        messages: options.messages,
+        tools: options.tools,
+        maxTokens,
+        temperature,
+        params: {},
+        timeoutMs: GEMINI_PRIMARY_TIMEOUT_MS,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${GEMINI_FALLBACK_MODEL}: ${msg}`);
+    }
+
+    const fallbackModelId = limitedChain[0];
+    if (fallbackModelId) {
+      const params = {
+        ...mergeParams(fallbackModelId),
+        ...(roleConfig.params ?? {}),
+      };
+      try {
+        return await createCompletion({
+          apiClient: client,
+          modelId: fallbackModelId,
+          messages: options.messages,
+          tools: options.tools,
+          maxTokens,
+          temperature,
+          params,
+          timeoutMs: Math.min(timeoutMs, GEMINI_PRIMARY_FALLBACK_TIMEOUT_MS),
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${fallbackModelId}: ${msg}`);
+      }
+    }
+
+    throw new Error(`All AI models failed. ${errors.join(" | ")}`);
+  }
 
   for (const [i, modelId] of limitedChain.entries()) {
     // A role's worst-case free-chain time (maxChain × timeoutMs) can exceed
