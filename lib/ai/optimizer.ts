@@ -92,7 +92,7 @@ function buildSystemPrompt(locale: "th" | "en"): string {
 JSON เรซูเม่ฉบับเต็มและรายละเอียดงานเป้าหมายอยู่ในข้อความด้านล่างแล้ว
 
 ขั้นตอน:
-1. ในเทิร์นแรก (เทิร์นเดียว) ต้องเรียก update_section อย่างน้อย 3 ครั้งพร้อมกัน สำหรับ summary, experience และ skills เป็นอย่างน้อย (เพิ่ม section อื่นที่อ่อนได้) มีเวลาแค่ 2 เทิร์นเท่านั้น
+1. เวลาจริงมีแค่เทิร์นเดียว (เทิร์นที่ 2 มักไม่ทันเพราะหมดเวลา) — ในเทิร์นแรกนี้ ให้เรียก update_section พร้อมกันในคราวเดียวสำหรับ "ทุก" section ที่มีเนื้อหาอยู่แล้วและปรับปรุงให้ดีขึ้นได้ ไม่ใช่แค่ summary, experience, skills เท่านั้น — รวมถึง education, projects, certifications, publications, researchExperience, teachingExperience, awards ด้วยถ้ามีข้อมูลอยู่ ข้ามเฉพาะ section ที่ไม่มีข้อมูลอยู่เลย
 2. ยึดหลักการปรับ ATS ในหลักการทำงานหลักด้านบน แทรกคำหลักจากรายละเอียดงานเป้าหมายเท่าที่ข้อเท็จจริงรองรับ และห้ามกุข้อมูล
 3. สำหรับ section ที่เป็น array ต้องคง field 'id' ของทุก item เดิมไว้
 4. เมื่อแก้ไขเสร็จ ให้พิมพ์ข้อความสรุปการเปลี่ยนแปลงสั้น ๆ เป็นภาษาไทย (โดยไม่เรียก tool)`;
@@ -107,7 +107,7 @@ Improve the resume's ATS readiness. You are on a very tight time budget and have
 The full resume JSON and the target job description are already in the message below.
 
 Steps:
-1. On your FIRST turn (a single turn), issue at least 3 update_section calls together — at minimum summary, experience, and skills (add other weak sections too). You only get 2 turns.
+1. You realistically only get ONE turn (a second turn almost never fits in the time budget). On this first turn, issue update_section calls together for EVERY section that already has content and can be improved — not just summary, experience, and skills. Also cover education, projects, certifications, publications, researchExperience, teachingExperience, and awards whenever they contain data. Skip only sections that are genuinely empty.
 2. Follow the ATS optimization principles in the core operating principles above, working in keywords from the target job description only where the facts support them. Never fabricate.
 3. For array sections, preserve the 'id' field of every existing item.
 4. When the edits are done, output a short plain-text summary of the changes (no tool calls).`;
@@ -141,7 +141,11 @@ function coerceToArray(value: unknown): unknown[] {
   return [value];
 }
 
-function normalizeSection(section: string, value: unknown, current: unknown): unknown {
+function normalizeSection(
+  section: string,
+  value: unknown,
+  current: unknown
+): unknown {
   if (section === "summary") {
     return typeof value === "string" ? value : "";
   }
@@ -153,17 +157,21 @@ function normalizeSection(section: string, value: unknown, current: unknown): un
     if (item === null || typeof item !== "object") return item;
     const typed = item as Record<string, unknown>;
     const existing = currentArray.find(
-      (c) => (c as Record<string, unknown>)?.id && (c as Record<string, unknown>).id === typed.id,
+      (c) =>
+        (c as Record<string, unknown>)?.id &&
+        (c as Record<string, unknown>).id === typed.id
     ) as Record<string, unknown> | undefined;
     const id =
       typeof typed.id === "string" && typed.id
         ? typed.id
-        : (existing?.id as string) ?? nanoid();
+        : ((existing?.id as string) ?? nanoid());
     return { ...existing, ...typed, id };
   });
 }
 
-function ensureIdsInArrays(data: Record<string, unknown>): Record<string, unknown> {
+function ensureIdsInArrays(
+  data: Record<string, unknown>
+): Record<string, unknown> {
   const arraySections = [...OPTIMIZER_SECTIONS].filter((s) => s !== "summary");
   for (const key of arraySections) {
     const value = data[key];
@@ -200,7 +208,10 @@ export async function optimizeResume(options: {
   const agentModel =
     modelId && ALLOWED_MODELS[modelId]?.supportsTools ? modelId : undefined;
 
-  const draft = JSON.parse(JSON.stringify(resumeData)) as Record<string, unknown>;
+  const draft = JSON.parse(JSON.stringify(resumeData)) as Record<
+    string,
+    unknown
+  >;
   const changes: SectionChange[] = [];
 
   const systemPrompt = options.outputLocale
@@ -211,7 +222,7 @@ export async function optimizeResume(options: {
     (jobDescription?.trim()
       ? `\n\nTarget Job Description:\n${jobDescription.trim()}`
       : "") +
-    `\n\nRewrite the weakest sections now with update_section — summary, experience and skills are usually the highest impact.`;
+    `\n\nRewrite every non-empty section now with update_section, in one batch of tool calls — don't limit yourself to summary, experience, and skills.`;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
@@ -220,12 +231,16 @@ export async function optimizeResume(options: {
 
   const executeTool = async (
     name: string,
-    args: Record<string, unknown>,
+    args: Record<string, unknown>
   ): Promise<unknown> => {
     if (name !== "update_section") return { error: `Unknown tool: ${name}` };
 
     const section = String(args.section ?? "");
-    if (!OPTIMIZER_SECTIONS.includes(section as (typeof OPTIMIZER_SECTIONS)[number])) {
+    if (
+      !OPTIMIZER_SECTIONS.includes(
+        section as (typeof OPTIMIZER_SECTIONS)[number]
+      )
+    ) {
       return { ok: false, error: `Unknown section: ${section}` };
     }
     const previous = JSON.parse(JSON.stringify(draft[section] ?? null));
@@ -271,11 +286,14 @@ export async function optimizeResume(options: {
         locale,
         undefined,
         locale,
-        Math.min(rescoreBudgetMs, 40_000),
+        Math.min(rescoreBudgetMs, 40_000)
       );
       scores.push(finalScore.score);
 
-      if (result.stopReason === "completed" && finalScore.score >= TARGET_SCORE) {
+      if (
+        result.stopReason === "completed" &&
+        finalScore.score >= TARGET_SCORE
+      ) {
         result.stopReason = "target_reached";
       }
     } catch {
