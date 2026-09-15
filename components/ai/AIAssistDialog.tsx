@@ -24,7 +24,11 @@ import {
   useAILanguageStore,
   type OutputLocale,
 } from "@/lib/store/ai-language-store";
-import { ALLOWED_MODELS } from "@/lib/ai/models";
+import {
+  ALLOWED_MODELS,
+  GEMINI_FALLBACK_LABEL,
+  GEMINI_PRIMARY_OVERRIDE_ID,
+} from "@/lib/ai/models";
 import { cn } from "@/lib/utils";
 import { AtsPanel } from "./AtsPanel";
 import { PolishPanel } from "./PolishPanel";
@@ -239,6 +243,32 @@ export function AIAssistDialog({
                     </span>
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setOverride(GEMINI_PRIMARY_OVERRIDE_ID)}
+                  className={cn(
+                    "w-full flex items-start gap-2 rounded-md border px-3 py-2 text-left text-sm transition-all active:scale-[0.99]",
+                    override === GEMINI_PRIMARY_OVERRIDE_ID
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-accent"
+                  )}
+                >
+                  <CheckCircle2
+                    size={16}
+                    className={cn(
+                      "mt-0.5 shrink-0",
+                      override === GEMINI_PRIMARY_OVERRIDE_ID
+                        ? "text-primary"
+                        : "text-muted-foreground/40"
+                    )}
+                  />
+                  <span className="flex flex-col">
+                    <span>{GEMINI_FALLBACK_LABEL}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {t("modelGeminiHint")}
+                    </span>
+                  </span>
+                </button>
               </div>
             </div>
           </div>
