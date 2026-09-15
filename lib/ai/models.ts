@@ -1,5 +1,4 @@
-export type ModelRole =
-  "autofill" | "tailor" | "extract" | "score" | "agent" | "polish";
+export type ModelRole = "autofill" | "extract" | "score" | "agent" | "polish";
 
 export interface ModelMeta {
   label: string;
@@ -74,20 +73,6 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
     // room to spare for auth/rate-limit checks either side of the LLM call.
     timeoutMs: 18_000,
   },
-  tailor: {
-    maxTokens: 16384,
-    temperature: 0.3,
-    // tailor.ts's 2x retry-on-malformed-JSON loop only helps when a model
-    // *responds* with bad JSON — a thrown timeout/network error propagates
-    // straight out and skips the retry, so the real worst case for a hung
-    // model is just maxChain × timeoutMs, not doubled. Measured latency for
-    // a real full-resume rewrite varies ~7-27s+, so keep a 2nd model to fall
-    // back to: 2 × 25s = 50s, under the 60s route maxDuration — the old 90s
-    // × full 3-model chain could reach 270s worst case (540s counting the
-    // retry loop), guaranteeing the platform kills the function mid-call.
-    timeoutMs: 25_000,
-    maxChain: 2,
-  },
   extract: {
     maxTokens: 4096,
     temperature: 0.2,
@@ -130,7 +115,7 @@ export const MODEL_ROLES: Record<ModelRole, RoleConfig> = {
   polish: {
     maxTokens: 16384,
     temperature: 0.3,
-    // Same reasoning as tailor — a thrown timeout skips polish.ts's
+    // A thrown timeout/network error skips polish.ts's own
     // retry-on-malformed-JSON loop, so keep a 2nd model as the real
     // fallback: 2 × 25s = 50s, under the 60s route maxDuration.
     timeoutMs: 25_000,

@@ -51,14 +51,16 @@ export function extractJsonObject(raw: string): unknown | null {
 function getExistingIds(current: unknown): string[] {
   if (!Array.isArray(current)) return [];
   return current
-    .map((item) => (isRecord(item) && typeof item.id === "string" ? item.id : ""))
+    .map((item) =>
+      isRecord(item) && typeof item.id === "string" ? item.id : ""
+    )
     .filter(Boolean);
 }
 
 function mergeArrayItem(
   incoming: unknown,
   existingIds: string[],
-  index: number,
+  index: number
 ): Record<string, unknown> {
   const base: Record<string, unknown> = {};
   if (isRecord(incoming)) {
@@ -72,7 +74,7 @@ function mergeArrayItem(
     incoming === null ||
     !isRecord(incoming) ||
     typeof (incoming as Record<string, unknown>).id !== "string"
-      ? existingIds[index] ?? nanoid()
+      ? (existingIds[index] ?? nanoid())
       : (incoming as Record<string, unknown>).id;
   return { ...base, id };
 }
@@ -80,7 +82,7 @@ function mergeArrayItem(
 /**
  * Merge one AI-rewritten array section back onto the original.
  *
- * tailor/polish only ever *reword* existing items — they must never drop or
+ * polish only ever *rewords* existing items — it must never drop or
  * reorder them. When every incoming item carries a known `id` we match by id
  * and keep the original ordering, so a reordered response can't shuffle
  * content. Otherwise we fall back to index mapping, and in both cases any
@@ -89,7 +91,7 @@ function mergeArrayItem(
  */
 function mergeArraySection(
   originalItems: unknown,
-  incoming: unknown[],
+  incoming: unknown[]
 ): Record<string, unknown>[] {
   const originalArray = Array.isArray(originalItems) ? originalItems : [];
   const existingIds = getExistingIds(originalArray);
@@ -103,7 +105,7 @@ function mergeArraySection(
       (item) =>
         isRecord(item) &&
         typeof item.id === "string" &&
-        existingIdSet.has(item.id),
+        existingIdSet.has(item.id)
     );
 
   if (incomingHaveKnownIds) {
@@ -147,7 +149,7 @@ function mergeArraySection(
  */
 export function mergeResumeOutput(
   original: ResumeData,
-  incoming: unknown,
+  incoming: unknown
 ): ResumeData {
   if (!isRecord(incoming)) return original;
 
@@ -163,7 +165,8 @@ export function mergeResumeOutput(
 
   for (const section of STRING_SECTIONS) {
     if (typeof incoming[section] === "string") {
-      (merged as unknown as Record<string, unknown>)[section] = incoming[section];
+      (merged as unknown as Record<string, unknown>)[section] =
+        incoming[section];
     }
   }
 

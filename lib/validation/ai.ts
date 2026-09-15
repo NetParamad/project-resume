@@ -7,14 +7,6 @@ const boundedText = z.string().max(20_000);
 // and, for whole-resume features, translates every field into that language.
 const outputLocaleSchema = z.enum(["en", "th"]).optional();
 
-export const tailorRequestSchema = z.object({
-  resumeData: resumeDataSchema,
-  jobDescription: boundedText.optional().default(""),
-  locale: localeSchema,
-  outputLocale: outputLocaleSchema,
-  model: modelSchema,
-});
-
 export const polishRequestSchema = z.object({
   resumeData: resumeDataSchema,
   locale: localeSchema,

@@ -12,7 +12,6 @@ import {
 import {
   Bot,
   Lightbulb,
-  Target,
   Sparkles,
   FileText,
   CheckCircle2,
@@ -21,19 +20,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAIModelStore } from "@/lib/store/ai-model-store";
-import { useAILanguageStore, type OutputLocale } from "@/lib/store/ai-language-store";
+import {
+  useAILanguageStore,
+  type OutputLocale,
+} from "@/lib/store/ai-language-store";
 import { ALLOWED_MODELS } from "@/lib/ai/models";
 import { cn } from "@/lib/utils";
 import { AtsPanel } from "./AtsPanel";
-import { TailorPanel } from "./TailorPanel";
 import { PolishPanel } from "./PolishPanel";
 import { ExtractPanel } from "./ExtractPanel";
 
-type Tab = "ats" | "tailor" | "polish" | "import";
+type Tab = "ats" | "polish" | "import";
 
 const TABS: Array<{ id: Tab; icon: LucideIcon; labelKey: string }> = [
   { id: "ats", icon: Lightbulb, labelKey: "aiTabAts" },
-  { id: "tailor", icon: Target, labelKey: "aiTabTailor" },
   { id: "polish", icon: Sparkles, labelKey: "aiTabPolish" },
   { id: "import", icon: FileText, labelKey: "aiTabImport" },
 ];
@@ -54,11 +54,12 @@ export function AIAssistDialog({
   const langOverride = useAILanguageStore((s) => s.override);
   const setLangOverride = useAILanguageStore((s) => s.setOverride);
 
-  const LANG_OPTIONS: Array<{ value: OutputLocale | null; labelKey: string }> = [
-    { value: null, labelKey: "outputLanguageAuto" },
-    { value: "th", labelKey: "outputLanguageTh" },
-    { value: "en", labelKey: "outputLanguageEn" },
-  ];
+  const LANG_OPTIONS: Array<{ value: OutputLocale | null; labelKey: string }> =
+    [
+      { value: null, labelKey: "outputLanguageAuto" },
+      { value: "th", labelKey: "outputLanguageTh" },
+      { value: "en", labelKey: "outputLanguageEn" },
+    ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,7 +70,9 @@ export function AIAssistDialog({
             {t("aiAssistTitle")}
           </DialogTitle>
           <DialogDescription>{t("aiAssistDescription")}</DialogDescription>
-          <p className="text-[11px] leading-relaxed text-muted-foreground/80">{tb("aiDisclaimer")}</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground/80">
+            {tb("aiDisclaimer")}
+          </p>
         </DialogHeader>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1 min-h-0">
@@ -93,7 +96,7 @@ export function AIAssistDialog({
                     "flex items-center gap-2 px-3 py-2 rounded-md text-sm whitespace-nowrap transition-all active:scale-[0.98]",
                     active
                       ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
                 >
                   <Icon size={15} className="shrink-0" />
@@ -111,9 +114,10 @@ export function AIAssistDialog({
             className="flex-1 min-h-0 overflow-y-auto pr-1 animate-fade-in-up [animation-duration:0.25s]"
           >
             {tab === "ats" && <AtsPanel />}
-            {tab === "tailor" && <TailorPanel />}
             {tab === "polish" && <PolishPanel />}
-            {tab === "import" && <ExtractPanel onClose={() => onOpenChange(false)} />}
+            {tab === "import" && (
+              <ExtractPanel onClose={() => onOpenChange(false)} />
+            )}
           </div>
         </div>
 
@@ -127,88 +131,114 @@ export function AIAssistDialog({
             <span className="flex items-center gap-2">
               <Settings2 size={14} />
               {t("advanced")}
-              <span className="text-xs text-muted-foreground/60">· {t("advancedHint")}</span>
+              <span className="text-xs text-muted-foreground/60">
+                · {t("advancedHint")}
+              </span>
             </span>
-            <ChevronDown size={14} className={cn("transition-transform duration-300 shrink-0", advancedOpen && "rotate-180")} />
+            <ChevronDown
+              size={14}
+              className={cn(
+                "transition-transform duration-300 shrink-0",
+                advancedOpen && "rotate-180"
+              )}
+            />
           </button>
 
           <div
             className={cn(
               "grid transition-[grid-template-rows] duration-300 ease-out",
-              advancedOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+              advancedOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
             )}
             aria-hidden={!advancedOpen}
             inert={!advancedOpen}
           >
             <div className="min-h-0 overflow-hidden">
               <div className="mt-3 space-y-1.5 max-h-[40vh] overflow-y-auto pr-1">
-              <div className="pb-1">
-                <p className="text-sm font-medium mb-1.5">{t("outputLanguage")}</p>
-                <div className="flex gap-1.5">
-                  {LANG_OPTIONS.map((opt) => {
-                    const selected = langOverride === opt.value;
-                    return (
-                      <button
-                        key={opt.labelKey}
-                        type="button"
-                        onClick={() => setLangOverride(opt.value)}
-                        className={cn(
-                          "flex-1 rounded-md border px-3 py-1.5 text-sm transition-all active:scale-[0.98]",
-                          selected
-                            ? "border-primary bg-primary/5 font-medium"
-                            : "border-border hover:bg-accent",
-                        )}
-                      >
-                        {t(opt.labelKey)}
-                      </button>
-                    );
-                  })}
+                <div className="pb-1">
+                  <p className="text-sm font-medium mb-1.5">
+                    {t("outputLanguage")}
+                  </p>
+                  <div className="flex gap-1.5">
+                    {LANG_OPTIONS.map((opt) => {
+                      const selected = langOverride === opt.value;
+                      return (
+                        <button
+                          key={opt.labelKey}
+                          type="button"
+                          onClick={() => setLangOverride(opt.value)}
+                          className={cn(
+                            "flex-1 rounded-md border px-3 py-1.5 text-sm transition-all active:scale-[0.98]",
+                            selected
+                              ? "border-primary bg-primary/5 font-medium"
+                              : "border-border hover:bg-accent"
+                          )}
+                        >
+                          {t(opt.labelKey)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    {t("outputLanguageHint")}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1.5">{t("outputLanguageHint")}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOverride(null)}
-                className={cn(
-                  "w-full flex items-start gap-2 rounded-md border px-3 py-2 text-left text-sm transition-all active:scale-[0.99]",
-                  override === null
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:bg-accent",
-                )}
-              >
-                <CheckCircle2
-                  size={16}
-                  className={cn("mt-0.5 shrink-0", override === null ? "text-primary" : "text-muted-foreground/40")}
-                />
-                <span className="flex flex-col">
-                  <span>{t("modelAuto")}</span>
-                  <span className="text-xs text-muted-foreground">{t("modelAutoHint")}</span>
-                </span>
-              </button>
-              {Object.entries(ALLOWED_MODELS).map(([id, meta]) => (
                 <button
-                  key={id}
                   type="button"
-                  onClick={() => setOverride(id)}
+                  onClick={() => setOverride(null)}
                   className={cn(
                     "w-full flex items-start gap-2 rounded-md border px-3 py-2 text-left text-sm transition-all active:scale-[0.99]",
-                    override === id
+                    override === null
                       ? "border-primary bg-primary/5"
-                      : "border-border hover:bg-accent",
+                      : "border-border hover:bg-accent"
                   )}
                 >
                   <CheckCircle2
                     size={16}
-                    className={cn("mt-0.5 shrink-0", override === id ? "text-primary" : "text-muted-foreground/40")}
+                    className={cn(
+                      "mt-0.5 shrink-0",
+                      override === null
+                        ? "text-primary"
+                        : "text-muted-foreground/40"
+                    )}
                   />
                   <span className="flex flex-col">
-                    <span>{meta.label}</span>
+                    <span>{t("modelAuto")}</span>
                     <span className="text-xs text-muted-foreground">
-                      {meta.supportsTools ? t("modelTools") : t("modelNoTools")}
+                      {t("modelAutoHint")}
                     </span>
                   </span>
                 </button>
-              ))}
+                {Object.entries(ALLOWED_MODELS).map(([id, meta]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setOverride(id)}
+                    className={cn(
+                      "w-full flex items-start gap-2 rounded-md border px-3 py-2 text-left text-sm transition-all active:scale-[0.99]",
+                      override === id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-accent"
+                    )}
+                  >
+                    <CheckCircle2
+                      size={16}
+                      className={cn(
+                        "mt-0.5 shrink-0",
+                        override === id
+                          ? "text-primary"
+                          : "text-muted-foreground/40"
+                      )}
+                    />
+                    <span className="flex flex-col">
+                      <span>{meta.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {meta.supportsTools
+                          ? t("modelTools")
+                          : t("modelNoTools")}
+                      </span>
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
