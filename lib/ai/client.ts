@@ -1,6 +1,11 @@
 import OpenAI from "openai";
 import {
   ALLOWED_MODELS,
+  GEMINI_FALLBACK_MODEL,
+  GEMINI_MAX_TIMEOUT_MS,
+  GEMINI_MIN_TIMEOUT_MS,
+  GEMINI_SAFETY_MARGIN_MS,
+  GEMINI_TOTAL_BUDGET_MS,
   MODEL_CHAIN,
   MODEL_PARAMS,
   MODEL_ROLES,
@@ -11,6 +16,15 @@ import {
 export const client = new OpenAI({
   baseURL: "https://integrate.api.nvidia.com/v1",
   apiKey: process.env.NVIDIA_API_KEY,
+});
+
+// Paid fallback client — see GEMINI_FALLBACK_MODEL in models.ts for why it's
+// kept off the primary chain. The Gemini OpenAI-compat endpoint 400s on any
+// NVIDIA-specific body field (chat_template_kwargs, reasoning_budget), so
+// its call site below must never pass roleConfig.params through to it.
+const geminiClient = new OpenAI({
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 export interface LLMChunk {
@@ -24,6 +38,7 @@ function mergeParams(modelId: string): Record<string, unknown> {
 }
 
 async function createCompletion(options: {
+  apiClient: OpenAI;
   modelId: string;
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
   tools?: OpenAI.Chat.Completions.ChatCompletionTool[];
@@ -32,13 +47,22 @@ async function createCompletion(options: {
   params: Record<string, unknown>;
   timeoutMs: number;
 }): Promise<OpenAI.Chat.Completions.ChatCompletionMessage> {
-  const { modelId, messages, tools, maxTokens, temperature, params, timeoutMs } = options;
+  const {
+    apiClient,
+    modelId,
+    messages,
+    tools,
+    maxTokens,
+    temperature,
+    params,
+    timeoutMs,
+  } = options;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await client.chat.completions.create(
+    const response = await apiClient.chat.completions.create(
       {
         model: modelId,
         messages,
@@ -51,7 +75,7 @@ async function createCompletion(options: {
         stream: false,
         ...params,
       } as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
-      { signal: controller.signal },
+      { signal: controller.signal }
     );
 
     const message = response.choices?.[0]?.message;
@@ -65,7 +89,7 @@ async function createCompletion(options: {
     const hasToolCalls = (message.tool_calls?.length ?? 0) > 0;
     if (!hasToolCalls && !message.content?.trim()) {
       throw new Error(
-        `Empty completion content (finish_reason: ${response.choices?.[0]?.finish_reason ?? "unknown"})`,
+        `Empty completion content (finish_reason: ${response.choices?.[0]?.finish_reason ?? "unknown"})`
       );
     }
 
@@ -88,9 +112,13 @@ export async function llmCall(options: {
     throw new Error("NVIDIA_API_KEY is not set");
   }
 
+  const startedAt = Date.now();
+
   const roleConfig = MODEL_ROLES[options.role];
   const override =
-    options.modelId && validateModel(options.modelId) ? options.modelId : undefined;
+    options.modelId && validateModel(options.modelId)
+      ? options.modelId
+      : undefined;
 
   const chain = override
     ? [override, ...MODEL_CHAIN.filter((m) => m !== override)]
@@ -99,7 +127,9 @@ export async function llmCall(options: {
   const activeChain = options.tools
     ? chain.filter((m) => ALLOWED_MODELS[m]?.supportsTools !== false)
     : chain;
-  const limitedChain = roleConfig.maxChain ? activeChain.slice(0, roleConfig.maxChain) : activeChain;
+  const limitedChain = roleConfig.maxChain
+    ? activeChain.slice(0, roleConfig.maxChain)
+    : activeChain;
 
   const maxTokens = options.maxTokens ?? roleConfig.maxTokens;
   const temperature = options.temperature ?? roleConfig.temperature ?? 0.5;
@@ -107,11 +137,11 @@ export async function llmCall(options: {
 
   const errors: string[] = [];
 
-  for (let i = 0; i < limitedChain.length; i++) {
-    const modelId = limitedChain[i];
+  for (const modelId of limitedChain) {
     const params = { ...mergeParams(modelId), ...(roleConfig.params ?? {}) };
     try {
       return await createCompletion({
+        apiClient: client,
         modelId,
         messages: options.messages,
         tools: options.tools,
@@ -123,9 +153,35 @@ export async function llmCall(options: {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${modelId}: ${msg}`);
-      if (i === limitedChain.length - 1) {
-        const last = new Error(`All AI models failed. ${errors.join(" | ")}`);
-        throw last;
+    }
+  }
+
+  // Every free model failed — spend a bit of the prepaid Gemini credit as a
+  // last resort, but only if enough of the route's 60s maxDuration budget
+  // is actually left (see GEMINI_* constants in models.ts). Skipping when
+  // time is too tight is intentional: better to fail exactly as before than
+  // risk the platform killing the function mid-call.
+  if (process.env.GEMINI_API_KEY) {
+    const remaining = GEMINI_TOTAL_BUDGET_MS - (Date.now() - startedAt);
+    const geminiTimeoutMs = Math.min(
+      remaining - GEMINI_SAFETY_MARGIN_MS,
+      GEMINI_MAX_TIMEOUT_MS
+    );
+    if (geminiTimeoutMs >= GEMINI_MIN_TIMEOUT_MS) {
+      try {
+        return await createCompletion({
+          apiClient: geminiClient,
+          modelId: GEMINI_FALLBACK_MODEL,
+          messages: options.messages,
+          tools: options.tools,
+          maxTokens,
+          temperature,
+          params: {},
+          timeoutMs: geminiTimeoutMs,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${GEMINI_FALLBACK_MODEL}: ${msg}`);
       }
     }
   }
@@ -143,7 +199,9 @@ export async function llmText(options: {
   temperature?: number;
 }): Promise<string> {
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    ...(options.system ? [{ role: "system" as const, content: options.system }] : []),
+    ...(options.system
+      ? [{ role: "system" as const, content: options.system }]
+      : []),
     { role: "user", content: options.user },
   ];
 
