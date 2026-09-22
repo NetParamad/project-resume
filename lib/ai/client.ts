@@ -26,19 +26,35 @@ const GEMINI_PRIMARY_TIMEOUT_MS = GEMINI_MAX_TIMEOUT_MS;
 // under it for every role.
 const GEMINI_PRIMARY_FALLBACK_TIMEOUT_MS = 20_000;
 
-export const client = new OpenAI({
-  baseURL: "https://integrate.api.nvidia.com/v1",
-  apiKey: process.env.NVIDIA_API_KEY,
-});
+// Clients are created lazily (not at module import) so that importing this
+// module for a Next.js build never requires API keys on the environment.
+// Keys are read from process.env the first time a request actually calls a
+// provider.
+let nvidiaClient: OpenAI | null = null;
+function getNvidiaClient(): OpenAI {
+  if (!nvidiaClient) {
+    nvidiaClient = new OpenAI({
+      baseURL: "https://integrate.api.nvidia.com/v1",
+      apiKey: process.env.NVIDIA_API_KEY,
+    });
+  }
+  return nvidiaClient;
+}
 
 // Paid fallback client — see GEMINI_FALLBACK_MODEL in models.ts for why it's
 // kept off the primary chain. The Gemini OpenAI-compat endpoint 400s on any
 // NVIDIA-specific body field (chat_template_kwargs, reasoning_budget), so
 // its call site below must never pass roleConfig.params through to it.
-const geminiClient = new OpenAI({
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  apiKey: process.env.GEMINI_API_KEY,
-});
+let gemini: OpenAI | null = null;
+function getGeminiClient(): OpenAI {
+  if (!gemini) {
+    gemini = new OpenAI({
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+      apiKey: process.env.GEMINI_API_KEY,
+    });
+  }
+  return gemini;
+}
 
 export interface LLMChunk {
   content: string | null;
@@ -165,7 +181,7 @@ export async function llmCall(options: {
     }
     try {
       return await createCompletion({
-        apiClient: geminiClient,
+        apiClient: getGeminiClient(),
         modelId: GEMINI_FALLBACK_MODEL,
         messages: options.messages,
         tools: options.tools,
@@ -187,7 +203,7 @@ export async function llmCall(options: {
       };
       try {
         return await createCompletion({
-          apiClient: client,
+          apiClient: getNvidiaClient(),
           modelId: fallbackModelId,
           messages: options.messages,
           tools: options.tools,
@@ -228,7 +244,7 @@ export async function llmCall(options: {
     const params = { ...mergeParams(modelId), ...(roleConfig.params ?? {}) };
     try {
       return await createCompletion({
-        apiClient: client,
+        apiClient: getNvidiaClient(),
         modelId,
         messages: options.messages,
         tools: options.tools,
@@ -257,7 +273,7 @@ export async function llmCall(options: {
     if (geminiTimeoutMs >= GEMINI_MIN_TIMEOUT_MS) {
       try {
         return await createCompletion({
-          apiClient: geminiClient,
+          apiClient: getGeminiClient(),
           modelId: GEMINI_FALLBACK_MODEL,
           messages: options.messages,
           tools: options.tools,

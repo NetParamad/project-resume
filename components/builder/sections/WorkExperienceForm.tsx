@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
+import { MonthYearField } from "@/components/ui/MonthYearField";
 import { useAiAutofillListener } from "@/lib/hooks/use-ai-autofill-listener";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import type { WorkExperience } from "@/lib/types/resume";
@@ -33,80 +34,87 @@ export function WorkExperienceForm() {
         {experience.map((exp) => (
           <Card key={exp.id} className="rounded-md shadow-none relative">
             <CardContent className="p-3 space-y-2">
-            <div className="flex items-center gap-1 absolute left-1 top-1">
-              <GripVertical size={14} className="text-muted-foreground cursor-grab" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-5">
-              <div className="space-y-1">
-                <Label className="text-xs">{t("jobTitle")}</Label>
-                <Input
-                  value={exp.jobTitle}
-                  onChange={(e) => update(exp.id, { jobTitle: e.target.value })}
-                  className="h-8 text-sm"
+              <div className="flex items-center gap-1 absolute left-1 top-1">
+                <GripVertical
+                  size={14}
+                  className="text-muted-foreground cursor-grab"
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("company")}</Label>
-                <Input
-                  value={exp.company}
-                  onChange={(e) => update(exp.id, { company: e.target.value })}
-                  className="h-8 text-sm"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">{t("startDate")}</Label>
-                <Input
-                  type="month"
-                  value={exp.startDate}
-                  onChange={(e) => update(exp.id, { startDate: e.target.value })}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("endDate")}</Label>
-                <Input
-                  type="month"
-                  value={exp.endDate}
-                  onChange={(e) => update(exp.id, { endDate: e.target.value })}
-                  disabled={exp.current}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="flex items-end pb-1">
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={exp.current}
-                    onChange={(e) => update(exp.id, { current: e.target.checked })}
-                    className="rounded"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-5">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("jobTitle")}</Label>
+                  <Input
+                    value={exp.jobTitle}
+                    onChange={(e) =>
+                      update(exp.id, { jobTitle: e.target.value })
+                    }
+                    className="h-8 text-sm"
                   />
-                  {t("current")}
-                </label>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("company")}</Label>
+                  <Input
+                    value={exp.company}
+                    onChange={(e) =>
+                      update(exp.id, { company: e.target.value })
+                    }
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("description")}</Label>
-              <textarea
-                value={exp.description}
-                onChange={(e) => update(exp.id, { description: e.target.value })}
-                placeholder={t("descriptionPlaceholder")}
-                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                rows={2}
-              />
-            </div>
-            <div className="flex items-center gap-1 absolute top-1 right-1">
-              <AIAssistButton section="experience" itemId={exp.id} />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => remove(exp.id)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 size={14} />
-              </Button>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("startDate")}</Label>
+                  <MonthYearField
+                    value={exp.startDate}
+                    onChange={(v) => update(exp.id, { startDate: v })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("endDate")}</Label>
+                  <MonthYearField
+                    value={exp.endDate}
+                    onChange={(v) => update(exp.id, { endDate: v })}
+                    disabled={exp.current}
+                  />
+                </div>
+                <div className="flex items-end pb-1">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={exp.current}
+                      onChange={(e) =>
+                        update(exp.id, { current: e.target.checked })
+                      }
+                      className="rounded"
+                    />
+                    {t("current")}
+                  </label>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">{t("description")}</Label>
+                <textarea
+                  value={exp.description}
+                  onChange={(e) =>
+                    update(exp.id, { description: e.target.value })
+                  }
+                  placeholder={t("descriptionPlaceholder")}
+                  className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  rows={2}
+                />
+              </div>
+              <div className="flex items-center gap-1 absolute top-1 right-1">
+                <AIAssistButton section="experience" itemId={exp.id} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => remove(exp.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

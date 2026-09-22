@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { MonthYearField } from "@/components/ui/MonthYearField";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,43 +29,43 @@ export function CertificationsForm() {
         {certs.map((cert) => (
           <Card key={cert.id} className="rounded-md shadow-none">
             <CardContent className="p-3 space-y-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">{t("name")}</Label>
-                <Input
-                  value={cert.name}
-                  onChange={(e) => update(cert.id, { name: e.target.value })}
-                  className="h-8 text-sm"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("name")}</Label>
+                  <Input
+                    value={cert.name}
+                    onChange={(e) => update(cert.id, { name: e.target.value })}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("issuer")}</Label>
+                  <Input
+                    value={cert.issuer}
+                    onChange={(e) =>
+                      update(cert.id, { issuer: e.target.value })
+                    }
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("issuer")}</Label>
-                <Input
-                  value={cert.issuer}
-                  onChange={(e) => update(cert.id, { issuer: e.target.value })}
-                  className="h-8 text-sm"
-                />
+              <div className="flex items-end justify-between">
+                <div className="w-full max-w-48 space-y-1">
+                  <Label className="text-xs">{t("date")}</Label>
+                  <MonthYearField
+                    value={cert.date}
+                    onChange={(v) => update(cert.id, { date: v })}
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => remove(cert.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 size={14} />
+                </Button>
               </div>
-            </div>
-            <div className="flex items-end justify-between">
-              <div className="w-full max-w-48 space-y-1">
-                <Label className="text-xs">{t("date")}</Label>
-                <Input
-                  type="month"
-                  value={cert.date}
-                  onChange={(e) => update(cert.id, { date: e.target.value })}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => remove(cert.id)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 size={14} />
-              </Button>
-            </div>
             </CardContent>
           </Card>
         ))}
