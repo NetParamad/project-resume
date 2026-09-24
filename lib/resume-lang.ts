@@ -4,7 +4,10 @@ export type ResumeLang = "en" | "th";
 
 export const resumeLangDict = {
   experience: { en: "Experience", th: "ประสบการณ์การทำงาน" },
-  professionalExperience: { en: "Professional Experience", th: "ประสบการณ์การทำงาน" },
+  professionalExperience: {
+    en: "Professional Experience",
+    th: "ประสบการณ์การทำงาน",
+  },
   summary: { en: "Professional Summary", th: "สรุปภาพรวม" },
   education: { en: "Education", th: "การศึกษา" },
   skills: { en: "Skills", th: "ทักษะ" },
@@ -16,6 +19,7 @@ export const resumeLangDict = {
   research: { en: "Research", th: "งานวิจัย" },
   teachingExperience: { en: "Teaching Experience", th: "ประสบการณ์การสอน" },
   awards: { en: "Awards & Honors", th: "รางวัลและเกียรติยศ" },
+  references: { en: "References", th: "บุคคลอ้างอิง" },
   present: { en: "Present", th: "ปัจจุบัน" },
   view: { en: "View", th: "ดู" },
   link: { en: "Link", th: "ลิงก์" },
@@ -38,5 +42,6 @@ export type ResumeLangKey = keyof typeof resumeLangDict;
 
 export function createResumeLang(data: unknown, override?: ResumeLang | null) {
   const isThai = override ? override === "th" : hasThaiInResume(data);
-  return (key: ResumeLangKey): string => resumeLangDict[key]?.[isThai ? "th" : "en"] ?? String(key);
+  return (key: ResumeLangKey): string =>
+    resumeLangDict[key]?.[isThai ? "th" : "en"] ?? String(key);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,10 @@ const YEAR_SPAN = 50;
 /**
  * Month + year picker displayed in Buddhist Era (พ.ศ.) when the UI locale is
  * Thai, otherwise AD. Always stores the ISO value "YYYY-MM".
+ *
+ * The two selects are staged locally and only committed (via onChange) once
+ * both month and year are set, so picking the first side of a blank field no
+ * longer resets the field.
  */
 export function MonthYearField({
   value,
@@ -41,6 +45,16 @@ export function MonthYearField({
   const locale = useLocale();
   const isThai = locale === "th";
   const parsed = parseValue(value);
+
+  const [staged, setStaged] = useState<{ year?: number; month?: number }>({
+    year: parsed?.year,
+    month: parsed?.month,
+  });
+
+  useEffect(() => {
+    const p = parseValue(value);
+    setStaged({ year: p?.year, month: p?.month });
+  }, [value]);
 
   const monthOptions = useMemo(() => {
     const intl = new Intl.DateTimeFormat(isThai ? "th-TH" : "en-US", {
@@ -62,12 +76,26 @@ export function MonthYearField({
     return list;
   }, [parsed?.year]);
 
-  const apply = (year: number | undefined, month: number | undefined) => {
-    if (year === undefined || month === undefined) {
+  const handleMonth = (raw: string) => {
+    const month = raw ? Number(raw) : undefined;
+    const year = staged.year;
+    setStaged({ year, month });
+    if (year !== undefined && month !== undefined) {
+      onChange(`${year}-${pad(month)}`);
+    } else if (month === undefined && year !== undefined) {
       onChange("");
-      return;
     }
-    onChange(`${year}-${pad(month)}`);
+  };
+
+  const handleYear = (raw: string) => {
+    const year = raw ? Number(raw) : undefined;
+    const month = staged.month;
+    setStaged({ year, month });
+    if (year !== undefined && month !== undefined) {
+      onChange(`${year}-${pad(month)}`);
+    } else if (year === undefined && month !== undefined) {
+      onChange("");
+    }
   };
 
   const displayYear = (ce: number) => (isThai ? String(ce + 543) : String(ce));
@@ -75,14 +103,9 @@ export function MonthYearField({
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
       <select
-        value={parsed?.month ?? ""}
+        value={staged.month ?? ""}
         disabled={disabled}
-        onChange={(e) =>
-          apply(
-            parsed?.year,
-            e.target.value ? Number(e.target.value) : undefined
-          )
-        }
+        onChange={(e) => handleMonth(e.target.value)}
         className="h-8 flex-1 min-w-0 rounded-md border border-input bg-background px-2 text-sm disabled:opacity-50"
       >
         <option value="">—</option>
@@ -93,14 +116,9 @@ export function MonthYearField({
         ))}
       </select>
       <select
-        value={parsed?.year ?? ""}
+        value={staged.year ?? ""}
         disabled={disabled}
-        onChange={(e) =>
-          apply(
-            e.target.value ? Number(e.target.value) : undefined,
-            parsed?.month
-          )
-        }
+        onChange={(e) => handleYear(e.target.value)}
         className="h-8 w-24 shrink-0 rounded-md border border-input bg-background px-2 text-sm disabled:opacity-50"
       >
         <option value="">—</option>
