@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AIAssistButton } from "@/components/ai/AIAssistButton";
 import { MonthYearField } from "@/components/ui/MonthYearField";
+import { shiftMonthYearValue, isRangeInvalid } from "@/lib/month-year";
 import { useAiAutofillListener } from "@/lib/hooks/use-ai-autofill-listener";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import type { WorkExperience } from "@/lib/types/resume";
@@ -68,6 +69,11 @@ export function WorkExperienceForm() {
                   <MonthYearField
                     value={exp.startDate}
                     onChange={(v) => update(exp.id, { startDate: v })}
+                    max={
+                      !exp.current
+                        ? shiftMonthYearValue(exp.endDate, -1)
+                        : undefined
+                    }
                   />
                 </div>
                 <div className="space-y-1">
@@ -76,6 +82,11 @@ export function WorkExperienceForm() {
                     value={exp.endDate}
                     onChange={(v) => update(exp.id, { endDate: v })}
                     disabled={exp.current}
+                    min={
+                      !exp.current
+                        ? shiftMonthYearValue(exp.startDate, 1)
+                        : undefined
+                    }
                   />
                 </div>
                 <div className="flex items-end pb-1">
@@ -92,6 +103,9 @@ export function WorkExperienceForm() {
                   </label>
                 </div>
               </div>
+              {!exp.current && isRangeInvalid(exp.startDate, exp.endDate) && (
+                <p className="text-xs text-destructive">{t("rangeError")}</p>
+              )}
               <div className="space-y-1">
                 <Label className="text-xs">{t("description")}</Label>
                 <textarea

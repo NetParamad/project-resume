@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { MonthYearField } from "@/components/ui/MonthYearField";
+import { shiftMonthYearValue, isRangeInvalid } from "@/lib/month-year";
 import { useResumeStore } from "@/lib/store/resume-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,7 @@ export function EducationForm() {
                   <MonthYearField
                     value={edu.startDate}
                     onChange={(v) => update(edu.id, { startDate: v })}
+                    max={shiftMonthYearValue(edu.endDate, -1)}
                   />
                 </div>
                 <div className="space-y-1">
@@ -70,9 +72,13 @@ export function EducationForm() {
                   <MonthYearField
                     value={edu.endDate}
                     onChange={(v) => update(edu.id, { endDate: v })}
+                    min={shiftMonthYearValue(edu.startDate, 1)}
                   />
                 </div>
               </div>
+              {isRangeInvalid(edu.startDate, edu.endDate) && (
+                <p className="text-xs text-destructive">{t("rangeError")}</p>
+              )}
               <div className="flex items-end justify-between">
                 <div className="w-full max-w-32 space-y-1">
                   <Label className="text-xs">{t("gpa")}</Label>

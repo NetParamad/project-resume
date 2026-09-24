@@ -321,6 +321,7 @@
       "current": "I currently work here",
       "description": "Description",
       "descriptionPlaceholder": "Describe your responsibilities and achievements...",
+      "rangeError": "End date must come after the start date",
       "add": "Add Experience",
       "aiPrompt": "Write job descriptions for a {title} at {company}"
     },
@@ -332,6 +333,7 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "gpa": "GPA",
+      "rangeError": "End date must come after the start date",
       "add": "Add Education"
     },
     "skills": {
@@ -402,6 +404,7 @@
       "current": "I currently work here",
       "description": "Description",
       "supervisor": "Supervisor",
+      "rangeError": "End date must come after the start date",
       "add": "Add Research Experience"
     },
     "teachingExperience": {
@@ -412,7 +415,8 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "description": "Description",
-      "add": "Add Teaching Experience"
+      "add": "Add Teaching Experience",
+      "rangeError": "End date must come after the start date"
     },
     "awards": {
       "title": "Awards & Honors",
