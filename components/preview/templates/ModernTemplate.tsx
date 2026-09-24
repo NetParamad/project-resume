@@ -309,7 +309,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
 
       {/* References */}
       {references && references.length > 0 && (
-        <div>
+        <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
             {t("references")}
           </h2>
