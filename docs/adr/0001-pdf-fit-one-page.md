@@ -14,7 +14,7 @@ PDF export is browser-print based: a hidden `.print-resume` copy of the resume i
 
 - Render the printable copy through a React portal to `document.body` (`PrintResumePortal`). Print CSS then does `body > *:not(.print-root) { display:none }`, so pagination depends solely on the resume.
 - Keep the print box fixed at 794×1122px with `overflow:hidden` as a **hard single-page guarantee**: worst case (scaling unsupported) clips instead of spilling to page 2.
-- Measure offscreen (visible at `left:-10000px`), await `document.fonts.ready` and in-flight images (capped ~2s), then iteratively solve the `zoom` scale (max 4 steps, floor `MIN_SCALE = 0.15`) via the pure helper `evaluateFitStep()`.
+- Measure offscreen (visible at `left:-10000px`), await `document.fonts.ready` and in-flight images (capped ~2s), then iteratively solve the `zoom` scale (max 6 steps, floor `MIN_SCALE = 0.15`) via the pure helper `evaluateFitStep()`/`solveFitScale()`.
 - Toast outcomes: auto-scaled → info; too long (floored at minimum, shrunk below 0.5×, or iterations exhausted) → error warning naming that content may be cut/too small; zoom unsupported → error.
 
 ## Consequences

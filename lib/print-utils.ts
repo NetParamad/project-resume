@@ -7,7 +7,7 @@ export const HEAVY_SCALE_THRESHOLD = 0.5;
 
 const ZOOM_TOLERANCE = 0.25;
 const PAGE_SLACK_PX = 2;
-const MAX_FIT_ITERATIONS = 4;
+const MAX_FIT_ITERATIONS = 6;
 
 let printQueued = false;
 let fitting = false;
@@ -40,11 +40,16 @@ function sleep(ms: number): Promise<void> {
 
 async function waitForPrintAssets(el: HTMLElement): Promise<void> {
   try {
-    await Promise.race([document.fonts?.ready ?? Promise.resolve(), sleep(1200)]);
+    await Promise.race([
+      document.fonts?.ready ?? Promise.resolve(),
+      sleep(1200),
+    ]);
   } catch {
     // Font readiness is best-effort; fall back to whatever is loaded.
   }
-  const pending = Array.from(el.querySelectorAll("img")).filter((img) => !img.complete);
+  const pending = Array.from(el.querySelectorAll("img")).filter(
+    (img) => !img.complete
+  );
   if (pending.length > 0) {
     await Promise.race([
       Promise.all(
@@ -53,8 +58,8 @@ async function waitForPrintAssets(el: HTMLElement): Promise<void> {
             new Promise<void>((resolve) => {
               img.addEventListener("load", () => resolve(), { once: true });
               img.addEventListener("error", () => resolve(), { once: true });
-            }),
-        ),
+            })
+        )
       ),
       sleep(2000),
     ]);
@@ -80,7 +85,7 @@ function loosenOverflowChildren(el: HTMLElement): Array<[HTMLElement, string]> {
 export function computeInitialScale(
   naturalHeight: number,
   threshold: number = FIT_THRESHOLD_PX,
-  minScale: number = MIN_SCALE,
+  minScale: number = MIN_SCALE
 ): number {
   if (naturalHeight <= threshold) return 1;
   return Math.max(minScale, threshold / naturalHeight);
@@ -93,20 +98,52 @@ export interface FitStep {
   scale: number;
 }
 
+export interface SolveFitResult {
+  /** Outcome of the search: the loop budget ran out while still refining. */
+  action: FitStepAction;
+  /** Zoom scale the last step was measured at — apply it verbatim. */
+  scale: number;
+}
+
+/**
+ * Iteratively refine the zoom scale until the measured height fits one page.
+ * `measure` must return the element's rendered height at the given scale (a
+ * hidden offscreen rect). Action semantics on return:
+ * - "fits": measured height is within the threshold. Apply `scale`, done.
+ * - "truncated": stuck at the minimum scale — content cannot fully fit.
+ * - "unsupported": zoom has no (or an implausible) effect — print unscaled.
+ * - "retry": budget exhausted while still refining — treat like "truncated".
+ */
+export function solveFitScale(
+  naturalHeight: number,
+  measure: (scale: number) => number,
+  maxIterations: number = MAX_FIT_ITERATIONS
+): SolveFitResult {
+  let step: FitStep = {
+    action: "retry",
+    scale: computeInitialScale(naturalHeight),
+  };
+  for (let i = 0; i < maxIterations && step.action === "retry"; i++) {
+    step = evaluateFitStep(naturalHeight, step.scale, measure(step.scale));
+  }
+  return { action: step.action, scale: step.scale };
+}
+
 /**
  * Pure decision step for the fit-to-one-page loop.
  * - "unsupported": zoom had no (or an implausible) effect on layout.
  * - "fits": actual height now fits inside one page.
  * - "retry": still too tall — try the returned smaller scale.
- * - "truncated": already at (or not meaningfully below) the previous scale
- *   and still too tall — content cannot fully fit.
+ * - "truncated": the scale cannot move forward (hit the minimum) and the
+ *   content is still too tall — it cannot fully fit. A few pixels over the
+ *   slack still refine ("retry") because that next step fits.
  */
 export function evaluateFitStep(
   naturalHeight: number,
   scale: number,
   actualHeight: number,
   threshold: number = FIT_THRESHOLD_PX,
-  minScale: number = MIN_SCALE,
+  minScale: number = MIN_SCALE
 ): FitStep {
   const expected = naturalHeight * scale;
   if (
@@ -121,7 +158,10 @@ export function evaluateFitStep(
     return { action: "fits", scale };
   }
   const refined = Math.max(minScale, (scale * threshold) / actualHeight);
-  if (refined >= scale - 0.005) {
+  // Zero forward progress (scale clamped at the minimum). Any real
+  // refinement, however small, gets one more measured step — a shrink of
+  // even 0.4% resolves the common "just a few px over the slack" case.
+  if (refined >= scale) {
     return { action: "truncated", scale: Math.min(scale, refined) };
   }
   return { action: "retry", scale: refined };
@@ -131,7 +171,15 @@ function resetZoom(el: HTMLElement): void {
   el.style.zoom = "";
 }
 
-const FORCED_PROPS = ["display", "position", "visibility", "left", "top", "margin", "padding"] as const;
+const FORCED_PROPS = [
+  "display",
+  "position",
+  "visibility",
+  "left",
+  "top",
+  "margin",
+  "padding",
+] as const;
 
 /**
  * Last-resort guarantee: inline !important beats any stylesheet state,
@@ -160,9 +208,8 @@ export interface PrintFitCallbacks {
   onCannotFit?: () => void;
 }
 
-
 export async function printResumeFitToOnePage(
-  callbacks: PrintFitCallbacks = {},
+  callbacks: PrintFitCallbacks = {}
 ): Promise<void> {
   const el = getPrintElement();
   if (!el) {
@@ -188,21 +235,21 @@ export async function printResumeFitToOnePage(
 
       const naturalHeight = el.scrollHeight;
       if (naturalHeight > FIT_THRESHOLD_PX) {
-        let step: FitStep = { action: "retry", scale: computeInitialScale(naturalHeight) };
-        for (let i = 0; i < MAX_FIT_ITERATIONS && step.action === "retry"; i++) {
-          el.style.zoom = String(step.scale);
-          const actualHeight = el.getBoundingClientRect().height;
-          step = evaluateFitStep(naturalHeight, step.scale, actualHeight);
-        }
+        const step = solveFitScale(naturalHeight, (scale) => {
+          el.style.zoom = String(scale);
+          return el.getBoundingClientRect().height;
+        });
 
         if (step.action === "unsupported") {
           outcome = "cannot-fit";
         } else {
           finalScale = step.scale;
-          const truncated =
-            step.action !== "fits" ||
-            step.scale < HEAVY_SCALE_THRESHOLD;
-          if (truncated) outcome = "too-long";
+          // "too-long" fires when content cannot fully fit OR was shrunk
+          // below half its natural size (ADR-0001: too small to read). A
+          // fit at >= 0.5x always prints one complete page.
+          const tooLong =
+            step.action !== "fits" || step.scale < HEAVY_SCALE_THRESHOLD;
+          if (tooLong) outcome = "too-long";
         }
       }
     } finally {
