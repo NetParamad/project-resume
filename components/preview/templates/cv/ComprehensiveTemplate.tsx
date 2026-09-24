@@ -325,7 +325,7 @@ export function ComprehensiveTemplate({ data }: ComprehensiveTemplateProps) {
       )}
 
       {references && references.length > 0 && (
-        <div className="mb-5">
+        <div className="mb-5 mt-5">
           <h2
             className="text-sm font-bold uppercase tracking-wider mb-2"
             style={{ color: accentColor }}

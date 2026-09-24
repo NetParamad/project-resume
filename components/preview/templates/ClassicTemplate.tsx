@@ -209,7 +209,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
       )}
 
       {researchExperience && researchExperience.length > 0 && (
-        <div className="mb-4 mt-4">
+        <div className="mb-4">
           <h2
             className="text-base font-serif font-bold tracking-wide border-b border-gray-300 pb-1 mb-2 uppercase"
             style={{ color: accentColor, borderColor: accentColor }}
