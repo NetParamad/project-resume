@@ -183,7 +183,7 @@ export function ModernTemplate({ data }: ModernTemplateProps) {
 
       {/* Languages */}
       {languages.length > 0 && (
-        <div>
+        <div className="mb-4">
           <h2 className="text-sm font-semibold border-b border-gray-300 pb-1 mb-2">
             {t("languages")}
           </h2>
