@@ -14,8 +14,8 @@ describe("computeInitialScale", () => {
   });
 
   it("scales proportionally for overflowing content", () => {
-    expect(computeInitialScale(2000)).toBeCloseTo(0.54, 5);
-    expect(computeInitialScale(2160)).toBeCloseTo(0.5, 5);
+    expect(computeInitialScale(2000)).toBeCloseTo(FIT_THRESHOLD_PX / 2000, 5);
+    expect(computeInitialScale(2160)).toBeCloseTo(FIT_THRESHOLD_PX / 2160, 5);
   });
 
   it("floors at MIN_SCALE for extremely long content", () => {
@@ -59,15 +59,20 @@ describe("evaluateFitStep", () => {
   });
 
   it("keeps refining instead of truncating when only a few px push over the slack", () => {
-    // Regression: a rich resume can land ~1085px after the first zoom — just
-    // past the 1082 threshold+slack. The tiny refinement (<0.5%) used to be
-    // treated as "cannot fit", firing the misleading "PDF too long" error
-    // even though the next step fits comfortably.
+    // Regression: a rich resume can land just past the threshold+slack after
+    // the first zoom. The tiny refinement (<0.5%) used to be treated as
+    // "cannot fit", firing the misleading "PDF too long" error even though
+    // the next step fits comfortably.
     const natural = 1938;
-    const step = evaluateFitStep(natural, FIT_THRESHOLD_PX / natural, 1085);
+    const overSlack = FIT_THRESHOLD_PX + 3;
+    const step = evaluateFitStep(
+      natural,
+      FIT_THRESHOLD_PX / natural,
+      overSlack
+    );
     expect(step.action).toBe("retry");
     expect(step.scale).toBeCloseTo(
-      (FIT_THRESHOLD_PX * FIT_THRESHOLD_PX) / natural / 1085,
+      (FIT_THRESHOLD_PX * FIT_THRESHOLD_PX) / natural / overSlack,
       5
     );
     expect(step.scale).toBeLessThan(FIT_THRESHOLD_PX / natural);
@@ -119,7 +124,7 @@ describe("solveFitScale", () => {
     let measurements = 0;
     const measure = () => {
       measurements++;
-      return 1085;
+      return FIT_THRESHOLD_PX + 3;
     };
     const result = solveFitScale(4000, measure);
     expect(result.action).toBe("retry");

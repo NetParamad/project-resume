@@ -1,7 +1,9 @@
 "use client";
 
 export const A4_PAGE_HEIGHT_PX = 1122.5;
-export const FIT_THRESHOLD_PX = 1080;
+// Fit to the FULL page so a downscaled resume fills the sheet (PAGE_SLACK_PX
+// already allows the fit loop to land within a few px of the edge).
+export const FIT_THRESHOLD_PX = 1118;
 export const MIN_SCALE = 0.15;
 export const HEAVY_SCALE_THRESHOLD = 0.5;
 
@@ -98,18 +100,16 @@ function resetScale(el: HTMLElement): void {
  * Re-center the zoomed copy on the paper. Zoom shrinks the layout box but
  * keeps it anchored at the top-left corner — without a nudge the whole
  * resume prints in a left-aligned column and leaves an uneven white band
- * on the right. Chrome translates the `left` offset to `left * zoom * 2/3`
- * on the printed page and renders the box itself at `794 * zoom * 2/3`
- * wide, so the offset that lands the box dead-center is
- * `(794 * (1 - zoom*2/3)) / (zoom*4/3)` (verified against the rasterised
- * output for a range of scale factors).
+ * on the right. Chrome scales the element's printed geometry by `scale` in
+ * both axes, so on the 794px sheet the box sits at `leftCss * scale` and is
+ * `794 * scale` wide; centering it therefore needs
+ * `leftCss = 794 * (1 - scale) / (2 * scale)` (verified against the
+ * rasterised PDF output).
  */
 function centerScaledCopy(el: HTMLElement, scale: number): void {
   el.style.setProperty("position", "absolute", "important");
   el.style.setProperty("top", "0", "important");
-  const leftCss = Math.round(
-    (A4_WIDTH - (A4_WIDTH * scale * 2) / 3) / ((scale * 4) / 3)
-  );
+  const leftCss = Math.round((A4_WIDTH * (1 - scale)) / (2 * scale));
   el.style.setProperty("left", `${leftCss}px`, "important");
 }
 
