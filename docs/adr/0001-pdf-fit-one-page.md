@@ -13,12 +13,14 @@ PDF export is browser-print based: a hidden `.print-resume` copy of the resume i
 ## Decision
 
 - Render the printable copy through a React portal to `document.body` (`PrintResumePortal`). Print CSS then does `body > *:not(.print-root) { display:none }`, so pagination depends solely on the resume.
-- Keep the print box fixed at 794×1122px with `overflow:hidden` as a **hard single-page guarantee**: worst case (scaling unsupported) clips instead of spilling to page 2.
+- Keep the print box at 794×1122px with `overflow:hidden` in the stylesheet as the **unscalable fallback** (worst case clips instead of spilling to page 2). On the fitted path the code replaces the box's height with the fitted height and `overflow:visible` at print time, because the fixed box clips a scaled copy to 1122×scale of its natural height, and re-centers the zoomed copy horizontally via `centerScaledCopy()` (Chrome anchors zoomed content top-left, producing a lopsided page).
 - Measure offscreen (visible at `left:-10000px`), await `document.fonts.ready` and in-flight images (capped ~2s), then iteratively solve the `zoom` scale (max 6 steps, floor `MIN_SCALE = 0.15`) via the pure helper `evaluateFitStep()`/`solveFitScale()`.
-- Toast outcomes: auto-scaled → info; too long (floored at minimum, shrunk below 0.5×, or iterations exhausted) → error warning naming that content may be cut/too small; zoom unsupported → error.
+- Toast outcomes: auto-scaled → info; too long (floored at minimum, shrunk below 0.5×, or iterations exhausted) → error warning naming that content may be cut/too small; scaling unsupported → error.
 
 ## Consequences
 
 - Call sites pass an options object `{ onScaled, onTooLong, onCannotFit }`; the function is async.
 - Any change to preview rendering must be mirrored in both portal call sites (`BuilderLayout.tsx`, `ShareResumeView.tsx`).
 - Pure fit logic lives next to `lib/print-utils.ts` and is unit tested (`lib/print-utils.test.ts`).
+- The print-time overrides (`height`, `overflow`, centering `position/left`) are `!important` where needed to beat `forcePrintable()` and the stylesheet, and are cleared again with the other forced styles in the print cleanup.
+- Horizontal centering is empirical: Chrome renders the zoomed box and translates its absolute `left` with scale-dependent ratios (`left·zoom·2/3`, box `794·zoom·2/3` wide), verified against rasterised PDF output; keep `centerScaledCopy()`'s formula in sync if browser print behaviour changes.

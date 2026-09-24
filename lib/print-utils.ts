@@ -66,8 +66,10 @@ async function waitForPrintAssets(el: HTMLElement): Promise<void> {
   }
 }
 
-const OFFSCREEN_STYLE =
-  "display:block !important; position:absolute !important; top:0; left:-10000px; width:794px; margin:0; padding:0; visibility:hidden;";
+/** Width of an A4 page in CSS pixels (matches the print stylesheet). */
+const A4_WIDTH = 794;
+
+const OFFSCREEN_STYLE = `display:block !important; position:absolute !important; top:0; left:-10000px; width:${A4_WIDTH}px; margin:0; padding:0; visibility:hidden;`;
 
 function loosenOverflowChildren(el: HTMLElement): Array<[HTMLElement, string]> {
   const clipped: Array<[HTMLElement, string]> = [];
@@ -76,6 +78,39 @@ function loosenOverflowChildren(el: HTMLElement): Array<[HTMLElement, string]> {
     child.style.overflow = "visible";
   });
   return clipped;
+}
+
+/**
+ * Set the zoom scale. Zoom is the ONLY scaling mechanism that participates
+ * in the print layout pass, so it is what makes a one-page PDF possible —
+ * a CSS transform leaves the layout height untouched (browser paginates the
+ * natural height) and clips content the moment `overflow:hidden` is set.
+ */
+function applyScale(el: HTMLElement, scale: number): void {
+  el.style.zoom = String(scale);
+}
+
+function resetScale(el: HTMLElement): void {
+  el.style.zoom = "";
+}
+
+/**
+ * Re-center the zoomed copy on the paper. Zoom shrinks the layout box but
+ * keeps it anchored at the top-left corner — without a nudge the whole
+ * resume prints in a left-aligned column and leaves an uneven white band
+ * on the right. Chrome translates the `left` offset to `left * zoom * 2/3`
+ * on the printed page and renders the box itself at `794 * zoom * 2/3`
+ * wide, so the offset that lands the box dead-center is
+ * `(794 * (1 - zoom*2/3)) / (zoom*4/3)` (verified against the rasterised
+ * output for a range of scale factors).
+ */
+function centerScaledCopy(el: HTMLElement, scale: number): void {
+  el.style.setProperty("position", "absolute", "important");
+  el.style.setProperty("top", "0", "important");
+  const leftCss = Math.round(
+    (A4_WIDTH - (A4_WIDTH * scale * 2) / 3) / ((scale * 4) / 3)
+  );
+  el.style.setProperty("left", `${leftCss}px`, "important");
 }
 
 /**
@@ -101,17 +136,17 @@ export interface FitStep {
 export interface SolveFitResult {
   /** Outcome of the search: the loop budget ran out while still refining. */
   action: FitStepAction;
-  /** Zoom scale the last step was measured at — apply it verbatim. */
+  /** Scale factor the last step was measured at — apply it verbatim. */
   scale: number;
 }
 
 /**
- * Iteratively refine the zoom scale until the measured height fits one page.
+ * Iteratively refine the scale until the measured height fits one page.
  * `measure` must return the element's rendered height at the given scale (a
  * hidden offscreen rect). Action semantics on return:
  * - "fits": measured height is within the threshold. Apply `scale`, done.
  * - "truncated": stuck at the minimum scale — content cannot fully fit.
- * - "unsupported": zoom has no (or an implausible) effect — print unscaled.
+ * - "unsupported": scaling had no (or an implausible) effect — print unscaled.
  * - "retry": budget exhausted while still refining — treat like "truncated".
  */
 export function solveFitScale(
@@ -167,10 +202,6 @@ export function evaluateFitStep(
   return { action: "retry", scale: refined };
 }
 
-function resetZoom(el: HTMLElement): void {
-  el.style.zoom = "";
-}
-
 const FORCED_PROPS = [
   "display",
   "position",
@@ -204,7 +235,7 @@ export interface PrintFitCallbacks {
   onScaled?: (scale: number) => void;
   /** Content is too long: it was shrunk to the minimum or may be cut off. */
   onTooLong?: (scale: number) => void;
-  /** Browser does not support zoom-based scaling; output may be clipped. */
+  /** Scaling had no effect; output may be clipped. */
   onCannotFit?: () => void;
 }
 
@@ -223,10 +254,11 @@ export async function printResumeFitToOnePage(
 
   const prevCss = el.style.cssText;
   let finalScale: number | null = null;
+  let fittedHeight = 0;
   let outcome: "fits" | "too-long" | "cannot-fit" = "fits";
 
   try {
-    resetZoom(el);
+    resetScale(el);
     el.style.cssText = OFFSCREEN_STYLE;
     const clipped = loosenOverflowChildren(el);
 
@@ -236,7 +268,7 @@ export async function printResumeFitToOnePage(
       const naturalHeight = el.scrollHeight;
       if (naturalHeight > FIT_THRESHOLD_PX) {
         const step = solveFitScale(naturalHeight, (scale) => {
-          el.style.zoom = String(scale);
+          applyScale(el, scale);
           return el.getBoundingClientRect().height;
         });
 
@@ -244,6 +276,7 @@ export async function printResumeFitToOnePage(
           outcome = "cannot-fit";
         } else {
           finalScale = step.scale;
+          fittedHeight = Math.round(naturalHeight * step.scale);
           // "too-long" fires when content cannot fully fit OR was shrunk
           // below half its natural size (ADR-0001: too small to read). A
           // fit at >= 0.5x always prints one complete page.
@@ -267,10 +300,21 @@ export async function printResumeFitToOnePage(
     // print stylesheet, leaving a blank page (left:-10000px/hidden).
     el.style.cssText = prevCss;
     if (finalScale !== null) {
-      el.style.zoom = String(finalScale);
+      applyScale(el, finalScale);
+      // Escape the print stylesheet's fixed 1122px overflow:hidden box: at
+      // scale s it clips content to 1122*s of its natural height. Size the
+      // box to the fitted height instead so the whole resume prints and the
+      // zoomed content fills the sheet.
+      if (fittedHeight > 0) {
+        el.style.height = `${fittedHeight}px`;
+        el.style.overflow = "visible";
+      }
     }
     // Reveal regardless of stylesheet state, then clean up after printing.
     forcePrintable(el);
+    // Zoom anchors the shrunk copy top-left; re-center it so the paper is
+    // symmetric (must run after forcePrintable's left:0/position:static).
+    if (finalScale !== null) centerScaledCopy(el, finalScale);
     fitting = false;
 
     if (outcome === "too-long") callbacks.onTooLong?.(finalScale ?? MIN_SCALE);
@@ -279,7 +323,7 @@ export async function printResumeFitToOnePage(
   }
 
   const cleanup = () => {
-    resetZoom(el);
+    resetScale(el);
     clearForcedStyles(el);
     window.removeEventListener("afterprint", cleanup);
   };
