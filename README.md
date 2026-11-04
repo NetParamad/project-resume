@@ -1,4 +1,4 @@
-[English](README.md) | [ไทย](README.th.md)
+[EN](README.md) | [TH](README.th.md)
 
 <h1 align="center">Resume Builder</h1>
 
@@ -191,4 +191,4 @@ Copy `.env.example` to `.env.local` and set (names only — never commit real va
 - **PDF export** — print-based; scaling uses `zoom` and an iterative fit so long content is auto-scaled to one A4 page (see ADR‑0001).
 - **Deployment** — deployed on Vercel. Set the environment variables above, point `NEXT_PUBLIC_SITE_URL` at the production domain, and apply the `supabase/migrations/` SQL to the production database.
 - **Architecture decisions** — recorded in [`docs/adr/`](docs/adr/): one-page PDF fit (0001), public share RPC (0002), input limits (0003), Vercel deployment (0004).
-- **License** — no license file is currently included; all rights reserved by the authors.
+- **License** — MIT (see [LICENSE](LICENSE)).
